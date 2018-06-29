@@ -5,7 +5,7 @@ Contact: Ralph Bird (ralph.bird.1@gmail.com) for details.
 
 ## Aim
 
-This repository is for the code that will be used to 
+This repository is for the code that will be used to convert VERITAS data into DL3 format.  Initially it is only being developed for point like irfs
 
 
 ## Git pushing
