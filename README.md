@@ -35,3 +35,52 @@ required = true
 ```
 *.ipynb filter=nbstrip_full
 ```
+
+---
+# pyV2DL3 -- package the code
+
+The python package for converting stage5 files to DL3 fits file. This is basically just a cleared up and packaged version of  the code written in the Jupyter notebook. Other than useful functions that can be called, a commandline tool `st5ToDL3` comes with the package.
+
+### Requirements
+
+
+1. vegas version >= 2.5.7
+2. pyROOT
+3. click
+4. astropy
+5. numpy
+
+### Install pyV2DL3
+
+```
+pip install .
+```
+
+### Usage of commandline tool st5ToDL3
+
+```
+Usage: st5ToDL3 [OPTIONS] <output>
+
+  Command line tool for converting stage5 file to DL3
+
+  There are two modes:
+      1) Single file mode
+          When --fifle_par is invoked, the path to the stage5 file and the
+          corresponding effective area should be provided. The <output> argument
+          is then the resulting fits file name.
+      2) File list mode
+          When using the option --runlist, the path to a stage6 runlist should be used.
+          The <output> is then the directory to which the fits while will be saved to.
+
+  Note: One one mode can be used at a time.
+
+Options:
+  -f, --file_pair <PATH PATH>...  A stage5 file (<file 1>) and the
+                                  corresponding effective area (<file 2>).
+  -l, --runlist PATH              Stage6 runlist
+  -d, --debug
+  -v, --verbose                   Print root output
+  --help                          Show this message and exit.
+```
+
+*Note: The runlist mode hasn't been fully implemented yet.  
