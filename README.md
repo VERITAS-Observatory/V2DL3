@@ -75,11 +75,13 @@ Usage: st5ToDL3 [OPTIONS] <output>
   Note: One one mode can be used at a time.
 
 Options:
-  -f, --file_pair <PATH PATH>...  A stage5 file (<file 1>) and the
-                                  corresponding effective area (<file 2>).
-  -l, --runlist PATH              Stage6 runlist
+  -f, --file_pair PATH...  A stage5 file (<file 1>) and the corresponding
+                           effective area (<file 2>).
+  -l, --runlist PATH       Stage6 runlist
+  -g, --gen_index_file     Generate hdu and observation index list files. Only
+                           have effect in file list mode.
   -d, --debug
-  -v, --verbose                   Print root output
-  --help                          Show this message and exit.
+  -v, --verbose            Print root output
+  --help                   Show this message and exit.
 ```
 
