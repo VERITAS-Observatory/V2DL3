@@ -17,7 +17,7 @@ def runlist2FP(rl_dict):
              help='A stage5 file (<file 1>) and the corresponding effective area (<file 2>).')
 @click.option('--runlist','-l',nargs=1,type=click.Path(exists=True),help='Stage6 runlist')
 @click.option('--gen_index_file','-g',is_flag=True,
-              help='Generate hdu and observation index list file. Only have effect in file list mode.')
+              help='Generate hdu and observation index list files. Only have effect in file list mode.')
 @click.option('--debug','-d',is_flag=True)
 @click.option('--verbose','-v',is_flag=True,help='Print root output')
 @click.argument('output',metavar='<output>')
