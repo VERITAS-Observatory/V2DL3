@@ -7,6 +7,7 @@ setup(
     install_requires=[
         'click',
         'numpy',
+        'astropy',
         'root_numpy'
     ],
     entry_points='''
