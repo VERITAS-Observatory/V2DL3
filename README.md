@@ -83,4 +83,3 @@ Options:
   --help                          Show this message and exit.
 ```
 
-*Note: The runlist mode hasn't been fully implemented yet.  
