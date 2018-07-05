@@ -16,10 +16,12 @@ def runlist2FP(rl_dict):
 @click.option('--file_pair','-f',nargs=2,type=click.Path(exists=True),
              help='A stage5 file (<file 1>) and the corresponding effective area (<file 2>).')
 @click.option('--runlist','-l',nargs=1,type=click.Path(exists=True),help='Stage6 runlist')
+@click.option('--gen_index_file','-g',is_flag=True,
+              help='Generate hdu and observation index list file. Only have effect in file list mode.')
 @click.option('--debug','-d',is_flag=True)
 @click.option('--verbose','-v',is_flag=True,help='Print root output')
 @click.argument('output',metavar='<output>')
-def cli(file_pair,runlist,debug,verbose,output):
+def cli(file_pair,runlist,gen_index_file,debug,verbose,output):
     """Command line tool for converting stage5 file to DL3
 
     \b 
@@ -52,7 +54,7 @@ def cli(file_pair,runlist,debug,verbose,output):
     from pyV2DL3.load_vegas import CppPrintContext    
     from pyV2DL3.parseSt6RunList import (parseRunlistStrs,validateRunlist,
                                          RunlistValidationError,RunlistParsingError)        
-    
+    from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file    
 
     if(len(file_pair) > 0):
         st5,ea = loadROOTFiles(file_pair[0],file_pair[1])
@@ -79,6 +81,7 @@ def cli(file_pair,runlist,debug,verbose,output):
             raise click.Abort()
         
         file_pairs = runlist2FP(rl_dict)       
+        flist = []
         for st5_str,ea_str in file_pairs:
            logging.info('Processing file: {}'.format(st5_str))
            logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str,ea_str))
@@ -87,6 +90,11 @@ def cli(file_pair,runlist,debug,verbose,output):
            with CppPrintContext(verbose=verbose): 
               hdulist = genHDUlist(st5,ea)
            hdulist.writeto('{}/{}.fits'.format(output,fname_base), overwrite=True) 
+           flist.append('{}/{}.fits'.format(output,fname_base))
+           # Generate hdu obs index file
+        if(gen_index_file):
+           logging.info('Generating index files {}/obs-index.fits.gz and {}/hdu-index.fits.gz'.format(output,output))
+           create_obs_hdu_index_file(flist,output)  
 
 if __name__ == '__main__':
     cli()
