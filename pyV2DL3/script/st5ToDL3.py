@@ -39,7 +39,7 @@ def cli(file_pair,runlist,debug,verbose,output):
         raise click.Abort()    
     if((len(file_pair) > 0) and (runlist is not None)):
         click.echo(cli.get_help(click.Context(cli)) )
-        click.echo("Only one file source can be used.")
+        click.secho("Only one file source can be used.",fg='yellow')
         raise click.Abort()    
 
     if(debug):
@@ -65,22 +65,23 @@ def cli(file_pair,runlist,debug,verbose,output):
         try:
             rl_dict = parseRunlistStrs(lines) 
         except RunlistParsingError as e: 
-            click.echo(str(e))
-            click.Abort()
+            click.secho(str(e),fg='red')
+            raise click.Abort()
         try:
             validateRunlist(rl_dict)
         except RunlistValidationError as e:
-            click.echo(str(e))
-            click.Abort()
+            click.secho(str(e),fg='red')
+            raise click.Abort()
         if(not os.path.exists(output)):
             os.makedirs(output)
         elif(os.path.isfile(output)):
-            click.echo("{} already exists as a file. <output> needs to be a directory for runlist mode.".format(output))
-            click.Abort()
+            click.secho("{} already exists as a file. <output> needs to be a directory for runlist mode.".format(output),fg='yellow')
+            raise click.Abort()
         
-        file_paris = runlist2FP(rl_dict)       
-        for st5_str,ea_str in file_paris:
+        file_pairs = runlist2FP(rl_dict)       
+        for st5_str,ea_str in file_pairs:
            logging.info('Processing file: {}'.format(st5_str))
+           logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str,ea_str))
            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
            st5,ea = loadROOTFiles(st5_str,ea_str)
            with CppPrintContext(verbose=verbose): 

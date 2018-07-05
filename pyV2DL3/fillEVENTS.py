@@ -126,7 +126,7 @@ def fillEVENTS(vegasFileIO):
     hdu1.header.set('LIVETIME', runHeader.pfRunDetails.fRunNominalLiveTimeSeconds,
                     '(dead=ONTIME-LIVETIME) [s] ')
     hdu1.header.set('DEADC   ', runHeader.getLiveTimeFrac(),
-                    'average deadtime fraction [] ')
+                    'Average dead time correction (LIVETIME/ONTIME)')
     
     hdu1.header.set('OBJECT  ', runHeader.getSourceId(), 'observed object')
     

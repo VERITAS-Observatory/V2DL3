@@ -10,19 +10,19 @@ class RunlistParsingError(Exception):
 def parseSectionTag(l):
     isEnd=False
     if( l[-1] != ']'):
-        raise Exception('Tag not ended with ]')
+        raise RunlistParsingError('Tag not ended with ]')
     l_content = l.strip('[').strip(']')
     if(l_content[0] == '/'):
         isEnd=True
         l_content.strip('/')
     contents = l_content.split()
     if((len(contents) < 3) or (contents[1] != 'ID:')):
-        raise Exception('Wrong tag format.')
+        raise RunlistParsingError('Wrong tag format.')
     key,id_str,gid=contents
     try:
         gid=int(gid)
     except:
-        raise Exception('Group ID {} is not an integer'.format(gid))
+        raise RunlistParsingError('Group ID {} is not an integer'.format(gid))
     return isEnd,key,gid
 
 def validateRunlist(r_dict):
@@ -75,6 +75,8 @@ def parseRunlistStrs(lines):
             isEnd,key,gid = parseSectionTag(l)
             if((not in_tag_region) and (isEnd) ):
                 raise RunlistParsingError('No start tag found for [{} ID: {:d}]'.format(key,gid))
+            elif(in_tag_region and (not isEnd)):
+                raise RunlistParsingError('No ending tag found for previous block before starting [{} ID: {:d}].'.format(key,gid))
             elif(not isEnd):
                 current_key_id = (key,gid)
                 try:

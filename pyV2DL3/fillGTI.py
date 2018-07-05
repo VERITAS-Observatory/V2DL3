@@ -27,9 +27,9 @@ def fillGTI(vegasFileIO):
     fits.Column(name='STOP', format='1D', array=goodTimeStop)
 ])
     hdu2.name = "GTI"
-    hdu2.header.set('TSTART',startTime_s,'start time same unit and system used in the rate table')
-    hdu2.header.set('TSTOP',endTime_s,'stop time same unit and system used in the rate table')
-    hdu2.header.set('TIMEZERO',startTime_s,'zero time same unit and system used in the rate table') # is this correct ? 
+    hdu2.header.set('TSTART',startTime_s,'start time [s]')
+    hdu2.header.set('TSTOP',endTime_s,'stop time same [s]')
+    hdu2.header.set('TIMEZERO',startTime_s,'zero time [s]') # is this correct ? 
     hdu2.header.set('TTYPE1','START   ' ,' start of good time interval')
     hdu2.header.set('TTYPE2','STOP    ' ,' start of good time interval')
     hdu2.header.set('EXTNAME','GTI     ' ,' name: Good Time Intervals')
