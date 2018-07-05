@@ -32,7 +32,7 @@ def cli(file_pair,runlist,gen_index_file,debug,verbose,output):
             is then the resulting fits file name.
         2) File list mode 
             When using the option --runlist, the path to a stage6 runlist should be used.
-            The <output> is then the directory to which the fits while will be saved to.
+            The <output> is then the directory to which the fits files will be saved to.
 
     Note: One one mode can be used at a time.
     """
