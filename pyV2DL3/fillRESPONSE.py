@@ -3,7 +3,7 @@ from ctypes import c_float
 import numpy as np
 import logging
 from root_numpy import hist2array
-from pyV2DL3.util import decodeConfigMask
+from pyV2DL3.util import decodeConfigMask,getThetaSquareCut
 
 from pyV2DL3.load_vegas import VEGASStatus
 
@@ -17,6 +17,13 @@ logger = logging.getLogger(__name__)
 
 def fillRESPONSE(effectiveAreaIO,azimuth,zenith,noise,offset):
     effectiveAreaIO.loadTheRootFile() 
+    # Get Theta2 cut from file
+    logger.debug('Getting Theta2 cut from EA file')
+    cuts = effectiveAreaIO.loadTheCutsInfo()
+    for k in cuts:
+        theta2cut = getThetaSquareCut(k.fCutsFileText)
+
+    logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
     effectiveAreaManager = VAEffectiveAreaManager()
     effectiveAreaManager.loadEffectiveAreas(effectiveAreaIO)
     effectiveAreaManager.setUseReconstructedEnergy(False)    
@@ -75,7 +82,7 @@ def fillRESPONSE(effectiveAreaIO,azimuth,zenith,noise,offset):
                     'Low energy threshold of validity [TeV]')
     hdu3.header.set('HI_THRES', maxEnergy.value/1000.,
                     'High energy threshold of validity [TeV]')
-    hdu3.header.set('RAD_MAX ', 0.1, 'Direction cut applied [deg]')
+    hdu3.header.set('RAD_MAX ', np.sqrt(theta2cut), 'Direction cut applied [deg]')
     ## Fill Migration Matrix
     a, e = hist2array(effectiveAreaManager.getEnergyBias2D(effectiveAreaParameters), return_edges=True)
     eLow = np.power(10, [e[0][:-1]])[0]
@@ -124,6 +131,6 @@ def fillRESPONSE(effectiveAreaIO,azimuth,zenith,noise,offset):
                     'Low energy threshold of validity [TeV]')
     hdu4.header.set('HI_THRES', maxEnergy.value/1000.,
                     'High energy threshold of validity [TeV]')
-    hdu4.header.set('RAD_MAX ', 0.1, 'Direction cut applied [deg]')
+    hdu4.header.set('RAD_MAX ', np.sqrt(theta2cut), 'Direction cut applied [deg]')
 
     return hdu3,hdu4

@@ -52,7 +52,20 @@ def getTimeCut(config_str_ori):
             if(len(cut_str) ==0):
                 return parseTimeCut('0/0')
             return parseTimeCut(cut_str)
-        
+
+def getThetaSquareCut(config_str_ori):
+    config_str = str(config_str_ori)
+    for i in config_str.splitlines():
+        # Skip comment lines
+        if( (len(i) ==0) or (i.strip()[0] == '#')):
+            continue
+        # I
+        elif(i.find('ThetaSquareUpper') >= 0 ):
+            key,cut_str = i.split(' ')
+            if(len(cut_str) ==0):
+                raise Exception('No theta2 cuts present in EA file')
+            return float(cut_str)
+                
 def isMergable(cut1,cut2):
     """
     Check if two cuts can be merged.
