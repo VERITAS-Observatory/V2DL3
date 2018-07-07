@@ -1,13 +1,10 @@
 from astropy.io import fits
 import numpy as np
 import logging
-from pyV2DL3.util import (getGTArray,
-                          getTimeCut,
-                          mergeTimeCut)
 
 logger = logging.getLogger(__name__)
 
-def fillGTI(vegasFileIO):
+def fillGTI(vegasFileIO,goodTimeStart=None,goodTimeStop=None):
     runHeader = vegasFileIO.loadTheRunHeader()    
     cuts = vegasFileIO.loadTheCutsInfo()
     startTime = runHeader.getStartTime()
@@ -15,11 +12,11 @@ def fillGTI(vegasFileIO):
 
     startTime_s = float(startTime.getDayNS()) / 1e9
     endTime_s = float(endTime.getDayNS()) / 1e9
-    # Get Time Cuts and build GTI start and stop time array
-    for k in cuts:
-        tmp =k.fCutsFileText
-        tc = getTimeCut(k.fCutsFileText)
-    goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
+
+    if(goodTimeStart is None):
+        goodTimeStart = np.array([startTime_s])
+    if(goodTimeStop is None):
+        goodTimeStop = np.array([endTime_s])
 
 
     hdu2 = fits.BinTableHDU.from_columns([

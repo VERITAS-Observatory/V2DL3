@@ -3,6 +3,10 @@ import numpy as np
 import logging
 
 from pyV2DL3.util import produceTelList,decodeConfigMask
+from pyV2DL3.util import (getGTArray,
+                          getTimeCut,
+                          mergeTimeCut)
+
 logger = logging.getLogger(__name__)
 
 windowSizeForNoise = 7
@@ -15,7 +19,7 @@ def fillEVENTS(vegasFileIO):
     qStatsData = vegasFileIO.loadTheQStatsData()
     pixelData = vegasFileIO.loadThePixelStatusData()
     arrayInfo          = vegasFileIO.loadTheArrayInfo(0)
-
+    cuts = vegasFileIO.loadTheCutsInfo()
 
     # Start filling events
     avAlt = []
@@ -90,9 +94,17 @@ def fillEVENTS(vegasFileIO):
     endTime_s = float(endTime.getDayNS()) / 1e9
     startTime = runHeader.getStartTime()
     endTime = runHeader.getEndTime()
-    
+    # Get Time Cuts and build GTI start and stop time array
+    for k in cuts:
+        tmp =k.fCutsFileText
+        tc = getTimeCut(k.fCutsFileText)
+
+    goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
+    real_live_time = np.sum(goodTimeStop - goodTimeStart)
+
     startTime_s = float(startTime.getDayNS()) / 1e9
     endTime_s = float(endTime.getDayNS()) / 1e9
+
     hdu1.header.set('DATE-OBS',
                     startTime.getString().split()[0],
                     'start date (UTC) of obs yy-mm-dd')
@@ -123,8 +135,12 @@ def fillEVENTS(vegasFileIO):
     hdu1.header.set('ONTIME  ', 
                     endTime_s - startTime_s,
                     'time on target (including deadtime)')
-    hdu1.header.set('LIVETIME', runHeader.pfRunDetails.fRunNominalLiveTimeSeconds,
+#    hdu1.header.set('LIVETIME', runHeader.pfRunDetails.fRunNominalLiveTimeSeconds,
+#                    '(dead=ONTIME-LIVETIME) [s] ')
+    # Correct live time for time cuts
+    hdu1.header.set('LIVETIME', runHeader.getLiveTimeFrac()*real_live_time,
                     '(dead=ONTIME-LIVETIME) [s] ')
+
     hdu1.header.set('DEADC   ', runHeader.getLiveTimeFrac(),
                     'Average dead time correction (LIVETIME/ONTIME)')
     
@@ -177,4 +193,4 @@ def fillEVENTS(vegasFileIO):
         nTels += 1
     
     avNoise /= nTels
-    return {'azimuth':avAz,'zenith':(90. - avAlt),'noise':avNoise},hdu1
+    return {'goodTimeStart':goodTimeStart,'goodTimeStop':goodTimeStop},{'azimuth':avAz,'zenith':(90. - avAlt),'noise':avNoise},hdu1

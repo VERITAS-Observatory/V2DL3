@@ -4,7 +4,6 @@ import numpy as np
 import logging
 from root_numpy import hist2array
 from pyV2DL3.util import decodeConfigMask,getThetaSquareCut
-
 from pyV2DL3.load_vegas import VEGASStatus
 
 # Load VEGAS

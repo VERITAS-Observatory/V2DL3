@@ -30,8 +30,8 @@ def loadROOTFiles(st5File,eaFile):
 
 def genHDUlist(vegasFileIO,effectiveAreaIO):
     hdu0 = genPrimaryHDU() 
-    config,hdu1 = fillEVENTS(vegasFileIO)
-    hdu2       =  fillGTI(vegasFileIO)
+    gti,config,hdu1 = fillEVENTS(vegasFileIO)
+    hdu2       =  fillGTI(vegasFileIO,**gti)
     hdu3,hdu4  = fillRESPONSE(effectiveAreaIO,offset=0.5,**config) 
     hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
     return hdulist
