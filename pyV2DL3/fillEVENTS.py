@@ -59,7 +59,8 @@ def fillEVENTS(vegasFileIO):
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
     # https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz)),np.sum(np.cos(avAz))))
+    avAz_deg = np.deg2rad(avAz)
+    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_deg)),np.sum(np.cos(avAz_deg))))
     avAz = avAz if avAz > 0 else avAz + 360
     
     avRA = np.rad2deg(np.mean(avRA))
