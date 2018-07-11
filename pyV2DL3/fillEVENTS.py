@@ -78,8 +78,9 @@ def fillEVENTS(vegasFileIO):
     fits.Column(name='ALT', format='1E', array=altArr, unit = "deg"), 
     fits.Column(name='AZ', format='1E', array=azArr, unit = "deg"), 
     fits.Column(name='ENERGY', format='1E', array=energyArr, unit = "TeV"), 
-    fits.Column(name='DETX', format='1E', array=detXArr, unit = "deg"), 
-    fits.Column(name='DETY', format='1E', array=detYArr, unit = "deg"),
+    # Remove to avoid confusion
+    # fits.Column(name='DETX', format='1E', array=detXArr, unit = "deg"), 
+    # fits.Column(name='DETY', format='1E', array=detYArr, unit = "deg"),
     fits.Column(name="EVENT_TYPE", format="1J", array=nTelArr)
     ])
     hdu1.name = "EVENTS"
@@ -169,8 +170,8 @@ def fillEVENTS(vegasFileIO):
     # other info - weather? pointing mode
     
     hdu1.header.set('EUNIT   ', 'TeV', 'energy unit')
-    hdu1.header.set('GEOLAT  ', np.rad2deg(arrayInfo.longitudeRad()), 'longitude of array center [deg]')
-    hdu1.header.set('GEOLON  ', np.rad2deg(arrayInfo.latitudeRad()), 'latitude of array center [deg]')
+    hdu1.header.set('GEOLON  ', np.rad2deg(arrayInfo.longitudeRad()), 'longitude of array center [deg]')
+    hdu1.header.set('GEOLAT  ', np.rad2deg(arrayInfo.latitudeRad()), 'latitude of array center [deg]')
     hdu1.header.set('ALTITUDE', arrayInfo.elevationM(), 'altitude of array center [m]')
     
     # What are these for? - May note be needed, leave out for now.

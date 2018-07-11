@@ -43,7 +43,6 @@ def gen_hdu_index(filelist,index_file_dir='./'):
         raise NoFitsFileError('No fits file found in the list.')
 
     hdu_table = vstack(hdu_tables)
-    hdu_table.meta['EXTNAME'] = 'HDU_INDEX'
     return hdu_table
 
 def gen_obs_index(filelist,index_file_dir='./'):
@@ -100,10 +99,12 @@ def gen_obs_index(filelist,index_file_dir='./'):
     if(len(obs_table) ==0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
-    obs_table.meta['EXTNAME'] = 'OBS_INDEX'
     obs_table.meta['MJDREFI'] = dl3_hdu[1].header['MJDREFI']
     obs_table.meta['MJDREFF'] = dl3_hdu[1].header['MJDREFF']
-    
+    obs_table.meta['TIMEUNIT'] = dl3_hdu[1].header['TIMEUNIT']   
+    obs_table.meta['TIMESYS'] = dl3_hdu[1].header['TIMESYS']   
+    obs_table.meta['TIMEREF'] = dl3_hdu[1].header['TIMEREF']   
+
     return obs_table
   
 

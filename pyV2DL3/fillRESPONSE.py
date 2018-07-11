@@ -82,6 +82,8 @@ def fillRESPONSE(effectiveAreaIO,azimuth,zenith,noise,offset):
     hdu3.header.set('HI_THRES', maxEnergy.value/1000.,
                     'High energy threshold of validity [TeV]')
     hdu3.header.set('RAD_MAX ', np.sqrt(theta2cut), 'Direction cut applied [deg]')
+
+    hdu3.header.set('CREF5','(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI)','') 
     ## Fill Migration Matrix
     a, e = hist2array(effectiveAreaManager.getEnergyBias2D(effectiveAreaParameters), return_edges=True)
     eLow = np.power(10, [e[0][:-1]])[0]
@@ -131,5 +133,6 @@ def fillRESPONSE(effectiveAreaIO,azimuth,zenith,noise,offset):
     hdu4.header.set('HI_THRES', maxEnergy.value/1000.,
                     'High energy threshold of validity [TeV]')
     hdu4.header.set('RAD_MAX ', np.sqrt(theta2cut), 'Direction cut applied [deg]')
-
+    #Axis order 
+    hdu4.header.set('CREF7','(ETRUE_LO:ETRUE_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)','') 
     return hdu3,hdu4
