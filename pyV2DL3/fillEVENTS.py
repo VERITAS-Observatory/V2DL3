@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 windowSizeForNoise = 7
 
-def fillEVENTS(vegasFileIO):
+def fillEVENTS(vegasFileIO,save_multiplicity=False):
 
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader          = vegasFileIO.loadTheRunHeader()
@@ -69,20 +69,21 @@ def fillEVENTS(vegasFileIO):
     logger.debug("Done!")    
     logger.debug("Create EVENT HDU")    
 
+    # Columns to be saved
+    columns = [ fits.Column(name='EVENT_ID', format='1J', array=evNumArr), 
+                fits.Column(name='TIME', format='1D', array=timeArr, unit="s"), 
+                fits.Column(name='RA', format='1E', array=raArr, unit = "deg"), 
+                fits.Column(name='DEC', format='1E', array=decArr, unit = "deg"), 
+                fits.Column(name='ALT', format='1E', array=altArr, unit = "deg"), 
+                fits.Column(name='AZ', format='1E', array=azArr, unit = "deg"), 
+                fits.Column(name='ENERGY', format='1E', array=energyArr, unit = "TeV") 
+              ]
+    # Add number of triggered telescope if necessary 
+    if(save_multiplicity):
+       columns.append(fits.Column(name="EVENT_TYPE", format="1J", array=nTelArr)) 
+
     # Create HDU
-    hdu1 = fits.BinTableHDU.from_columns([
-    fits.Column(name='EVENT_ID', format='1J', array=evNumArr), 
-    fits.Column(name='TIME', format='1D', array=timeArr, unit="s"), 
-    fits.Column(name='RA', format='1E', array=raArr, unit = "deg"), 
-    fits.Column(name='DEC', format='1E', array=decArr, unit = "deg"), 
-    fits.Column(name='ALT', format='1E', array=altArr, unit = "deg"), 
-    fits.Column(name='AZ', format='1E', array=azArr, unit = "deg"), 
-    fits.Column(name='ENERGY', format='1E', array=energyArr, unit = "TeV"), 
-    # Remove to avoid confusion
-    # fits.Column(name='DETX', format='1E', array=detXArr, unit = "deg"), 
-    # fits.Column(name='DETY', format='1E', array=detYArr, unit = "deg"),
-    fits.Column(name="EVENT_TYPE", format="1J", array=nTelArr)
-    ])
+    hdu1 = fits.BinTableHDU.from_columns(columns)
     hdu1.name = "EVENTS"
 
     # Fill Header

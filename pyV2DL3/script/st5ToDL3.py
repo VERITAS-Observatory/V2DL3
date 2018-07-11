@@ -18,16 +18,19 @@ def runlist2FP(rl_dict):
 @click.option('--runlist','-l',nargs=1,type=click.Path(exists=True),help='Stage6 runlist')
 @click.option('--gen_index_file','-g',is_flag=True,
               help='Generate hdu and observation index list files. Only have effect in file list mode.')
+@click.option('--save_multiplicity','-m',is_flag=True,
+              help='Save telescope multiplicity into event list')
 @click.option('--debug','-d',is_flag=True)
 @click.option('--verbose','-v',is_flag=True,help='Print root output')
 @click.argument('output',metavar='<output>')
-def cli(file_pair,runlist,gen_index_file,debug,verbose,output):
+def cli(file_pair,runlist,gen_index_file,
+        save_multiplicity,debug,verbose,output):
     """Command line tool for converting stage5 file to DL3
 
     \b 
     There are two modes:
         1) Single file mode
-            When --fifle_par is invoked, the path to the stage5 file and the 
+            When --file_pair is invoked, the path to the stage5 file and the 
             corresponding effective area should be provided. The <output> argument
             is then the resulting fits file name.
         2) File list mode 
@@ -59,7 +62,7 @@ def cli(file_pair,runlist,gen_index_file,debug,verbose,output):
     if(len(file_pair) > 0):
         st5,ea = loadROOTFiles(file_pair[0],file_pair[1])
         with CppPrintContext(verbose=verbose): 
-            hdulist = genHDUlist(st5,ea)
+            hdulist = genHDUlist(st5,ea,save_multiplicity=save_multiplicity)
         hdulist.writeto(output, overwrite=True)        
     else:
         with open(runlist) as f:
@@ -88,7 +91,7 @@ def cli(file_pair,runlist,gen_index_file,debug,verbose,output):
            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
            st5,ea = loadROOTFiles(st5_str,ea_str)
            with CppPrintContext(verbose=verbose): 
-              hdulist = genHDUlist(st5,ea)
+              hdulist = genHDUlist(st5,ea,save_multiplicity=save_multiplicity)
            hdulist.writeto('{}/{}.fits'.format(output,fname_base), overwrite=True) 
            flist.append('{}/{}.fits'.format(output,fname_base))
            # Generate hdu obs index file

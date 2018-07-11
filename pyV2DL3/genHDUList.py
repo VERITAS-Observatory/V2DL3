@@ -28,9 +28,9 @@ def genPrimaryHDU():
 def loadROOTFiles(st5File,eaFile):
     return VARootIO(st5File, True),VARootIO(eaFile, True)
 
-def genHDUlist(vegasFileIO,effectiveAreaIO):
+def genHDUlist(vegasFileIO,effectiveAreaIO,save_multiplicity=False):
     hdu0 = genPrimaryHDU() 
-    gti,config,hdu1 = fillEVENTS(vegasFileIO)
+    gti,config,hdu1 = fillEVENTS(vegasFileIO,save_multiplicity=save_multiplicity)
     hdu2       =  fillGTI(vegasFileIO,**gti)
     hdu3,hdu4  = fillRESPONSE(effectiveAreaIO,offset=0.5,**config) 
     hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
