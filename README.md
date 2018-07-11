@@ -65,7 +65,7 @@ Usage: st5ToDL3 [OPTIONS] <output>
 
   There are two modes:
       1) Single file mode
-          When --fifle_par is invoked, the path to the stage5 file and the
+          When --file_pair is invoked, the path to the stage5 file and the
           corresponding effective area should be provided. The <output> argument
           is then the resulting fits file name.
       2) File list mode
@@ -80,6 +80,7 @@ Options:
   -l, --runlist PATH       Stage6 runlist
   -g, --gen_index_file     Generate hdu and observation index list files. Only
                            have effect in file list mode.
+  -m, --save_multiplicity  Save telescope multiplicity into event list
   -d, --debug
   -v, --verbose            Print root output
   --help                   Show this message and exit.
