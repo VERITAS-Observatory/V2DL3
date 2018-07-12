@@ -1,15 +1,12 @@
 from astropy.io import fits
 import logging
-from pyV2DL3.load_vegas import VEGASStatus
-# Load VEGAS
-vegas = VEGASStatus()
-vegas.loadVEGAS()
-from ROOT import VARootIO
 from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fillRESPONSE import fillRESPONSE
 from pyV2DL3.fillEVENTS import fillEVENTS
+from pyV2DL3.vegas.vegasDataSource import vegasDataSource
 
 logger = logging.getLogger(__name__)
+
 def genPrimaryHDU():
     """
     Generate primary hdu
@@ -25,13 +22,18 @@ def genPrimaryHDU():
     hdu0.header['COMMENT'] = "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
     return hdu0
 
-def loadROOTFiles(st5File,eaFile):
-    return VARootIO(st5File, True),VARootIO(eaFile, True)
+def loadROOTFiles(st5File,eaFile,file_type='VEGAS'):
+    if(file_type == 'VEGAS'):
+        return vegasDataSource(st5File,eaFile) 
+    if(file_type == 'ED'):
+        raise Exception('ED file type not implemented') 
+    else:
+        raise Exception('File type not supported: {}'.format(file_type))
 
-def genHDUlist(vegasFileIO,effectiveAreaIO,save_multiplicity=False):
+def genHDUlist(datasource,save_multiplicity=False):
     hdu0 = genPrimaryHDU() 
-    gti,config,hdu1 = fillEVENTS(vegasFileIO,save_multiplicity=save_multiplicity)
-    hdu2       =  fillGTI(vegasFileIO,**gti)
-    hdu3,hdu4  = fillRESPONSE(effectiveAreaIO,offset=0.5,**config) 
+    hdu1 = fillEVENTS(datasource,save_multiplicity=save_multiplicity)
+    hdu2       =  fillGTI(datasource)
+    hdu3,hdu4  = fillRESPONSE(datasource) 
     hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
     return hdulist

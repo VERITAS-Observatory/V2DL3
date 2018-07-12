@@ -4,25 +4,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def fillGTI(vegasFileIO,goodTimeStart=None,goodTimeStop=None):
-    runHeader = vegasFileIO.loadTheRunHeader()    
-    cuts = vegasFileIO.loadTheCutsInfo()
-    startTime = runHeader.getStartTime()
-    endTime = runHeader.getEndTime()
-
-    startTime_s = float(startTime.getDayNS()) / 1e9
-    endTime_s = float(endTime.getDayNS()) / 1e9
-
-    if(goodTimeStart is None):
-        goodTimeStart = np.array([startTime_s])
-    if(goodTimeStop is None):
-        goodTimeStop = np.array([endTime_s])
-
-
+def fillGTI(datasource,goodTimeStart=None,goodTimeStop=None):
+    gti_dict = datasource.get_gti_data()
+    goodTimeStart = gti_dict['goodTimeStart']     
+    goodTimeStop = gti_dict['goodTimeStop']     
+    startTime_s = gti_dict['TSTART']
+    endTime_s   = gti_dict['TSTOP']
     hdu2 = fits.BinTableHDU.from_columns([
     fits.Column(name='START', format='1D', array=goodTimeStart), 
     fits.Column(name='STOP', format='1D', array=goodTimeStop)
-])
+    ])
     hdu2.name = "GTI"
     hdu2.header.set('TSTART',startTime_s,'start time [s]')
     hdu2.header.set('TSTOP',endTime_s,'stop time same [s]')

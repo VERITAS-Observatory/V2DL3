@@ -20,11 +20,12 @@ def runlist2FP(rl_dict):
               help='Generate hdu and observation index list files. Only have effect in file list mode.')
 @click.option('--save_multiplicity','-m',is_flag=True,
               help='Save telescope multiplicity into event list')
+@click.option('--ed','-e',is_flag=True,help='ED mode')
 @click.option('--debug','-d',is_flag=True)
 @click.option('--verbose','-v',is_flag=True,help='Print root output')
 @click.argument('output',metavar='<output>')
 def cli(file_pair,runlist,gen_index_file,
-        save_multiplicity,debug,verbose,output):
+        save_multiplicity,ed,debug,verbose,output):
     """Command line tool for converting stage5 file to DL3
 
     \b 
@@ -54,15 +55,15 @@ def cli(file_pair,runlist,gen_index_file,
 
     logging.debug("Start importing VEGAS/ROOT") 
     from pyV2DL3.genHDUList import loadROOTFiles,genHDUlist
-    from pyV2DL3.load_vegas import CppPrintContext    
+    from pyV2DL3.root_lib_util import CppPrintContext    
     from pyV2DL3.parseSt6RunList import (parseRunlistStrs,validateRunlist,
                                          RunlistValidationError,RunlistParsingError)        
     from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file    
 
     if(len(file_pair) > 0):
-        st5,ea = loadROOTFiles(file_pair[0],file_pair[1])
+        datasource = loadROOTFiles(file_pair[0],file_pair[1])
         with CppPrintContext(verbose=verbose): 
-            hdulist = genHDUlist(st5,ea,save_multiplicity=save_multiplicity)
+            hdulist = genHDUlist(datasource,save_multiplicity=save_multiplicity)
         hdulist.writeto(output, overwrite=True)        
     else:
         with open(runlist) as f:
@@ -89,9 +90,14 @@ def cli(file_pair,runlist,gen_index_file,
            logging.info('Processing file: {}'.format(st5_str))
            logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str,ea_str))
            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-           st5,ea = loadROOTFiles(st5_str,ea_str)
+           if(ed):
+               datasource = loadROOTFiles(st5_str,ea_str,'ED')
+           else:
+               datasource = loadROOTFiles(st5_str,ea_str,'VEGAS')
+
            with CppPrintContext(verbose=verbose): 
-              hdulist = genHDUlist(st5,ea,save_multiplicity=save_multiplicity)
+              datasource.fill_data()  
+           hdulist = genHDUlist(datasource,save_multiplicity=save_multiplicity)
            hdulist.writeto('{}/{}.fits'.format(output,fname_base), overwrite=True) 
            flist.append('{}/{}.fits'.format(output,fname_base))
            # Generate hdu obs index file
