@@ -81,6 +81,7 @@ Options:
   -g, --gen_index_file     Generate hdu and observation index list files. Only
                            have effect in file list mode.
   -m, --save_multiplicity  Save telescope multiplicity into event list
+  -e, --ed                 ED mode
   -d, --debug
   -v, --verbose            Print root output
   --help                   Show this message and exit.
