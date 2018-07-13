@@ -18,11 +18,11 @@ import numpy as np
 #     return sorted(tels)
 #
 #
-def produceTelList(mask):
+def produceTelList(telConfig):
     '''Convert the list of telescopes into a string for FITS header
     '''
     telList = ""
-    for tel in decodeConfigMask(mask):
+    for tel in telConfig['TelID']:
         telList += "T" + str(tel) + ","
     return telList[:-1]
 #

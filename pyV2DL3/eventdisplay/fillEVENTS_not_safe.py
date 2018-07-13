@@ -23,9 +23,10 @@ def __fillEVENTS_not_safe__(edFileIO):
     # FIXME: This should be taken from a common script (by VEGAS also)
     reference_mjd = 53402.0
 
-    # Load header ,array info and selected event tree ( vegas > v2.5.7)
+    # Load required trees within the anasum file:
     runSummary = tree2array(edFileIO.Get("total_1/stereo/tRunSummary"))
     runNumber = runSummary['runOn'][0]
+    telConfig = tree2array(edFileIO.Get("run_{}/stereo/telconfig".format(runNumber)))
     vAnaSumRunParameter = edFileIO.Get("run_{}/stereo/VAnaSumRunParameter".format(runNumber))
     runParametersV2 = edFileIO.Get("run_{}/stereo/runparameterV2".format(runNumber))
     selectedEventsTree = tree2array(edFileIO.Get("run_{}/stereo/TreeWithEventsForCtools".format(runNumber)))
@@ -68,22 +69,6 @@ def __fillEVENTS_not_safe__(edFileIO):
     energyArr = selectedEventsTree['Energy']
     # Not used for the moment by science tools.
     # nTelArr = selectedEventsTree['NImages']
-    logger.debug("Start filling events ...")
-
-    # for ev in selectedEventsTree:
-    #     evNumArr.append(selectedEventsTree['eventNumber'])
-    #     timeArr.append(selectedEventsTree['timeOfDay'])
-    #     raArr.append(selectedEventsTree['RA'])
-    #     decArr.append(selectedEventsTree['DEC'])
-    #     azArr.append(selectedEventsTree['Az'])
-    #     altArr.append(selectedEventsTree['El'])
-    #     energyArr.append(selectedEventsTree['Energy'])
-    #     # nTelArr.append(selectedEventsTree['NImages'])
-    #
-    #     avAlt.append(ev.S.fArrayTrackingElevation_Deg)
-    #     avAz.append(ev.S.fArrayTrackingAzimuth_Deg)
-    #     avRA.append(ev.S.fArrayTrackingRA_J2000_Rad)
-    #     avDec.append(ev.S.fArrayTrackingDec_J2000_Rad)
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -104,15 +89,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['ENERGY'] = energyArr
     # evt_dict['EVENT_TYPE'] =nTelArr
 
-    # Calculate Live Time
-    startDateTime = (runParameters.fDBRunStartTimeSQL).split(" ")
-    endTime = runHeader.getEndTime()
-    
-    startTime_s = float(startTime.getDayNS()) / 1e9
-    endTime_s = float(endTime.getDayNS()) / 1e9
-    startTime = runHeader.getStartTime()
-    endTime = runHeader.getEndTime()
-    # Get Time Cuts and build GTI start and stop time array
+    # FIXME: Get Time Cuts and build GTI start and stop time array
     for k in cuts:
         tmp =k.fCutsFileText
         tc = getTimeCut(k.fCutsFileText)
@@ -142,11 +119,13 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['AZ_PNT'] = avAz
     evt_dict['RA_OBJ'] = runParametersV2.fTargetRA
     evt_dict['DEC_OBJ'] = runParametersV2.fTargetDec
-    evt_dict['TELLIST'] = produceTelList(runHeader.fRunInfo.fConfigMask)
-    evt_dict['N_TELS'] = runHeader.pfRunDetails.fTels
+    evt_dict['TELLIST'] = produceTelList(telConfig)
+    evt_dict['N_TELS'] = len(telConfig['TelID'])
     evt_dict['GEOLON'] = np.rad2deg(arrayInfo.longitudeRad())
     evt_dict['GEOLAT'] = np.rad2deg(arrayInfo.latitudeRad())
     evt_dict['ALTITUDE'] = arrayInfo.elevationM()
+
+    31.6747333333334, -110.9528
 
     avNoise = 0
     nTels = 0
