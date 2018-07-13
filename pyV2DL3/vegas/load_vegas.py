@@ -10,12 +10,12 @@ class VEGASStatus:
     def loadVEGAS(self):
         if(not self.__vegas_loaded):
             logger.debug('Load VEGAS lib')
-            if gSystem.Load("libVEGASCommon.dylib"):
+            if gSystem.Load("libVEGAScommon"):
                 raise Exception("Problem loading VEGAS Common libraries - please check this before proceeding")
-            if gSystem.Load("libVEGASStage6.dylib"):
-                raise Exception("Problem loading VEGAS Stage 6 libraries - please check this before proceeding")
-            if gSystem.Load("libVEGASStage5.dylib"):
-                raise Exception("Problem loading VEGAS Stage 5 libraries - please check this before proceeding") 
+            if gSystem.Load("libVEGASstage5"):
+                raise Exception("Problem loading VEGAS Stage 5 libraries - please check this before proceeding")
+            if gSystem.Load("libVEGASstage6"):
+                raise Exception("Problem loading VEGAS Stage 6 libraries - please check this before proceeding") 
             self.__vegas_loaded = True
 
 VEGASStatus = SingletonDecorator(VEGASStatus)
