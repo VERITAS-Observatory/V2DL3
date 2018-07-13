@@ -2,7 +2,7 @@ import logging
 import os
 from astropy.io import fits
 from astropy.table import Table, vstack
-
+from astropy.io.fits import table_to_hdu
 logger = logging.getLogger(__name__)
 
 class NoFitsFileError(Exception):
@@ -34,8 +34,7 @@ def gen_hdu_index(filelist,index_file_dir='./'):
 
         t = Table([obs_id, hdu_type_name, hdu_type, file_dir, file_name, hdu_name],
                   names=('OBS_ID', 'HDU_TYPE', 'HDU_CLASS', 'FILE_DIR', 'FILE_NAME', 'HDU_NAME'),
-                  dtype=('>i8', 'S6', 'S10', 'S40', 'S54', 'S20'),
-                  meta={'name': 'HDU_INDEX'}
+                  dtype=('>i8', 'S6', 'S10', 'S40', 'S54', 'S20')
                   )
 
         hdu_tables.append(t)
@@ -43,7 +42,8 @@ def gen_hdu_index(filelist,index_file_dir='./'):
         raise NoFitsFileError('No fits file found in the list.')
 
     hdu_table = vstack(hdu_tables)
-    hdu_table.meta['EXTNAME'] = 'HDU_INDEX'
+    hdu_table = table_to_hdu(hdu_table)
+    hdu_table.name = 'HDU_INDEX'
     return hdu_table
 
 def gen_obs_index(filelist,index_file_dir='./'):
@@ -94,16 +94,20 @@ def gen_obs_index(filelist,index_file_dir='./'):
             'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
             'TSTOP',
             'N_TELS', 'TELLIST'),
-        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20'),
-        meta={'name': 'OBS_INDEX'}
+        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20')
     )
     if(len(obs_table) ==0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
-    obs_table.meta['EXTNAME'] = 'OBS_INDEX'
+
     obs_table.meta['MJDREFI'] = dl3_hdu[1].header['MJDREFI']
     obs_table.meta['MJDREFF'] = dl3_hdu[1].header['MJDREFF']
-    
+    obs_table.meta['TIMEUNIT'] = dl3_hdu[1].header['TIMEUNIT']   
+    obs_table.meta['TIMESYS'] = dl3_hdu[1].header['TIMESYS']   
+    obs_table.meta['TIMEREF'] = dl3_hdu[1].header['TIMEREF']   
+    obs_table = table_to_hdu(obs_table)
+    obs_table.name = 'OBS_INDEX'
+
     return obs_table
   
 
@@ -159,12 +163,12 @@ def create_obs_hdu_index_file(filelist,index_file_dir='./',
 
     hdu_table = gen_hdu_index(filelist,index_file_dir)
     logger.debug('Writing {} ...'.format(hdu_index_file))
-    hdu_table.write('{}/{}'.format(index_file_dir,hdu_index_file),
+    hdu_table.writeto('{}/{}'.format(index_file_dir,hdu_index_file),
                     overwrite=True)
 
     obs_table = gen_obs_index(filelist,index_file_dir)
     logger.debug('Writing {} ...'.format(obs_index_file))
-    obs_table.write('{}/{}'.format(index_file_dir,obs_index_file),
+    obs_table.writeto('{}/{}'.format(index_file_dir,obs_index_file),
                      overwrite=True)
 
 
