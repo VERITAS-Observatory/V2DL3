@@ -5,6 +5,8 @@ from pyV2DL3.vegas.util import produceTelList,decodeConfigMask
 from pyV2DL3.vegas.util import (getGTArray,
                           getTimeCut,
                           mergeTimeCut)
+from pyV2DL3.constant import VTS_REFERENCE_MJD
+from astropy.time import Time
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,21 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     arrayInfo          = vegasFileIO.loadTheArrayInfo(0)
     cuts = vegasFileIO.loadTheCutsInfo()
 
+
+    # Calculate time references 
+
+    startTime = runHeader.getStartTime()
+    endTime = runHeader.getEndTime()
+    
+    mjd         = startTime.getMJDInt()    
+    startTime_s = float(startTime.getDayNS()) / 1e9
+    endTime_s = float(endTime.getDayNS()) / 1e9
+
+    t_ref     = Time(VTS_REFERENCE_MJD,format='mjd',scale='utc') 
+    seconds_from_reference_t0 =  (Time(mjd,format='mjd',scale='utc') - t_ref).sec
+    startTime_s = startTime_s + seconds_from_reference_t0
+    endTime_s   = endTime_s   + seconds_from_reference_t0
+    
     # Start filling events
     avAlt = []
     avAz = []
@@ -38,8 +55,11 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
+        # seconds since first light         
+        time_relative_to_reference = (float(ev.S.fTime.getDayNS())/1e9 +
+                                      seconds_from_reference_t0)
         evNumArr.append(ev.S.fArrayEventNum)
-        timeArr.append(float(ev.S.fTime.getDayNS())/1e9)
+        timeArr.append(time_relative_to_reference)
         raArr.append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
         decArr.append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
         azArr.append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
@@ -72,15 +92,8 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['EVENT_TYPE'] =nTelArr
 
 
-    # Calculate Live Time
-    startTime = runHeader.getStartTime()
-    endTime = runHeader.getEndTime()
-    
-    startTime_s = float(startTime.getDayNS()) / 1e9
-    endTime_s = float(endTime.getDayNS()) / 1e9
-    startTime = runHeader.getStartTime()
-    endTime = runHeader.getEndTime()
     # Get Time Cuts and build GTI start and stop time array
+    # and calculate live time
     for k in cuts:
         tmp =k.fCutsFileText
         tc = getTimeCut(k.fCutsFileText)
@@ -88,9 +101,7 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
     real_live_time = np.sum(goodTimeStop - goodTimeStart)
     
-    startTime_s = float(startTime.getDayNS()) / 1e9
-    endTime_s = float(endTime.getDayNS()) / 1e9 
-
+    
     # Filling Header info
     evt_dict['OBS_ID'] = runHeader.getRunNumber()
     evt_dict['DATE-OBS'] = startTime.getString().split()[0]
@@ -99,7 +110,7 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['TIME-END'] = endTime.getString().split()[1]
     evt_dict['TSTART']   = startTime_s
     evt_dict['TSTOP']    = endTime_s
-    evt_dict['MJDREFI']  = int(startTime.getMJDInt())
+    evt_dict['MJDREFI']  = VTS_REFERENCE_MJD 
     evt_dict['ONTIME']   = endTime_s - startTime_s
     evt_dict['LIVETIME'] = runHeader.getLiveTimeFrac()*real_live_time
     evt_dict['DEADC']    =  evt_dict['LIVETIME']/evt_dict['ONTIME']
