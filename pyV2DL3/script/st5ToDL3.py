@@ -53,7 +53,7 @@ def cli(file_pair,runlist,gen_index_file,
     else:
         logging.basicConfig(level=logging.INFO)
 
-    logging.debug("Start importing VEGAS/ROOT") 
+    logging.debug("Start importing ROOT") 
     from pyV2DL3.genHDUList import loadROOTFiles,genHDUlist
     from pyV2DL3.root_lib_util import CppPrintContext    
     from pyV2DL3.parseSt6RunList import (parseRunlistStrs,validateRunlist,
@@ -61,9 +61,15 @@ def cli(file_pair,runlist,gen_index_file,
     from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file    
 
     if(len(file_pair) > 0):
-        datasource = loadROOTFiles(file_pair[0],file_pair[1])
+        st5_str,ea_str = file_pair
+        if(ed):
+            datasource = loadROOTFiles(st5_str,ea_str,'ED')
+        else:
+            datasource = loadROOTFiles(st5_str,ea_str,'VEGAS')
+
         with CppPrintContext(verbose=verbose): 
-            hdulist = genHDUlist(datasource,save_multiplicity=save_multiplicity)
+           datasource.fill_data()  
+        hdulist = genHDUlist(datasource,save_multiplicity=save_multiplicity)
         hdulist.writeto(output, overwrite=True)        
     else:
         with open(runlist) as f:
