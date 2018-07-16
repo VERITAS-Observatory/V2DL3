@@ -76,6 +76,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     # RA and DEC already in degrees.
     avRA = np.mean(raArr)
     avDec = np.mean(decArr)
+
     # Filling Event List
     evt_dict['EVENT_ID'] = evNumArr
     evt_dict['TIME'] = timeArr

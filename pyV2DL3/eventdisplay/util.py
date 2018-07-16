@@ -25,6 +25,10 @@ def produceTelList(telConfig):
     for tel in telConfig['TelID']:
         telList += "T" + str(tel) + ","
     return telList[:-1]
+
+
+def is_close(a, b, rel_tol=1e-04, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 #
 # def parseTimeCut(tCutStr):
 #     """
