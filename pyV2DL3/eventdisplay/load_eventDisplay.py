@@ -11,9 +11,9 @@ class EDStatus:
         pass
 
     def loadED(self):
-        if(not self.__ed_loaded):
+        if not self.__ed_loaded:
             logger.debug('Load eventDisplay libVAnaSum.so')
-            if gSystem.Load("libVEGASCommon.dylib"):
+            if gSystem.Load("$EVNDISPSYS/lib/libVAnaSum.so"):
                 raise Exception("Problem loading eventDisplay libraries - please check this before proceeding")
             self.__ed_loaded = True
 

@@ -3,15 +3,16 @@ from ctypes import c_float
 import numpy as np
 import logging
 from root_numpy import hist2array
-from pyV2DL3.vegas.util import decodeConfigMask,getThetaSquareCut
 import ROOT
  
 logger = logging.getLogger(__name__)
 
-def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
+
+def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset):
     response_dict = {}
 
-    effectiveAreaIO.loadTheRootFile() 
+    from ROOT import VEvndispRunParameter, VSkyCoordinatesUtilities, VAnaSumRunParameter
+
     # Get Theta2 cut from file
     logger.debug('Getting Theta2 cut from EA file')
     cuts = effectiveAreaIO.loadTheCutsInfo()

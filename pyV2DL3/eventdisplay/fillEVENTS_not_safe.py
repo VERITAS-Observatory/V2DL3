@@ -4,10 +4,6 @@ from pyV2DL3.eventdisplay.util import produceTelList
 from root_numpy import tree2array
 from astropy.time import Time
 
-# EventDisplay imports
-from ROOT import VEvndispRunParameter, VSkyCoordinatesUtilities, VAnaSumRunParameter
-
-
 # from pyV2DL3.vegas.util import produceTelList,decodeConfigMask
 # from pyV2DL3.vegas.util import (getGTArray,
 #                           getTimeCut,
@@ -18,10 +14,16 @@ windowSizeForNoise = 7
 
 
 def __fillEVENTS_not_safe__(edFileIO):
+    # EventDisplay imports
+    from ROOT import VEvndispRunParameter, VSkyCoordinatesUtilities, VAnaSumRunParameter
+
     evt_dict = {}
 
-    # FIXME: This should be taken from a common script (by VEGAS also)
+    # FIXME: These should be taken from a common script (by VEGAS also)
     reference_mjd = 53402.0
+    geo_lat = 31.675075
+    geo_lon = -110.951996
+    altitude = 1268
 
     # Load required trees within the anasum file:
     runSummary = tree2array(edFileIO.Get("total_1/stereo/tRunSummary"))
@@ -53,12 +55,6 @@ def __fillEVENTS_not_safe__(edFileIO):
     tstart_from_reference = (Time(runParametersV2.fDBRunStartTimeSQL, format='iso', scale='utc') - t_ref).sec
     tstop_from_reference = (Time(runParametersV2.fDBRunStoppTimeSQL, format='iso', scale='utc') - t_ref).sec
 
-    # Start filling events
-    avAlt = []
-    avAz = []
-    avRA = []
-    avDec = []
-
     evNumArr = selectedEventsTree['eventNumber']
     # This should already have microsecond resolution if stored with double precision.
     timeArr = seconds_from_reference + selectedEventsTree['timeOfDay']
@@ -68,17 +64,18 @@ def __fillEVENTS_not_safe__(edFileIO):
     altArr = selectedEventsTree['El']
     energyArr = selectedEventsTree['Energy']
     # Not used for the moment by science tools.
-    # nTelArr = selectedEventsTree['NImages']
+    nTelArr = selectedEventsTree['NImages']
 
-    avAlt = np.mean(avAlt)
+    avAlt = np.mean(altArr)
     # Calculate average azimuth angle from average vector on a circle
     # https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-    avAz_deg = np.deg2rad(avAz)
-    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_deg)),np.sum(np.cos(avAz_deg))))
+    avAz_rad = np.deg2rad(azArr)
+    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_rad)),np.sum(np.cos(avAz_rad))))
     avAz = avAz if avAz > 0 else avAz + 360
 
-    avRA = np.rad2deg(np.mean(avRA))
-    avDec = np.rad2deg(np.mean(avDec))
+    # RA and DEC already in degrees.
+    avRA = np.mean(raArr)
+    avDec = np.mean(decArr)
     # Filling Event List
     evt_dict['EVENT_ID'] = evNumArr
     evt_dict['TIME'] = timeArr
@@ -87,18 +84,17 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['ALT'] = altArr
     evt_dict['AZ'] = azArr
     evt_dict['ENERGY'] = energyArr
-    # evt_dict['EVENT_TYPE'] =nTelArr
+    evt_dict['EVENT_TYPE'] = nTelArr
 
     # FIXME: Get Time Cuts and build GTI start and stop time array
-    for k in cuts:
-        tmp =k.fCutsFileText
-        tc = getTimeCut(k.fCutsFileText)
-    
-    goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
-    real_live_time = np.sum(goodTimeStop - goodTimeStart)
-    
-    startTime_s = float(startTime.getDayNS()) / 1e9
-    endTime_s = float(endTime.getDayNS()) / 1e9 
+    # for k in cuts:
+    #     tmp =k.fCutsFileText
+    #     tc = getTimeCut(k.fCutsFileText)
+    #
+    # goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
+    # real_live_time = np.sum(goodTimeStop - goodTimeStart)
+    # startTime_s = float(startTime.getDayNS()) / 1e9
+    # endTime_s = float(endTime.getDayNS()) / 1e9
 
     # Filling Header info
     evt_dict['OBS_ID'] = runNumber
@@ -121,19 +117,15 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['DEC_OBJ'] = runParametersV2.fTargetDec
     evt_dict['TELLIST'] = produceTelList(telConfig)
     evt_dict['N_TELS'] = len(telConfig['TelID'])
-    evt_dict['GEOLON'] = np.rad2deg(arrayInfo.longitudeRad())
-    evt_dict['GEOLAT'] = np.rad2deg(arrayInfo.latitudeRad())
-    evt_dict['ALTITUDE'] = arrayInfo.elevationM()
+    evt_dict['GEOLON'] = geo_lon
+    evt_dict['GEOLAT'] = geo_lat
+    evt_dict['ALTITUDE'] = altitude
 
-    31.6747333333334, -110.9528
+    avNoise = runSummary['pedvarsOn'][0]
 
-    avNoise = 0
-    nTels = 0
-    for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
-        avNoise += qStatsData.getCameraAverageTraceVarTimeIndpt(telID-1, windowSizeForNoise, pixelData, arrayInfo)
-        nTels += 1
-    
-    avNoise /= nTels
-    return ({'goodTimeStart':goodTimeStart,'goodTimeStop':goodTimeStop,'TSTART':startTime_s,'TSTOP':endTime_s},
-           {'azimuth':avAz,'zenith':(90. - avAlt),'noise':avNoise},
-           evt_dict)
+    # FIXME: For now we are not including any good time interval (GTI).
+    # This should be improved in the future, reading the time masks.
+    return ({'goodTimeStart': tstart_from_reference, 'goodTimeStop': tstop_from_reference,
+             'TSTART': tstart_from_reference, 'TSTOP': tstop_from_reference},
+            {'azimuth': avAz, 'zenith': (90. - avAlt), 'noise': avNoise},
+            evt_dict)
