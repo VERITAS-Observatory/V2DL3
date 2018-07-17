@@ -50,7 +50,7 @@ def fillEVENTS(datasource,save_multiplicity=False):
                     evt_dict['TSTOP'],
                     'mission time of end of obs [s]')
     hdu1.header.set('MJDREFI ',
-                    evt_dict['MJDREFI'], 'int part of reference MJD [days]')
+                    int(evt_dict['MJDREFI']), 'int part of reference MJD [days]')
     hdu1.header.set('MJDREFF ', 0., 'fractional part of reference MJD [days]')
     
     hdu1.header.set('TIMEUNIT', 's', 'time unit is seconds since MET start')
