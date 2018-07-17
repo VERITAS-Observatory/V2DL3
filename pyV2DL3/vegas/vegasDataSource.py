@@ -6,7 +6,7 @@ import ROOT
 
 class vegasDataSource(vtsDataSource):
     def __init__(self,etv_file,ea_file):
-        super().__init__(etv_file,ea_file)
+        super(vegasDataSource, self).__init__(etv_file,ea_file)
 
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()        
