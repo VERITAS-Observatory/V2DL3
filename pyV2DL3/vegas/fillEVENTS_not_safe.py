@@ -5,7 +5,7 @@ from pyV2DL3.vegas.util import produceTelList,decodeConfigMask
 from pyV2DL3.vegas.util import (getGTArray,
                           getTimeCut,
                           mergeTimeCut)
-from pyV2DL3.constant import VTS_REFERENCE_MJD
+from pyV2DL3.constant import VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,VTS_REFERENCE_LON,VTS_REFERENCE_HEIGHT
 from astropy.time import Time
 
 logger = logging.getLogger(__name__)
@@ -120,12 +120,12 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['ALT_PNT']   = avAlt
     evt_dict['AZ_PNT']    = avAz 
     evt_dict['RA_OBJ']    = np.rad2deg(runHeader.getSourceRA()) 
-    evt_dict['DEC_OBJ']    = np.rad2deg(runHeader.getSourceDec()) 
-    evt_dict['TELLIST']    = produceTelList(runHeader.fRunInfo.fConfigMask) 
-    evt_dict['N_TELS']    =runHeader.pfRunDetails.fTels 
-    evt_dict['GEOLON']    = np.rad2deg(arrayInfo.longitudeRad())
-    evt_dict['GEOLAT']    = np.rad2deg(arrayInfo.latitudeRad())
-    evt_dict['ALTITUDE']  = arrayInfo.elevationM()
+    evt_dict['DEC_OBJ']   = np.rad2deg(runHeader.getSourceDec()) 
+    evt_dict['TELLIST']   = produceTelList(runHeader.fRunInfo.fConfigMask) 
+    evt_dict['N_TELS']    = runHeader.pfRunDetails.fTels 
+    evt_dict['GEOLON']    = VTS_REFERENCE_LON
+    evt_dict['GEOLAT']    = VTS_REFERENCE_LAT
+    evt_dict['ALTITUDE']  = VTS_REFERENCE_HEIGHT
 
     avNoise = 0
     nTels = 0
