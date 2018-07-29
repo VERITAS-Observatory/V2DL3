@@ -1,5 +1,6 @@
 class vtsDataSource(object):
-    def __init__(self,evt_file,ea_file):
+    def __init__(self,source_name,evt_file,ea_file):
+        self.__data_source_name__ = source_name
         self.__evt_file__ = evt_file
         self.__ea_file__  = ea_file
         
@@ -20,6 +21,9 @@ class vtsDataSource(object):
 
     def __fill_response__(self):
         pass
+
+    def get_source_name(self):
+        return self.__data_source_name__ 
 
     def get_evt_data(self):
         return self.__evt__
