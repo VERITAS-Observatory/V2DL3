@@ -14,3 +14,5 @@ VTS_REFERENCE_HEIGHT = 1277.110044 #m
 HDUCLASS = 'GADF' 
 HDUDOC   = 'https://gamma-astro-data-formats.readthedocs.io'
 HDUVERS  = '0.2' 
+RADECSYS = 'FK5'
+EQUINOX  = float(2000)

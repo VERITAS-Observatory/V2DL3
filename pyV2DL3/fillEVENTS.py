@@ -2,7 +2,8 @@ from astropy.io import fits
 import numpy as np
 import logging
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
-from pyV2DL3.constant import VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,VTS_REFERENCE_LON,VTS_REFERENCE_HEIGHT
+from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
+                              VTS_REFERENCE_LON,VTS_REFERENCE_HEIGHT,RADECSYS,EQUINOX)
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +33,8 @@ def fillEVENTS(datasource,save_multiplicity=False):
     hdu1 = addHDUClassKeyword(hdu1,class1='EVENTS')
 
     # Fill Header
-    hdu1.header.set('RADECSYS','FK5','equatorial system type')             
-    hdu1.header.set('EQUINOX',int(2000),'base equinox')             
+    hdu1.header.set('RADECSYS',RADECSYS,'equatorial system type')             
+    hdu1.header.set('EQUINOX',EQUINOX,'base equinox')             
     hdu1.header.set('CREATOR','pyV2DL3 v{}::{}'.format(VERSION,datasource.get_source_name())) 
     hdu1.header.set('ORIGIN','VERITAS Collaboration', 'Data from VERITAS') 
     hdu1.header.set('TELESCOP', 'VERITAS')
