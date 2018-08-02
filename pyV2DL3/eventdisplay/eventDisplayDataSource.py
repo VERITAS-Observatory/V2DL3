@@ -8,7 +8,7 @@ import ROOT
 class eventDisplayDataSource(vtsDataSource):
     def __init__(self, etv_file, ea_file):
         print(etv_file)
-        super(eventDisplayDataSource, self).__init__(etv_file,ea_file)
+        super(eventDisplayDataSource, self).__init__('EventDisplay',etv_file,ea_file)
 
         # Loading eventDisplay if not already done so
         self.ed_status = EDStatus()

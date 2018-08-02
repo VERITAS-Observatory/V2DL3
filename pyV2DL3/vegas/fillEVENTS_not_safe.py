@@ -110,7 +110,6 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['TIME-END'] = endTime.getString().split()[1]
     evt_dict['TSTART']   = startTime_s
     evt_dict['TSTOP']    = endTime_s
-    evt_dict['MJDREFI']  = VTS_REFERENCE_MJD 
     evt_dict['ONTIME']   = endTime_s - startTime_s
     evt_dict['LIVETIME'] = runHeader.getLiveTimeFrac()*real_live_time
     evt_dict['DEADC']    =  evt_dict['LIVETIME']/evt_dict['ONTIME']
@@ -123,9 +122,6 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['DEC_OBJ']   = np.rad2deg(runHeader.getSourceDec()) 
     evt_dict['TELLIST']   = produceTelList(runHeader.fRunInfo.fConfigMask) 
     evt_dict['N_TELS']    = runHeader.pfRunDetails.fTels 
-    evt_dict['GEOLON']    = VTS_REFERENCE_LON
-    evt_dict['GEOLAT']    = VTS_REFERENCE_LAT
-    evt_dict['ALTITUDE']  = VTS_REFERENCE_HEIGHT
 
     avNoise = 0
     nTels = 0

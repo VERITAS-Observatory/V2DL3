@@ -83,8 +83,8 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
             
     ac = ac.transpose() 
     x = np.array([(eLow, eHigh, bLow, bHigh, [0, 1.0], [1.0, 2.0], [ac, ac])], 
-                 dtype=[('ETRUE_LO', '>f4', (len(eLow),)), 
-                        ('ETRUE_HI', '>f4', (len(eHigh),)), 
+                 dtype=[('ENERG_LO', '>f4', (len(eLow),)), 
+                        ('ENERG_HI', '>f4', (len(eHigh),)), 
                         ('MIGRA_LO', '>f4', (len(bLow),)), 
                         ('MIGRA_HI', '>f4', (len(bLow),)), 
                         ('THETA_LO', '>f4', (2,)), 

@@ -1,7 +1,9 @@
 from astropy.io import fits
 import numpy as np
 import logging
-
+from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
+from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
+                              VTS_REFERENCE_LON,VTS_REFERENCE_HEIGHT,RADECSYS,EQUINOX)
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +13,7 @@ def fillEVENTS(datasource,save_multiplicity=False):
     logger.debug("Create EVENT HDU")    
 
     # Columns to be saved
-    columns = [ fits.Column(name='EVENT_ID', format='1J', array=evt_dict['EVENT_ID']), 
+    columns = [ fits.Column(name='EVENT_ID', format='1K', array=evt_dict['EVENT_ID']), 
                 fits.Column(name='TIME', format='1D', array=evt_dict['TIME'], unit="s"), 
                 fits.Column(name='RA', format='1E', array=evt_dict['RA'], unit = "deg"), 
                 fits.Column(name='DEC', format='1E', array=evt_dict['DEC'], unit = "deg"), 
@@ -27,9 +29,20 @@ def fillEVENTS(datasource,save_multiplicity=False):
     hdu1 = fits.BinTableHDU.from_columns(columns)
     hdu1.name = "EVENTS"
 
+    # Fill Standard HDUCLASS headers
+    hdu1 = addHDUClassKeyword(hdu1,class1='EVENTS')
+
     # Fill Header
+    hdu1.header.set('RADECSYS',RADECSYS,'equatorial system type')             
+    hdu1.header.set('EQUINOX',EQUINOX,'base equinox')             
+    hdu1.header.set('CREATOR','pyV2DL3 v{}::{}'.format(VERSION,datasource.get_source_name())) 
+    hdu1.header.set('ORIGIN','VERITAS Collaboration', 'Data from VERITAS') 
+    hdu1.header.set('TELESCOP', 'VERITAS')
+    hdu1.header.set('INSTRUME','VERITAS') 
+    
+
     hdu1.header.set('OBS_ID  ', evt_dict['OBS_ID'], 'Run Number')
-    hdu1.header.set('TELESCOP', 'VERITAS', 'Data from VERITAS')
+
     hdu1.header.set('DATE-OBS',
                     evt_dict['DATE-OBS'],
                     'start date (UTC) of obs yy-mm-dd')
@@ -50,7 +63,7 @@ def fillEVENTS(datasource,save_multiplicity=False):
                     evt_dict['TSTOP'],
                     'mission time of end of obs [s]')
     hdu1.header.set('MJDREFI ',
-                    int(evt_dict['MJDREFI']), 'int part of reference MJD [days]')
+                    VTS_REFERENCE_MJD, 'int part of reference MJD [days]')
     hdu1.header.set('MJDREFF ', 0., 'fractional part of reference MJD [days]')
     
     hdu1.header.set('TIMEUNIT', 's', 'time unit is seconds since MET start')
@@ -60,6 +73,7 @@ def fillEVENTS(datasource,save_multiplicity=False):
     hdu1.header.set('ONTIME  ', 
                     evt_dict['ONTIME'],
                     'time on target (including deadtime)')
+
     # Correct live time for time cuts
     hdu1.header.set('LIVETIME', evt_dict['LIVETIME'],
                     '(dead=ONTIME-LIVETIME) [s] ')
@@ -68,19 +82,19 @@ def fillEVENTS(datasource,save_multiplicity=False):
                     'Average dead time correction (LIVETIME/ONTIME)')
     
     hdu1.header.set('OBJECT  ', evt_dict['OBJECT'], 'observed object')
-    
-    hdu1.header.set('RA_PNT  ', evt_dict['RA_PNT'], 'observation position RA [deg]')
-    hdu1.header.set('DEC_PNT ', evt_dict['DEC_PNT'], 'observation position DEC [deg]')
-    hdu1.header.set('ALT_PNT ', evt_dict['ALT_PNT'], 'average altitude of pointing [deg]')
-    hdu1.header.set('AZ_PNT  ', evt_dict['AZ_PNT'], 'average azimuth of pointing [deg]')
-
-    
     hdu1.header.set('RA_OBJ  ',
                     evt_dict['RA_OBJ'],
                     'observation position RA [deg]')
     hdu1.header.set('DEC_OBJ ',
                     evt_dict['DEC_OBJ'],
                     'observation position DEC [deg]')
+
+
+    hdu1.header.set('RA_PNT  ', evt_dict['RA_PNT'], 'observation position RA [deg]')
+    hdu1.header.set('DEC_PNT ', evt_dict['DEC_PNT'], 'observation position DEC [deg]')
+    hdu1.header.set('ALT_PNT ', evt_dict['ALT_PNT'], 'average altitude of pointing [deg]')
+    hdu1.header.set('AZ_PNT  ', evt_dict['AZ_PNT'], 'average azimuth of pointing [deg]')
+    
     
     # get the list of telescopes that participate in the event
     hdu1.header.set('TELLIST',
@@ -88,14 +102,11 @@ def fillEVENTS(datasource,save_multiplicity=False):
                     'comma-separated list of tel IDs')
     hdu1.header.set('N_TELS',evt_dict['N_TELS'] ,
                     'number of telescopes in event list')
-    
-    # other info - weather? pointing mode
-    
+
     hdu1.header.set('EUNIT   ', 'TeV', 'energy unit')
-    hdu1.header.set('GEOLON  ',evt_dict['GEOLON'] , 'longitude of array center [deg]')
-    hdu1.header.set('GEOLAT  ', evt_dict['GEOLAT'], 'latitude of array center [deg]')
-    hdu1.header.set('ALTITUDE', evt_dict['ALTITUDE'], 'altitude of array center [m]')
-    
+    hdu1.header.set('GEOLON  ',VTS_REFERENCE_LON , 'longitude of array center [deg]')
+    hdu1.header.set('GEOLAT  ',VTS_REFERENCE_LAT, 'latitude of array center [deg]')
+    hdu1.header.set('ALTITUDE',VTS_REFERENCE_HEIGHT, 'altitude of array center [m]')
 
     # Calculate average noise
     return hdu1
