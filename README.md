@@ -1,7 +1,10 @@
 # V2DL3
 VERITAS (VEGAS and ED) to DL3 Converter
 
-Contact: Ralph Bird (ralph.bird.1@gmail.com) for details.
+Contact:
+	Ralph Bird (ralph.bird.1@gmail.com)
+	Tarek Hassan (tarek.hassan@desy.de)
+	Tony Lin (xyxlin@gmail.com)
         
 ## Aim
 
@@ -13,7 +16,6 @@ This repository is for the code that will be used to convert VERITAS data into D
 The python package for converting stage5 files to DL3 fits file. Other than useful functions that can be called, a commandline tool `st5ToDL3` comes with the package.
 
 ### Requirements
-
 
 1. vegas version >= 2.5.7
 2. pyROOT

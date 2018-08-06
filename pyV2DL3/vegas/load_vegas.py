@@ -10,11 +10,11 @@ class VEGASStatus:
     def loadVEGAS(self):
         if(not self.__vegas_loaded):
             logger.debug('Load VEGAS lib')
-            if gSystem.Load("libVEGAScommon"):
+            if gSystem.Load("libVEGAScommon") not in [0,1]:
                 raise Exception("Problem loading VEGAS Common libraries - please check this before proceeding")
-            if gSystem.Load("libVEGASstage5"):
+            if gSystem.Load("libVEGASstage5") not in [0,1]:
                 raise Exception("Problem loading VEGAS Stage 5 libraries - please check this before proceeding")
-            if gSystem.Load("libVEGASstage6"):
+            if gSystem.Load("libVEGASstage6") not in [0,1]:
                 raise Exception("Problem loading VEGAS Stage 6 libraries - please check this before proceeding") 
             self.__vegas_loaded = True
 
