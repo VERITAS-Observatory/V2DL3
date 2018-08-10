@@ -1,0 +1,13 @@
+name: V2DL3 
+channels:
+  - astropy
+  - conda-forge
+dependencies:
+  - python>=3.5 
+  - click 
+  - numpy>=1.13 
+  - astropy>=2.0 
+  - cython>=0.27
+  - pip:
+    - git+https://github.com/scikit-hep/root_numpy.git#egg=root_numpy
+    - git+https://github.com/gammapy/gammapy.git#egg=gammapy
