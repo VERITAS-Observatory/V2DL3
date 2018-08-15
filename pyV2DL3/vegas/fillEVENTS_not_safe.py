@@ -111,7 +111,7 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     evt_dict['TSTART']   = startTime_s
     evt_dict['TSTOP']    = endTime_s
     evt_dict['ONTIME']   = endTime_s - startTime_s
-    evt_dict['LIVETIME'] = runHeader.getLiveTimeFrac()*real_live_time
+    evt_dict['LIVETIME'] = runHeader.getLiveTimeFrac(True)*real_live_time # True to suppress error warnings
     evt_dict['DEADC']    =  evt_dict['LIVETIME']/evt_dict['ONTIME']
     evt_dict['OBJECT']   = runHeader.getSourceId()
     evt_dict['RA_PNT']   = avRA
