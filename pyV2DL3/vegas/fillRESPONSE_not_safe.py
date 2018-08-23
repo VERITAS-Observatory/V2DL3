@@ -45,8 +45,8 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
     ye = np.array(ye)
     energyLow = np.power(10, x - (x[1] - x[0])/2.)
     energyHigh = np.power(10, x + (x[1] - x[0])/2.)
-    thetaLow = [0.0, 1.0]
-    thetaHigh = [1.0, 2.0]
+    thetaLow = [0.0,  10.0]
+    thetaHigh = [0.0, 10.0]
     # ea = np.vstack((y, y))
     ea = [y,y]
     minEnergy , maxEnergy = c_float(), c_float()

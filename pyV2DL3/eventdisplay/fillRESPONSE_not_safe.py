@@ -46,8 +46,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset):
             # print(entry.ze, entry.azMin, entry.azMax, entry.Woff, entry.noise, entry.pedvar, entry.index)
     energyLow = np.power(10, log_energy_TeV - (log_energy_TeV[1] - log_energy_TeV[0]) / 2.)
     energyHigh = np.power(10, log_energy_TeV + (log_energy_TeV[1] - log_energy_TeV[0]) / 2.)
-    thetaLow = [0.0, 1.0]
-    thetaHigh = [1.0, 2.0]
+    thetaLow =  [0.0, 10.0]
+    thetaHigh = [0.0, 10.0]
 
 
     # effectiveAreaManager = ROOT.VAEffectiveAreaManager()
