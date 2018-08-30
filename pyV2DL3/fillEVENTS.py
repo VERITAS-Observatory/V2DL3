@@ -17,8 +17,9 @@ def fillEVENTS(datasource,save_multiplicity=False):
                 fits.Column(name='TIME', format='1D', array=evt_dict['TIME'], unit="s"), 
                 fits.Column(name='RA', format='1E', array=evt_dict['RA'], unit = "deg"), 
                 fits.Column(name='DEC', format='1E', array=evt_dict['DEC'], unit = "deg"), 
-                fits.Column(name='ALT', format='1E', array=evt_dict['ALT'], unit = "deg"), 
-                fits.Column(name='AZ', format='1E', array=evt_dict['AZ'], unit = "deg"), 
+                # Not necessary for gammapy and spec
+                # fits.Column(name='ALT', format='1E', array=evt_dict['ALT'], unit = "deg"), 
+                # fits.Column(name='AZ', format='1E', array=evt_dict['AZ'], unit = "deg"), 
                 fits.Column(name='ENERGY', format='1E', array=evt_dict['ENERGY'], unit = "TeV") 
               ]
     # Add number of triggered telescope if necessary 
