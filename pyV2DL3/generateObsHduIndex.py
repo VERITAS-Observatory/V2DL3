@@ -3,6 +3,7 @@ import os
 from astropy.io import fits
 from astropy.table import Table, vstack
 from astropy.io.fits import table_to_hdu
+from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 logger = logging.getLogger(__name__)
 
 class NoFitsFileError(Exception):
@@ -44,6 +45,9 @@ def gen_hdu_index(filelist,index_file_dir='./'):
     hdu_table = vstack(hdu_tables)
     hdu_table = table_to_hdu(hdu_table)
     hdu_table.name = 'HDU_INDEX'
+    hdu_table = addHDUClassKeyword(hdu_table,'INDEX',
+                                        class2='HDU')
+
     return hdu_table
 
 def gen_obs_index(filelist,index_file_dir='./'):
@@ -96,6 +100,24 @@ def gen_obs_index(filelist,index_file_dir='./'):
             'N_TELS', 'TELLIST'),
         dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20')
     )
+    #obs_table = Table(
+    #    [obs_id, ra_pnt, dec_pnt, tstart, tstop],
+    #    names=('OBS_ID', 'RA_PNT', 'DEC_PNT', 'TSTART','TSTOP'),
+    #    dtype=('>i8', '>f4', '>f4', '>f4', '>f4')
+    #)
+
+    # Set units
+    obs_table['RA_PNT'].unit  = 'deg'
+    obs_table['DEC_PNT'].unit = 'deg'
+
+    obs_table['ZEN_PNT'].unit = 'deg'
+    obs_table['ALT_PNT'].unit = 'deg'
+    obs_table['AZ_PNT'].unit = 'deg'
+    obs_table['ONTIME'].unit = 's'
+    obs_table['LIVETIME'].unit = 's'
+
+    obs_table['TSTART'].unit  = 's'
+    obs_table['TSTOP'].unit   = 's'
     if(len(obs_table) ==0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
@@ -105,8 +127,14 @@ def gen_obs_index(filelist,index_file_dir='./'):
     obs_table.meta['TIMEUNIT'] = dl3_hdu[1].header['TIMEUNIT']   
     obs_table.meta['TIMESYS'] = dl3_hdu[1].header['TIMESYS']   
     obs_table.meta['TIMEREF'] = dl3_hdu[1].header['TIMEREF']   
+    obs_table.meta['ALTITUDE'] = dl3_hdu[1].header['ALTITUDE']   
+    obs_table.meta['GEOLAT'] = dl3_hdu[1].header['GEOLAT']   
+    obs_table.meta['GEOLON'] = dl3_hdu[1].header['GEOLON']   
+
     obs_table = table_to_hdu(obs_table)
     obs_table.name = 'OBS_INDEX'
+    obs_table = addHDUClassKeyword(obs_table,'INDEX',
+                                        class2='OBS')
 
     return obs_table
   
