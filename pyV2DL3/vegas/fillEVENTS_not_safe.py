@@ -99,7 +99,7 @@ def __fillEVENTS_not_safe__(vegasFileIO):
         tc = getTimeCut(k.fCutsFileText)
     
     goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
-    real_live_time = np.sum(goodTimeStop - goodTimeStart)
+    real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
     
     
     # Filling Header info
