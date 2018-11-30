@@ -3,11 +3,7 @@ import logging
 from pyV2DL3.eventdisplay.util import produceTelList
 from root_numpy import tree2array
 from astropy.time import Time
-
-# from pyV2DL3.vegas.util import produceTelList,decodeConfigMask
-# from pyV2DL3.vegas.util import (getGTArray,
-#                           getTimeCut,
-#                           mergeTimeCut)
+from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE_LON, VTS_REFERENCE_HEIGHT
 
 logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
@@ -18,12 +14,6 @@ def __fillEVENTS_not_safe__(edFileIO):
     from ROOT import VEvndispRunParameter, VSkyCoordinatesUtilities, VAnaSumRunParameter
 
     evt_dict = {}
-
-    # FIXME: These should be taken from a common script (by VEGAS also)
-    reference_mjd = 53402.0
-    geo_lat = 31.675075
-    geo_lon = -110.951996
-    altitude = 1268
 
     # Load required trees within the anasum file:
     runSummary = tree2array(edFileIO.Get("total_1/stereo/tRunSummary"))
@@ -50,7 +40,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     deadtime = vAnaSumRunParameter.fScalarDeadTimeFrac
 
     # Number of seconds between reference time and run MJD at 00:00:00:
-    t_ref = Time(reference_mjd, format='mjd', scale='utc')
+    t_ref = Time(VTS_REFERENCE_MJD, format='mjd', scale='utc')
     seconds_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
     tstart_from_reference = (Time(runParametersV2.fDBRunStartTimeSQL, format='iso', scale='utc') - t_ref).sec
     tstop_from_reference = (Time(runParametersV2.fDBRunStoppTimeSQL, format='iso', scale='utc') - t_ref).sec
@@ -105,7 +95,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['TIME-END'] = stopDateTime[1]
     evt_dict['TSTART'] = tstart_from_reference
     evt_dict['TSTOP'] = tstop_from_reference
-    evt_dict['MJDREFI'] = int(reference_mjd)
+    evt_dict['MJDREFI'] = int(VTS_REFERENCE_MJD)
     evt_dict['ONTIME'] = tstop_from_reference - tstart_from_reference
     evt_dict['LIVETIME'] = (tstop_from_reference - tstart_from_reference) * (1 - deadtime)
     evt_dict['DEADC'] = 1 - deadtime
@@ -118,9 +108,9 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['DEC_OBJ'] = runParametersV2.fTargetDec
     evt_dict['TELLIST'] = produceTelList(telConfig)
     evt_dict['N_TELS'] = len(telConfig['TelID'])
-    evt_dict['GEOLON'] = geo_lon
-    evt_dict['GEOLAT'] = geo_lat
-    evt_dict['ALTITUDE'] = altitude
+    evt_dict['GEOLON'] = VTS_REFERENCE_LON
+    evt_dict['GEOLAT'] = VTS_REFERENCE_LAT
+    evt_dict['ALTITUDE'] = VTS_REFERENCE_HEIGHT
 
     avNoise = runSummary['pedvarsOn'][0]
 

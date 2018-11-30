@@ -22,9 +22,9 @@ class eventDisplayDataSource(vtsDataSource):
         self.__noise__   = 0 
 
     def __fill_evt__(self):
-        gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)
+        gti, ea_config, events = __fillEVENTS_not_safe__(self.__evt_file__)
         self.__gti__ = gti
-        self.__evt__ = evts
+        self.__evt__ = events
         self.__azimuth__ = ea_config['azimuth']
         self.__zenith__ = ea_config['zenith']
         self.__noise__ = ea_config['noise']
