@@ -18,7 +18,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset):
     cuts = effectiveArea.Get("GammaHadronCuts")
     effAreaTree = effectiveArea.Get("fEffArea")
 
-    # FIXME: It's sad, but this is the only way I find to extract the IRFs...
+    # FIXME: This whole part of the code needs to be updated with the new 'IrfInterpolator' class.
     plotter = VPlotInstrumentResponseFunction()
     plotter.addInstrumentResponseData(filename, 0., 0.5, 0, 1.5, 200, "A_MC")
     # Get Theta2 cut from file
@@ -46,7 +46,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset):
             # print(entry.ze, entry.azMin, entry.azMax, entry.Woff, entry.noise, entry.pedvar, entry.index)
     energyLow = np.power(10, log_energy_TeV - (log_energy_TeV[1] - log_energy_TeV[0]) / 2.)
     energyHigh = np.power(10, log_energy_TeV + (log_energy_TeV[1] - log_energy_TeV[0]) / 2.)
-    thetaLow =  [0.0, 10.0]
+    thetaLow = [0.0, 10.0]
     thetaHigh = [0.0, 10.0]
 
 
