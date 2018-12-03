@@ -27,17 +27,17 @@ def genPrimaryHDU():
 
 def loadROOTFiles(data_file, effective_area_file, file_type='VEGAS'):
     if file_type == 'VEGAS':
-        return vegasDataSource(data_file,effective_area_file)
+        return vegasDataSource(data_file, effective_area_file)
     if file_type == 'ED':
-        return eventDisplayDataSource(data_file,effective_area_file)
+        return eventDisplayDataSource(data_file, effective_area_file)
     else:
         raise Exception('File type not supported: {}'.format(file_type))
 
 
 def genHDUlist(datasource, save_multiplicity=False):
     hdu0 = genPrimaryHDU() 
-    hdu1 = fillEVENTS(datasource,save_multiplicity=save_multiplicity)
+    hdu1 = fillEVENTS(datasource, save_multiplicity=save_multiplicity)
     hdu2 = fillGTI(datasource)
-    hdu3,hdu4 = fillRESPONSE(datasource)
+    hdu3, hdu4 = fillRESPONSE(datasource)
     hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
     return hdulist

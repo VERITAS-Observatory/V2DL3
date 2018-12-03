@@ -18,8 +18,8 @@ class eventDisplayDataSource(vtsDataSource):
 
         # Auxiliary storage 
         self.__azimuth__ = 0
-        self.__zenith__  = 0
-        self.__noise__   = 0 
+        self.__zenith__ = 0
+        self.__noise__ = 0
 
     def __fill_evt__(self):
         gti, ea_config, events = __fillEVENTS_not_safe__(self.__evt_file__)
