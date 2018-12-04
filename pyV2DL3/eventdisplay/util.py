@@ -53,6 +53,13 @@ def bin_edges_to_centers(axis):
     return np.delete(axis + bin_size / 2., len(axis) - 1)
 
 
+def bin_centers_to_edges(axis):
+    # This function assumes bins of equal width
+    bin_size = axis[1] - axis[0]
+    extended_axis = np.insert(axis, 0, axis[0]-bin_size)
+    return extended_axis + bin_size/2.
+
+
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()

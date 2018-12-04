@@ -15,9 +15,9 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     endTime_s = gti_dict['TSTOP']
 
     hdu2 = fits.BinTableHDU.from_columns([
-    fits.Column(name='START', format='1D', array=goodTimeStart, unit='s'),
-    fits.Column(name='STOP', format='1D', array=goodTimeStop, unit='s')
-    ])
+        fits.Column(name='START', format='1D', array=goodTimeStart, unit='s'),
+        fits.Column(name='STOP', format='1D', array=goodTimeStop, unit='s')
+        ])
     hdu2.name = "GTI"
     # Fill Standard HDUCLASS keywords
     hdu2 = addHDUClassKeyword(hdu2,class1='GTI')
