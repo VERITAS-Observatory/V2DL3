@@ -3,14 +3,14 @@ import logging
 import os
 
 
-def runlist2FP(rl_dict):
+def runlist_to_file_pair(rl_dict):
     eas = rl_dict['EA']
     st5s = rl_dict['RUNLIST']
     file_pair = []
     for k in st5s.keys():
         ea = eas[k][0]
         for f in st5s[k]:
-            file_pair.append((f,ea))
+            file_pair.append((f, ea))
     return file_pair
 
 
@@ -18,25 +18,27 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--file_pair','-f',nargs=2,type=click.Path(exists=True),
+@click.option('--file_pair', '-f', nargs=2,type=click.Path(exists=True),
               help='A stage5 file (<file 1>) and the corresponding effective area (<file 2>).')
-@click.option('--runlist','-l',nargs=1,type=click.Path(exists=True),help='Stage6 runlist')
-@click.option('--gen_index_file','-g',is_flag=True,
+@click.option('--runlist', '-l', nargs=1, type=click.Path(exists=True), help='Stage6 runlist')
+@click.option('--gen_index_file', '-g', is_flag=True,
               help='Generate hdu and observation index list files. Only have effect in file list mode.')
-@click.option('--save_multiplicity','-m',is_flag=True,
+@click.option('--save_multiplicity', '-m', is_flag=True,
               help='Save telescope multiplicity into event list')
-@click.option('--ed','-e',is_flag=True,help='ED mode')
-@click.option('--debug','-d',is_flag=True)
-@click.option('--verbose','-v',is_flag=True,help='Print root output')
-@click.argument('output',metavar='<output>')
-def cli(file_pair, runlist, gen_index_file,
-        save_multiplicity, ed, debug, verbose, output):
+@click.option('--ed', '-e', is_flag=True, help='ED mode')
+@click.option('--full-enclosure', is_flag=True, help='Store full-enclosure IRFs (no direction cut applied)')
+@click.option('--point-like', is_flag=True, help='Store point-like IRFs (direction cut applied)')
+@click.option('--debug', '-d', is_flag=True)
+@click.option('--verbose', '-v', is_flag=True, help='Print root output')
+@click.argument('output', metavar='<output>')
+def cli(file_pair, runlist, gen_index_file, save_multiplicity,
+        ed, full_enclosure, point_like, debug, verbose, output):
     """Command line tool for converting stage5 file to DL3
 
     \b
     There are two modes:
         1) Single file mode
-            When --file_pair is invoked, the path to the stage5 file and the
+            When --file_pair is invoked, the path to the stage5/anasum file and the
             corresponding effective area should be provided. The <output> argument
             is then the resulting fits file name.
         2) File list mode
@@ -95,7 +97,7 @@ def cli(file_pair, runlist, gen_index_file,
             click.secho("{} already exists as a file. <output> needs to be a directory for runlist mode.".format(output),fg='yellow')
             raise click.Abort()
 
-        file_pairs = runlist2FP(rl_dict)
+        file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
         for st5_str,ea_str in file_pairs:
             logging.info('Processing file: {}'.format(st5_str))

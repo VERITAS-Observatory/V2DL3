@@ -1,12 +1,12 @@
-class vtsDataSource(object):
-    def __init__(self,source_name,evt_file,ea_file):
+class VtsDataSource(object):
+    def __init__(self, source_name, evt_file, ea_file):
         self.__data_source_name__ = source_name
         self.__evt_file__ = evt_file
-        self.__ea_file__  = ea_file
+        self.__ea_file__ = ea_file
         
         self.__evt__ = dict()
         self.__git__ = dict()
-        self.__response__  = dict()
+        self.__response__ = dict()
 
     def fill_data(self,**kwargs):            
         self.__fill_evt__(**kwargs)

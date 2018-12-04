@@ -5,6 +5,18 @@ import sys
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
 
 
+def produce_tel_list(tel_config):
+    # Convert the list of telescopes into a string for FITS header
+    tel_list = ""
+    for tel in tel_config['TelID']:
+        tel_list += "T" + str(tel) + ","
+    return tel_list[:-1]
+
+
+def is_close(a, b, rel_tol=1e-04, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
 class WrongIrf(Exception):
     def __init__(self, message, errors):
 

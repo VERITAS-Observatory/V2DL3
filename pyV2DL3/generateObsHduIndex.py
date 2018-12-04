@@ -139,9 +139,9 @@ def gen_obs_index(filelist,index_file_dir='./'):
     return obs_table
   
 
-def create_obs_hdu_index_file(filelist,index_file_dir='./',
-                         hdu_index_file='hdu-index.fits.gz',
-                         obs_index_file='obs-index.fits.gz'):
+def create_obs_hdu_index_file(filelist, index_file_dir='./',
+                              hdu_index_file= 'hdu-index.fits.gz',
+                              obs_index_file= 'obs-index.fits.gz'):
     """Before we start to work with gammapy we will stick to the format established for the data.
     What the pointLikeDL3 is generating is in the following format
 

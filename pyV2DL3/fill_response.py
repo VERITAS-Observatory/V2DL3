@@ -4,7 +4,8 @@ import logging
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword 
 logger = logging.getLogger(__name__)
 
-def fillRESPONSE(datasource):
+
+def fill_response(datasource):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
 
@@ -12,10 +13,8 @@ def fillRESPONSE(datasource):
     hdu3 = fits.BinTableHDU(data=x)
     hdu3.name = "EFFECTIVE AREA"
     # Fill Standard HDUCLASS keyword
-    hdu3 = addHDUClassKeyword(hdu3,class1='RESPONSE',     
-                                   class2='EFF_AREA',
-                                   class3='POINT-LIKE',
-                                   class4='AEFF_2D')  
+    hdu3 = addHDUClassKeyword(hdu3, class1='RESPONSE', class2='EFF_AREA',
+                              class3='POINT-LIKE', class4='AEFF_2D')
     hdu3.header.set('OBS_ID', evt_dict['OBS_ID'],'Run Number')
     hdu3.header.set('TUNIT1 ', 'TeV', "")
     hdu3.header.set('TUNIT2 ', 'TeV', "")
@@ -34,7 +33,7 @@ def fillRESPONSE(datasource):
     hdu4 = fits.BinTableHDU(data=x)
     hdu4.name = "ENERGY DISPERSION"
     # Fill Standard HDUCLASS keyword
-    hdu4 = addHDUClassKeyword(hdu4,class1='RESPONSE',     
+    hdu4 = addHDUClassKeyword(hdu4,class1='RESPONSE',
                                    class2='EDISP',
                                    class3='POINT-LIKE',
                                    class4='EDISP_2D')  

@@ -8,7 +8,8 @@ import ROOT
  
 logger = logging.getLogger(__name__)
 
-def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
+
+def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset):
     response_dict = {}
 
     effectiveAreaIO.loadTheRootFile() 

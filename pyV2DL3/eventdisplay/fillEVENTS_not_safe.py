@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from pyV2DL3.eventdisplay.util import produceTelList
+from pyV2DL3.eventdisplay.util import produce_tel_list
 from root_numpy import tree2array
 from astropy.time import Time
 from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE_LON, VTS_REFERENCE_HEIGHT
@@ -106,7 +106,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['AZ_PNT'] = avAz
     evt_dict['RA_OBJ'] = runParametersV2.fTargetRA
     evt_dict['DEC_OBJ'] = runParametersV2.fTargetDec
-    evt_dict['TELLIST'] = produceTelList(telConfig)
+    evt_dict['TELLIST'] = produce_tel_list(telConfig)
     evt_dict['N_TELS'] = len(telConfig['TelID'])
     evt_dict['GEOLON'] = VTS_REFERENCE_LON
     evt_dict['GEOLAT'] = VTS_REFERENCE_LAT
@@ -116,7 +116,7 @@ def __fillEVENTS_not_safe__(edFileIO):
 
     # FIXME: For now we are not including any good time interval (GTI).
     # This should be improved in the future, reading the time masks.
-    return ({'goodTimeStart': tstart_from_reference, 'goodTimeStop': tstop_from_reference,
+    return ({'goodTimeStart': [tstart_from_reference], 'goodTimeStop': [tstop_from_reference],
              'TSTART': tstart_from_reference, 'TSTOP': tstop_from_reference},
             {'azimuth': avAz, 'zenith': (90. - avAlt), 'noise': avNoise},
             evt_dict)

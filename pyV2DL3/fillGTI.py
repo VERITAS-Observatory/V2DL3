@@ -12,7 +12,7 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     goodTimeStart = [*gti_dict['goodTimeStart']]
     goodTimeStop = [*gti_dict['goodTimeStop']]
     startTime_s = gti_dict['TSTART']
-    endTime_s   = gti_dict['TSTOP']
+    endTime_s = gti_dict['TSTOP']
 
     hdu2 = fits.BinTableHDU.from_columns([
     fits.Column(name='START', format='1D', array=goodTimeStart, unit='s'),
@@ -24,8 +24,7 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     hdu2.header.set('TSTART', startTime_s, 'start time [s]')
     hdu2.header.set('TSTOP', endTime_s, 'stop time same [s]')
 
-    hdu2.header.set('MJDREFI ',
-                   VTS_REFERENCE_MJD, 'int part of reference MJD [days]')
+    hdu2.header.set('MJDREFI ', VTS_REFERENCE_MJD, 'int part of reference MJD [days]')
     hdu2.header.set('MJDREFF ', 0., 'fractional part of reference MJD [days]')
 
     hdu2.header.set('TIMEUNIT', 's', 'time unit is seconds since MET start')
