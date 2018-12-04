@@ -35,9 +35,10 @@ def loadROOTFiles(data_file, effective_area_file, file_type='VEGAS'):
 
 
 def genHDUlist(datasource, save_multiplicity=False):
-    hdu0 = genPrimaryHDU() 
-    hdu1 = fillEVENTS(datasource, save_multiplicity=save_multiplicity)
-    hdu2 = fillGTI(datasource)
-    hdu3, hdu4 = fill_response(datasource)
-    hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
+    hdus = list()
+    hdus.append(genPrimaryHDU())
+    hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity))
+    hdus.append(fillGTI(datasource))
+    hdus.extend(fill_response(datasource))
+    hdulist = fits.HDUList(hdus)
     return hdulist

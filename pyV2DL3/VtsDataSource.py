@@ -34,3 +34,5 @@ class VtsDataSource(object):
     def get_response_data(self):
         return self.__response__
 
+    def set_irfs_to_store(self, irfs_to_store):
+        self.__response__['irfs_to_store'] = irfs_to_store

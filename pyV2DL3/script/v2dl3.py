@@ -61,11 +61,17 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         logging.basicConfig(level=logging.INFO)
 
     logging.debug("Start importing ROOT")
-    from pyV2DL3.genHDUList import loadROOTFiles,genHDUlist
-    from pyV2DL3.root_lib_util import CppPrintContext
-    from pyV2DL3.parseSt6RunList import (parseRunlistStrs,validateRunlist,
-                                         RunlistValidationError,RunlistParsingError)
+    from pyV2DL3.genHDUList import loadROOTFiles, genHDUlist
+    from pyV2DL3.root_lib_util import cpp_print_context
+    from pyV2DL3.parseSt6RunList import (parseRunlistStrs, validateRunlist,
+                                         RunlistValidationError, RunlistParsingError)
     from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
+
+    # Store in a dict the IRFs to be stored within a file.
+    # By default we will only store point-like IRFs.
+    if not full_enclosure and not point_like:
+        point_like = True
+    irfs_to_store = {'full-enclosure': full_enclosure, 'point-like': point_like}
 
     if len(file_pair) > 0:
         st5_str, ea_str = file_pair
@@ -73,9 +79,9 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
             datasource = loadROOTFiles(st5_str, ea_str, 'ED')
         else:
             datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
-
-        with CppPrintContext(verbose=verbose):
+        with cpp_print_context(verbose=verbose):
             datasource.fill_data()
+        datasource.set_irfs_to_store(irfs_to_store)
         hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
         hdulist.writeto(output, overwrite=True)
     else:
@@ -84,32 +90,34 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         try:
             rl_dict = parseRunlistStrs(lines)
         except RunlistParsingError as e:
-            click.secho(str(e),fg='red')
+            click.secho(str(e), fg='red')
             raise click.Abort()
         try:
             validateRunlist(rl_dict)
         except RunlistValidationError as e:
-            click.secho(str(e),fg='red')
+            click.secho(str(e), fg='red')
             raise click.Abort()
         if not os.path.exists(output):
             os.makedirs(output)
         elif os.path.isfile(output):
-            click.secho("{} already exists as a file. <output> needs to be a directory for runlist mode.".format(output),fg='yellow')
+            click.secho("{} already exists as a file. <output> needs to be a directory for runlist mode.".format(output),
+                        fg='yellow')
             raise click.Abort()
 
         file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
-        for st5_str,ea_str in file_pairs:
+        for st5_str, ea_str in file_pairs:
             logging.info('Processing file: {}'.format(st5_str))
-            logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str,ea_str))
+            logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str, ea_str))
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             if ed:
                 datasource = loadROOTFiles(st5_str, ea_str, 'ED')
             else:
                 datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
 
-            with CppPrintContext(verbose=verbose):
+            with cpp_print_context(verbose=verbose):
                 datasource.fill_data()
+            datasource.set_irfs_to_store(irfs_to_store)
             hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
             hdulist.writeto('{}/{}.fits'.format(output, fname_base), overwrite=True)
             flist.append('{}/{}.fits'.format(output, fname_base))
