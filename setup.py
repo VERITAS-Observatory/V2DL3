@@ -9,7 +9,9 @@ setup(
         'numpy',
         # 'gammapy',
         'astropy',
-        'root_numpy'
+        'root_numpy',
+        'pkgconfig',
+        'uproot'
     ],
     entry_points='''
         [console_scripts]
