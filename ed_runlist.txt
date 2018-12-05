@@ -9,8 +9,8 @@
 ./eventDisplay/57993.anasum.root
 [/RUNLIST ID: 1]
 [EA ID: 0]
-./eventDisplay/gernot_effarea_test_direction_full_stats.root
+./eventDisplay/EffArea-GRISU-V5-ID0-Ze20deg-0.5wob-200-Cut-NTel2-PointSource-Moderate.root
 [/EA ID: 0]
 [EA ID: 1]
-./eventDisplay/gernot_effarea_test_direction_full_stats.root
+./eventDisplay/EffArea-GRISU-V5-ID0-Ze20deg-0.5wob-200-Cut-NTel2-PointSource-Moderate.root
 [/EA ID: 1]
