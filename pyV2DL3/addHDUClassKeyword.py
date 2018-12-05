@@ -1,4 +1,6 @@
-from pyV2DL3.constant import HDUCLASS,HDUDOC,HDUVERS
+from pyV2DL3.constant import HDUCLASS, HDUDOC, HDUVERS
+
+
 def addHDUClassKeyword(hdu,class1,class2=None,
                        class3=None,class4=None):
     hdu.header.set('HDUCLASS',HDUCLASS,'This FITS file follows the GADF data format')

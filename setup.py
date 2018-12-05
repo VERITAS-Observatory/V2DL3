@@ -7,12 +7,12 @@ setup(
     install_requires=[
         'click',
         'numpy',
-        'gammapy',
+        # 'gammapy',
         'astropy',
         'root_numpy'
     ],
     entry_points='''
         [console_scripts]
-        st5ToDL3=pyV2DL3.script.st5ToDL3:cli
+        v2dl3=pyV2DL3.script.v2dl3:cli
     '''
 )

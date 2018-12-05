@@ -1,18 +1,18 @@
-from pyV2DL3.vtsDataSource import vtsDataSource
+from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.eventdisplay.load_eventDisplay import EDStatus
 from pyV2DL3.eventdisplay.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.eventdisplay.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 import ROOT
 
 
-class eventDisplayDataSource(vtsDataSource):
+class EventDisplayDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file):
         print(etv_file)
-        super(eventDisplayDataSource, self).__init__('EventDisplay',etv_file,ea_file)
+        super(EventDisplayDataSource, self).__init__('EventDisplay', etv_file, ea_file)
 
         # Loading eventDisplay if not already done so
         self.ed_status = EDStatus()
-        self.ed_status.loadED()
+        self.ed_status.load_ed()
         self.__evt_file__ = ROOT.TFile.Open(etv_file)
         self.__ea_file__ = ROOT.TFile.Open(ea_file)
 

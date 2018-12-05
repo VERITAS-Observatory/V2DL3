@@ -1,19 +1,19 @@
-from pyV2DL3.vtsDataSource import vtsDataSource
+from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.vegas.load_vegas import VEGASStatus    
 from pyV2DL3.vegas.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.vegas.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 import ROOT
 
 
-class vegasDataSource(vtsDataSource):
-    def __init__(self,etv_file,ea_file):
-        super(vegasDataSource, self).__init__('VEGAS',etv_file,ea_file)
+class VegasDataSource(VtsDataSource):
+    def __init__(self, etv_file, ea_file):
+        super(VegasDataSource, self).__init__('VEGAS', etv_file, ea_file)
 
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()        
         self.vegas_status.loadVEGAS()
-        self.__evt_file__ = ROOT.VARootIO(etv_file,True)
-        self.__ea_file__ = ROOT.VARootIO(ea_file,True)
+        self.__evt_file__ = ROOT.VARootIO(etv_file, True)
+        self.__ea_file__ = ROOT.VARootIO(ea_file, True)
 
         # Auxiliary storage 
         self.__azimuth__ = 0
@@ -35,5 +35,4 @@ class vegasDataSource(vtsDataSource):
         az = self.__azimuth__ 
         ze = self.__zenith__
         nn = self.__noise__  
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__,az,ze,nn,0.5)    
-        
+        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5)

@@ -10,7 +10,7 @@ class EDStatus:
     def __init__(self):
         pass
 
-    def loadED(self):
+    def load_ed(self):
         if not self.__ed_loaded:
             logger.debug('Load eventDisplay libVAnaSum.so')
             if gSystem.Load("$EVNDISPSYS/lib/libVAnaSum.so"):

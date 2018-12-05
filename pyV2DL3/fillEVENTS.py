@@ -8,39 +8,38 @@ from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
 logger = logging.getLogger(__name__)
 
 
-def fillEVENTS(datasource,save_multiplicity=False):
+def fillEVENTS(datasource, save_multiplicity=False):
     evt_dict = datasource.get_evt_data()
     logger.debug("Create EVENT HDU")    
 
     # Columns to be saved
-    columns = [ fits.Column(name='EVENT_ID', format='1K', array=evt_dict['EVENT_ID']), 
-                fits.Column(name='TIME', format='1D', array=evt_dict['TIME'], unit="s"), 
-                fits.Column(name='RA', format='1E', array=evt_dict['RA'], unit = "deg"), 
-                fits.Column(name='DEC', format='1E', array=evt_dict['DEC'], unit = "deg"), 
-                # Not necessary for gammapy and spec
-                # fits.Column(name='ALT', format='1E', array=evt_dict['ALT'], unit = "deg"), 
-                # fits.Column(name='AZ', format='1E', array=evt_dict['AZ'], unit = "deg"), 
-                fits.Column(name='ENERGY', format='1E', array=evt_dict['ENERGY'], unit = "TeV") 
-              ]
+    columns = [fits.Column(name='EVENT_ID', format='1K', array=evt_dict['EVENT_ID']),
+               fits.Column(name='TIME', format='1D', array=evt_dict['TIME'], unit="s"),
+               fits.Column(name='RA', format='1E', array=evt_dict['RA'], unit="deg"),
+               fits.Column(name='DEC', format='1E', array=evt_dict['DEC'], unit="deg"),
+               # Not necessary for gammapy and spec
+               # fits.Column(name='ALT', format='1E', array=evt_dict['ALT'], unit = "deg"),
+               # fits.Column(name='AZ', format='1E', array=evt_dict['AZ'], unit = "deg"),
+               fits.Column(name='ENERGY', format='1E', array=evt_dict['ENERGY'], unit="TeV")
+               ]
     # Add number of triggered telescope if necessary 
-    if(save_multiplicity):
-       columns.append(fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict['EVENT_TYPE'])) 
+    if save_multiplicity:
+        columns.append(fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict['EVENT_TYPE']))
 
     # Create HDU
     hdu1 = fits.BinTableHDU.from_columns(columns)
     hdu1.name = "EVENTS"
 
     # Fill Standard HDUCLASS headers
-    hdu1 = addHDUClassKeyword(hdu1,class1='EVENTS')
+    hdu1 = addHDUClassKeyword(hdu1, class1='EVENTS')
 
     # Fill Header
-    hdu1.header.set('RADECSYS',RADECSYS,'equatorial system type')             
-    hdu1.header.set('EQUINOX',EQUINOX,'base equinox')             
-    hdu1.header.set('CREATOR','pyV2DL3 v{}::{}'.format(VERSION,datasource.get_source_name())) 
-    hdu1.header.set('ORIGIN','VERITAS Collaboration', 'Data from VERITAS') 
+    hdu1.header.set('RADECSYS', RADECSYS, 'equatorial system type')
+    hdu1.header.set('EQUINOX', EQUINOX, 'base equinox')
+    hdu1.header.set('CREATOR', 'pyV2DL3 v{}::{}'.format(VERSION, datasource.get_source_name()))
+    hdu1.header.set('ORIGIN', 'VERITAS Collaboration', 'Data from VERITAS')
     hdu1.header.set('TELESCOP', 'VERITAS')
-    hdu1.header.set('INSTRUME','VERITAS') 
-    
+    hdu1.header.set('INSTRUME', 'VERITAS')
 
     hdu1.header.set('OBS_ID  ', evt_dict['OBS_ID'], 'Run Number')
 
@@ -90,24 +89,22 @@ def fillEVENTS(datasource,save_multiplicity=False):
                     evt_dict['DEC_OBJ'],
                     'observation position DEC [deg]')
 
-
     hdu1.header.set('RA_PNT  ', evt_dict['RA_PNT'], 'observation position RA [deg]')
     hdu1.header.set('DEC_PNT ', evt_dict['DEC_PNT'], 'observation position DEC [deg]')
     hdu1.header.set('ALT_PNT ', evt_dict['ALT_PNT'], 'average altitude of pointing [deg]')
     hdu1.header.set('AZ_PNT  ', evt_dict['AZ_PNT'], 'average azimuth of pointing [deg]')
-    
-    
+
     # get the list of telescopes that participate in the event
     hdu1.header.set('TELLIST',
                     evt_dict['TELLIST'],
                     'comma-separated list of tel IDs')
-    hdu1.header.set('N_TELS',evt_dict['N_TELS'] ,
+    hdu1.header.set('N_TELS',evt_dict['N_TELS'],
                     'number of telescopes in event list')
 
     hdu1.header.set('EUNIT   ', 'TeV', 'energy unit')
-    hdu1.header.set('GEOLON  ',VTS_REFERENCE_LON , 'longitude of array center [deg]')
-    hdu1.header.set('GEOLAT  ',VTS_REFERENCE_LAT, 'latitude of array center [deg]')
-    hdu1.header.set('ALTITUDE',VTS_REFERENCE_HEIGHT, 'altitude of array center [m]')
+    hdu1.header.set('GEOLON  ', VTS_REFERENCE_LON, 'longitude of array center [deg]')
+    hdu1.header.set('GEOLAT  ', VTS_REFERENCE_LAT, 'latitude of array center [deg]')
+    hdu1.header.set('ALTITUDE', VTS_REFERENCE_HEIGHT, 'altitude of array center [m]')
 
     # Calculate average noise
     return hdu1

@@ -8,7 +8,8 @@ import ROOT
  
 logger = logging.getLogger(__name__)
 
-def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
+
+def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset):
     response_dict = {}
 
     effectiveAreaIO.loadTheRootFile() 
@@ -24,7 +25,7 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
     effectiveAreaManager.setUseReconstructedEnergy(False)    
 
     effectiveAreaParameters = ROOT.VAEASimpleParameterData()
-    effectiveAreaParameters.fAzimuth = (azimuth)
+    effectiveAreaParameters.fAzimuth = azimuth
     effectiveAreaParameters.fZenith = zenith 
     effectiveAreaParameters.fNoise = noise 
     effectiveAreaParameters.fOffset = offset 
@@ -49,7 +50,7 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
     thetaHigh = [0.0, 10.0]
     # ea = np.vstack((y, y))
     ea = [y,y]
-    minEnergy , maxEnergy = c_float(), c_float()
+    minEnergy, maxEnergy = c_float(), c_float()
     effectiveAreaManager.getSafeEnergyRange(effectiveAreaParameters, 0.5, minEnergy, maxEnergy)
 
     x = np.array([(energyLow, energyHigh, thetaLow, thetaHigh, ea)], 
@@ -61,7 +62,7 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO,azimuth,zenith,noise,offset):
     response_dict['EA'] = x
     response_dict['LO_THRES'] = minEnergy.value/1000.
     response_dict['HI_THRES'] = maxEnergy.value/1000.
-    response_dict['RAD_MAX']  = np.sqrt(theta2cut)
+    response_dict['RAD_MAX'] = np.sqrt(theta2cut)
 
     a, e = hist2array(effectiveAreaManager.getEnergyBias2D(effectiveAreaParameters), return_edges=True)
     eLow = np.power(10, [e[0][:-1]])[0]

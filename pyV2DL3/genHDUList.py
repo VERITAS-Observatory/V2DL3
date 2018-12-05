@@ -1,10 +1,10 @@
 from astropy.io import fits
 import logging
 from pyV2DL3.fillGTI import fillGTI
-from pyV2DL3.fillRESPONSE import fillRESPONSE
+from pyV2DL3.fill_response import fill_response
 from pyV2DL3.fillEVENTS import fillEVENTS
-from pyV2DL3.vegas.vegasDataSource import vegasDataSource
-from pyV2DL3.eventdisplay.eventDisplayDataSource import eventDisplayDataSource
+from pyV2DL3.vegas.VegasDataSource import VegasDataSource
+from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +27,18 @@ def genPrimaryHDU():
 
 def loadROOTFiles(data_file, effective_area_file, file_type='VEGAS'):
     if file_type == 'VEGAS':
-        return vegasDataSource(data_file, effective_area_file)
+        return VegasDataSource(data_file, effective_area_file)
     if file_type == 'ED':
-        return eventDisplayDataSource(data_file, effective_area_file)
+        return EventDisplayDataSource(data_file, effective_area_file)
     else:
         raise Exception('File type not supported: {}'.format(file_type))
 
 
 def genHDUlist(datasource, save_multiplicity=False):
-    hdu0 = genPrimaryHDU() 
-    hdu1 = fillEVENTS(datasource, save_multiplicity=save_multiplicity)
-    hdu2 = fillGTI(datasource)
-    hdu3, hdu4 = fillRESPONSE(datasource)
-    hdulist = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
+    hdus = list()
+    hdus.append(genPrimaryHDU())
+    hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity))
+    hdus.append(fillGTI(datasource))
+    hdus.extend(fill_response(datasource))
+    hdulist = fits.HDUList(hdus)
     return hdulist
