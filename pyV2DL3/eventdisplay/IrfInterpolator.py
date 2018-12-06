@@ -4,10 +4,12 @@ from scipy.interpolate import RegularGridInterpolator
 
 
 class IrfInterpolator:
-    def __init__(self, filename):
+    def __init__(self, filename, azimuth):
         self.implemented_irf_names_1d = ['eff', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
-        self.implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut', 'hAngularDiff_2D']
+        self.implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
+                                         'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
         self.irf_name = ""
+        self.azimuth = azimuth
         import os.path
         if os.path.isfile(filename):
             self.filename = filename
@@ -23,7 +25,8 @@ class IrfInterpolator:
             raise WrongIrf
 
     def __load_irf(self):
-        irf_data, irf_axes = extract_irf(self.filename, self.irf_name, return_irf_axes=True)
+        irf_data, irf_axes = extract_irf(self.filename, self.irf_name, azimuth=self.azimuth,
+                                         single_index=True, return_irf_axes=True)
         # This is an important technical step: the regular grid interpolator does not accept 
         # interpolating on a dimension with size = 1.
         # Make sure that there are no size 1 dimensions. Do the same with the axes:
