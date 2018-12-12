@@ -20,7 +20,7 @@ def fill_response(datasource):
         hdu_ea.name = "EFFECTIVE AREA"
         # Fill Standard HDUCLASS keyword
         hdu_ea = addHDUClassKeyword(hdu_ea, class1='RESPONSE', class2='EFF_AREA',
-                                  class3='POINT-LIKE', class4='AEFF_2D')
+                                    class3='POINT-LIKE', class4='AEFF_2D')
         hdu_ea.header.set('OBS_ID', evt_dict['OBS_ID'],'Run Number')
         hdu_ea.header.set('TUNIT1 ', 'TeV', "")
         hdu_ea.header.set('TUNIT2 ', 'TeV', "")
@@ -94,7 +94,6 @@ def fill_response(datasource):
         # Fill Standard HDUCLASS keyword
         hdu_fe_edisp = addHDUClassKeyword(hdu_fe_edisp, class1='RESPONSE', class2='EDISP',
                                           class3='FULL-ENCLOSURE', class4='EDISP_2D')
-
         hdu_fe_edisp.header.set('TUNIT1 ', 'TeV', "")
         hdu_fe_edisp.header.set('TUNIT2 ', 'TeV', "")
         hdu_fe_edisp.header.set('TUNIT3 ', '', "")
@@ -105,23 +104,23 @@ def fill_response(datasource):
         #
         # Direction dispersion (full-enclosure)
         #
-        x = response_dict['FULL_PSF']
-        hdu_fe_psf = fits.BinTableHDU(data=x)
-        hdu_fe_psf.name = "PSF"
-        # Fill Standard HDUCLASS keyword
-        hdu_fe_psf = addHDUClassKeyword(hdu_fe_psf, class1='RESPONSE', class2='PSF',
-                                        class3='FULL-ENCLOSURE', class4='PSF_TABLE')
-
-        hdu_fe_psf.header.set('TUNIT1 ', 'TeV', "")
-        hdu_fe_psf.header.set('TUNIT2 ', 'TeV', "")
-        hdu_fe_psf.header.set('TUNIT3 ', 'deg', "")
-        hdu_fe_psf.header.set('TUNIT4 ', 'deg', "")
-        hdu_fe_psf.header.set('TUNIT5 ', 'deg', "")
-        hdu_fe_psf.header.set('TUNIT6 ', 'deg', "")
-        hdu_fe_psf.header.set('TUNIT7 ', 'sr^-1', "")
-        # Axis order
-        hdu_fe_psf.header.set('CREF7', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)', '')
+        # x = response_dict['PSF']
+        # hdu_fe_psf = fits.BinTableHDU(data=x)
+        # hdu_fe_psf.name = "PSF"
+        # # Fill Standard HDUCLASS keyword
+        # hdu_fe_psf = addHDUClassKeyword(hdu_fe_psf, class1='RESPONSE', class2='PSF',
+        #                                 class3='FULL-ENCLOSURE', class4='PSF_TABLE')
+        #
+        # hdu_fe_psf.header.set('TUNIT1 ', 'TeV', "")
+        # hdu_fe_psf.header.set('TUNIT2 ', 'TeV', "")
+        # hdu_fe_psf.header.set('TUNIT3 ', 'deg', "")
+        # hdu_fe_psf.header.set('TUNIT4 ', 'deg', "")
+        # hdu_fe_psf.header.set('TUNIT5 ', 'deg', "")
+        # hdu_fe_psf.header.set('TUNIT6 ', 'deg', "")
+        # hdu_fe_psf.header.set('TUNIT7 ', 'sr^-1', "")
+        # # Axis order
+        # hdu_fe_psf.header.set('CREF7', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)', '')
         response_hdus.append(hdu_fe_ea)
         response_hdus.append(hdu_fe_edisp)
-        response_hdus.append(hdu_fe_psf)
+        # response_hdus.append(hdu_fe_psf)
     return response_hdus

@@ -44,13 +44,12 @@ class IrfInterpolator:
         if self.irf_name in self.implemented_irf_names_2d:
             # In this case, the interpolator needs to interpolate over 2 dimensions:
             xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
-            interpolated_irf = self.interpolator((xx, yy, coordinate[0], coordinate[1], coordinate[2],
-                                                  coordinate[3], coordinate[4]))
+            interpolated_irf = self.interpolator((xx, yy, coordinate[0], coordinate[1], coordinate[2]))
             return interpolated_irf, [self.irf_axes[0], self.irf_axes[1]]
         elif self.irf_name in self.implemented_irf_names_1d:
             # In this case, the interpolator needs to interpolate only over 1 dimension (true energy):
             interpolated_irf = self.interpolator((self.irf_axes[0], coordinate[0], coordinate[1],
-                                                  coordinate[2], coordinate[3], coordinate[4]))
+                                                  coordinate[2]))
             return interpolated_irf, [self.irf_axes[0]]
         else:
             print("The interpolation of the irf you entered: {}  is either wrong or not implemented.".format(self.irf_name))
