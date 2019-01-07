@@ -7,6 +7,9 @@ class VtsDataSource(object):
         self.__evt__ = dict()
         self.__git__ = dict()
         self.__response__ = dict()
+        # 'point-like' or 'full-enclosure'
+        # Default is point like
+        self.__irf_to_store__ =  'point-like'
 
     def fill_data(self,**kwargs):            
         self.__fill_evt__(**kwargs)
@@ -35,4 +38,4 @@ class VtsDataSource(object):
         return self.__response__
 
     def set_irfs_to_store(self, irfs_to_store):
-        self.__response__['irfs_to_store'] = irfs_to_store
+        self.__irf_to_store__ = irfs_to_store

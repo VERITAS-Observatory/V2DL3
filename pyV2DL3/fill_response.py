@@ -11,7 +11,7 @@ def fill_response(datasource):
     irfs_to_store = response_dict['irfs_to_store']
 
     response_hdus = list()
-    if irfs_to_store['point-like']:
+    if datasource.__irf_to_store__ == 'point-like':
         #
         # Effective area (Point-like)
         #
@@ -63,7 +63,7 @@ def fill_response(datasource):
         hdu_edisp.header.set('CREF7', '(ETRUE_LO:ETRUE_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)', '')
         response_hdus.append(hdu_ea)
         response_hdus.append(hdu_edisp)
-    if irfs_to_store['full-enclosure']:
+    elif datasource.__irf_to_store__ == 'full-enclosure':
         #
         # Effective area (full-enclosure)
         #
@@ -104,23 +104,25 @@ def fill_response(datasource):
         #
         # Direction dispersion (full-enclosure)
         #
-        # x = response_dict['PSF']
-        # hdu_fe_psf = fits.BinTableHDU(data=x)
-        # hdu_fe_psf.name = "PSF"
-        # # Fill Standard HDUCLASS keyword
-        # hdu_fe_psf = addHDUClassKeyword(hdu_fe_psf, class1='RESPONSE', class2='PSF',
-        #                                 class3='FULL-ENCLOSURE', class4='PSF_TABLE')
+        x = response_dict['PSF']
+        hdu_fe_psf = fits.BinTableHDU(data=x)
+        hdu_fe_psf.name = "PSF"
+        # Fill Standard HDUCLASS keyword
+        hdu_fe_psf = addHDUClassKeyword(hdu_fe_psf, class1='RESPONSE', class2='PSF',
+                                         class3='FULL-ENCLOSURE', class4='PSF_TABLE')
         #
-        # hdu_fe_psf.header.set('TUNIT1 ', 'TeV', "")
-        # hdu_fe_psf.header.set('TUNIT2 ', 'TeV', "")
-        # hdu_fe_psf.header.set('TUNIT3 ', 'deg', "")
-        # hdu_fe_psf.header.set('TUNIT4 ', 'deg', "")
-        # hdu_fe_psf.header.set('TUNIT5 ', 'deg', "")
-        # hdu_fe_psf.header.set('TUNIT6 ', 'deg', "")
-        # hdu_fe_psf.header.set('TUNIT7 ', 'sr^-1', "")
+        hdu_fe_psf.header.set('TUNIT1 ', 'TeV', "")
+        hdu_fe_psf.header.set('TUNIT2 ', 'TeV', "")
+        hdu_fe_psf.header.set('TUNIT3 ', 'deg', "")
+        hdu_fe_psf.header.set('TUNIT4 ', 'deg', "")
+        hdu_fe_psf.header.set('TUNIT5 ', 'deg', "")
+        hdu_fe_psf.header.set('TUNIT6 ', 'deg', "")
+        hdu_fe_psf.header.set('TUNIT7 ', 'sr^-1', "")
         # # Axis order
-        # hdu_fe_psf.header.set('CREF7', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)', '')
+        hdu_fe_psf.header.set('CREF7', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)', '')
         response_hdus.append(hdu_fe_ea)
         response_hdus.append(hdu_fe_edisp)
-        # response_hdus.append(hdu_fe_psf)
+        response_hdus.append(hdu_fe_psf)
+    else:
+        raise Exception('IRF type {} is not supported'.format(datasource.__irf_to_store__ ))
     return response_hdus

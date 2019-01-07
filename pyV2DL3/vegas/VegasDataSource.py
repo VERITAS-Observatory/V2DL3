@@ -34,5 +34,10 @@ class VegasDataSource(VtsDataSource):
     def __fill_response__(self):
         az = self.__azimuth__ 
         ze = self.__zenith__
-        nn = self.__noise__  
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5)
+        nn = self.__noise__
+        if(self.__irf_to_store__ == 'full-enclosure'):
+            self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5,True)
+        elif(self.__irf_to_store__ == 'point-like'):
+            self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5, False)
+        else:
+            raise Exception('IRF type {} not supported'.format(self.__irf_to_store__))
