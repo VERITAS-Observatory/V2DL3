@@ -9,8 +9,8 @@ import ROOT
 logger = logging.getLogger(__name__)
 
 
-def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset,is_full_enclosure=False):
-    if(not is_full_enclosure):
+def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset,irf_to_store={}):
+    if(irf_to_store['point-like']):
         response_dict = {}
 
         effectiveAreaIO.loadTheRootFile()
@@ -94,8 +94,8 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset,is
                             ('MATRIX', '>f4', (2, np.shape(ac)[0], np.shape(ac)[1]))])
 
         response_dict['MIGRATION'] = x
-        return response_dict
-    else:
+
+    if(irf_to_store['full-enclosure']):
         response_dict = {}
         effectiveAreaIO.loadTheRootFile()
         irfloader = IRFLoader(effectiveAreaIO)
@@ -106,7 +106,7 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, offset,is
         response_dict['HI_THRES'] = maxEnergy
         response_dict['FULL_MIGRATION'] = ebias_final_data
         response_dict['PSF'] = abias_final_data
-        return response_dict
+    return response_dict
 
 
 

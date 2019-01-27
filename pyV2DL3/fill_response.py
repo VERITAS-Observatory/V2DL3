@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 def fill_response(datasource):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
-    irfs_to_store = response_dict['irfs_to_store']
+    #irfs_to_store = response_dict['irfs_to_store']
 
     response_hdus = list()
-    if datasource.__irf_to_store__ == 'point-like':
+    if datasource.__irf_to_store__['point-like']:
         #
         # Effective area (Point-like)
         #
@@ -63,7 +63,7 @@ def fill_response(datasource):
         hdu_edisp.header.set('CREF7', '(ETRUE_LO:ETRUE_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)', '')
         response_hdus.append(hdu_ea)
         response_hdus.append(hdu_edisp)
-    elif datasource.__irf_to_store__ == 'full-enclosure':
+    if datasource.__irf_to_store__['full-enclosure']:
         #
         # Effective area (full-enclosure)
         #
@@ -123,6 +123,6 @@ def fill_response(datasource):
         response_hdus.append(hdu_fe_ea)
         response_hdus.append(hdu_fe_edisp)
         response_hdus.append(hdu_fe_psf)
-    else:
-        raise Exception('IRF type {} is not supported'.format(datasource.__irf_to_store__ ))
+    if( not (datasource.__irf_to_store__['point-like'] or datasource.__irf_to_store__['full-enclosure'])):
+        raise Exception('No IRF to store...')
     return response_hdus
