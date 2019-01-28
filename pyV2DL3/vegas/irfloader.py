@@ -328,7 +328,9 @@ class IRFLoader:
         mighigh   = irf_data[0]['ABias_Dict']['MigrationHigh']
         abias_interpolated = abias_interpolator((az, ze, noise))
         # Flip axis order
-        abias_interpolated = np.transpose(abias_interpolated, axes=(0, 2, 1))
+        # Axis order:
+        # Energy, Theta, Rad
+        abias_interpolated = np.transpose(abias_interpolated, axes=(1, 0, 2))
         abias_final_data = np.array([(elow, ehigh, thetalow, thetahigh, miglow, mighigh, abias_interpolated)],
                                     dtype=[('ENERG_LO', '>f4', np.shape(elow)),
                                            ('ENERG_HI', '>f4', np.shape(ehigh)),
