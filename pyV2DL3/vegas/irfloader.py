@@ -85,7 +85,8 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise):
         ac = []
         for aa in a:
             if np.sum(aa) > 0:
-                ab = aa / (bHigh - bLow) / np.sum(aa) / np.pi / (bHigh + bLow)
+                # As the unit is sr^-1 we need to convert y bin size into radian  
+                ab = aa / np.deg2rad(bHigh - bLow) / np.sum(aa) / np.pi / np.deg2rad(bHigh + bLow)
             else:
                 ab = aa
             try:
