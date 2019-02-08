@@ -34,5 +34,5 @@ class VegasDataSource(VtsDataSource):
     def __fill_response__(self):
         az = self.__azimuth__ 
         ze = self.__zenith__
-        nn = self.__noise__  
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5)
+        nn = self.__noise__
+        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5,self.__irf_to_store__)
