@@ -20,6 +20,11 @@ class VegasDataSource(VtsDataSource):
         self.__zenith__ = 0
         self.__noise__ = 0
 
+    def __del__(self):
+        # Close the root files
+        self.__evt_file__.closeTheRootFile()
+        self.__ea_file__.closeTheRootFile()
+
     def __fill_evt__(self):
         gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)
         self.__gti__ = gti
