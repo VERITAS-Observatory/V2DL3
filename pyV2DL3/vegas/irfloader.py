@@ -5,6 +5,8 @@ from pyV2DL3.vegas.load_vegas import VEGASStatus
 from scipy.interpolate import RegularGridInterpolator
 import numpy as np
 from bisect import bisect_left
+import logging
+logger = logging.getLogger(__name__)
 
 def graph_to_array_y(graph):
     y = [g for g in graph.GetY()]
@@ -158,7 +160,8 @@ class IRFLoader:
         self.__manager__ = ROOT.VAEffectiveAreaManager()
         self.__manager__.setUseReconstructedEnergy(False)
         self.__manager__.loadEffectiveAreas(vts_io)
-        self.__axis__ = ['Azimuth', 'Zenith', 'Noise', 'AbsoluteOffset']
+        # Deal with AbsoluteOffset separately
+        self.__axis__ = ['Azimuth', 'Zenith', 'Noise']#, 'AbsoluteOffset']
         self.__pointlike__ = pointlike
         self.__buildIndex__()
 
@@ -171,6 +174,7 @@ class IRFLoader:
             if (k not in index_check):
                 raise Exception("IRF missing axis: {}".format(k))
         index_dict = {'Index': []}
+
         for i, ea in enumerate(manager.fEffectiveAreas):
             index_dict['Index'].append(i)
             for name, val in zip(ea.fDimensionNames, ea.fDimensionValues):
@@ -178,17 +182,27 @@ class IRFLoader:
                     index_dict[name] = []
                 else:
                     index_dict[name].append(val)
+
+        # Deal with AbsoluteOffset
+        if('AbsoluteOffset' not in index_check):
+            logger.info("No offset axis available from file. Use 0.5 deg as default.")
+            index_dict['AbsoluteOffset'] = []
+            for i in range(len(index_dict['Index'])):
+                index_dict['AbsoluteOffset'].append(0.5)
+
         # Validate Completeness
         num_IRF = len(index_dict['Index'])
         axis_dict = {}
         check_num = 1
-        for k in self.__axis__:
+
+        for k in self.__axis__ + ['AbsoluteOffset']:
             check_num = check_num * len(np.unique(index_dict[k]))
             axis_dict[k] = np.sort(np.unique(index_dict[k]))
-            if (len(axis_dict[k]) < 2):
+            if((len(axis_dict[k]) < 2) and (not (k == 'AbsoluteOffset'))):
                 raise Exception('{} Axis need to have more than two values'.format(k))
-        if (num_IRF != check_num):
-            raise Exception("EA File not full")
+        #if (num_IRF != check_num):
+        #    print(num_IRF,check_num)
+        #    raise Exception("EA File not full")
         self.__axis_dict__ = axis_dict
         self.__index_dict__ = index_dict
 
