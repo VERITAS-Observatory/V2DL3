@@ -39,10 +39,11 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
     logger.debug('Getting Theta2 cut from EA file')
     theta2cut = cuts.fCut_Theta2_max
     logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
-    #
-    # Interpolate effective area  (point-like)
-    #
+
     if irf_to_store['point-like']:
+        #
+        # Interpolate effective area  (point-like)
+        #
         irf_interpolator.set_irf('eff')
         eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
         log_energy_tev = axis[0]
@@ -99,11 +100,11 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
 
         response_dict['MIGRATION'] = x
-    #
-    # Interpolate effective area (full-enclosure)
-    #
 
     if irf_to_store['full-enclosure']:
+        #
+        # Interpolate effective area (full-enclosure)
+        #
         irf_interpolator.set_irf('gEffAreaNoTh2MC')
         eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
         log_energy_tev = axis[0]
@@ -120,78 +121,78 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('THETA_HI', '>f4', np.shape(theta_high)),
                             ('EFFAREA', '>f4', np.shape(ea))])
         response_dict['FULL_EA'] = x
-    #
-    # Energy dispersion (full-enclosure)
-    #
-    # irf_interpolator.set_irf('hEsysMCRelative2DNoDirectionCut')
-    # bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
-    #
-    # energy_edges = bin_centers_to_edges(axis[0])
-    # bias_edges = bin_centers_to_edges(axis[1])
-    #
-    # eLow = np.power(10, [energy_edges[:-1]])[0]
-    # eHigh = np.power(10, [energy_edges[1:]])[0]
-    #
-    # bLow = np.array([bias_edges[:-1]])[0]
-    # bHigh = np.array([bias_edges[1:]])[0]
-    #
-    # ac = []
-    # for aa in bias.transpose():
-    #     if np.sum(aa) > 0:
-    #         ab = aa / np.sum(aa * (bHigh - bLow))
-    #     else:
-    #         ab = aa
-    #     try:
-    #         ac = np.vstack((ac, ab))
-    #     except:
-    #         ac = ab
-    #
-    # ac = ac.transpose()
-    # x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
-    #              dtype=[('ENERG_LO', '>f4', (len(eLow),)),
-    #                     ('ENERG_HI', '>f4', (len(eHigh),)),
-    #                     ('MIGRA_LO', '>f4', (len(bLow),)),
-    #                     ('MIGRA_HI', '>f4', (len(bHigh),)),
-    #                     ('THETA_LO', '>f4', (len(theta_low),)),
-    #                     ('THETA_HI', '>f4', (len(theta_high),)),
-    #                     ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
-    #
-    # response_dict['FULL_MIGRATION'] = x
-    #
-    # Direction dispersion (for full-enclosure IRFs)
-    #
-    # irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
-    # direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
-    #
-    # energy_edges = bin_centers_to_edges(axis[0])
-    # rad_edges = bin_centers_to_edges(axis[1])
-    #
-    # eLow = np.power(10, [energy_edges[:-1]])[0]
-    # eHigh = np.power(10, [energy_edges[1:]])[0]
-    #
-    # rLow = np.power(10, [rad_edges[:-1]])[0]
-    # rHigh = np.power(10, [rad_edges[1:]])[0]
-    #
-    # ac = []
-    # for aa in direction_diff.transpose():
-    #     if np.sum(aa) > 0:
-    #         ab = aa / np.sum(aa * (rHigh - rLow))
-    #     else:
-    #         ab = aa
-    #     try:
-    #         ac = np.vstack((ac, ab))
-    #     except:
-    #         ac = ab
-    #
-    # ac = ac.transpose()
-    # x = np.array([(eLow, eHigh, rLow, rHigh, theta_low, theta_high, [ac, ac])],
-    #              dtype=[('ENERG_LO', '>f4', (len(eLow),)),
-    #                     ('ENERG_HI', '>f4', (len(eHigh),)),
-    #                     ('RAD_LO', '>f4', (len(rLow),)),
-    #                     ('RAD_HI', '>f4', (len(rHigh),)),
-    #                     ('THETA_LO', '>f4', (len(theta_low),)),
-    #                     ('THETA_HI', '>f4', (len(theta_high),)),
-    #                     ('RPSF', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
-    #
-    # response_dict['PSF'] = x
+        #
+        # Energy dispersion (full-enclosure)
+        #
+        irf_interpolator.set_irf('hEsysMCRelative2DNoDirectionCut')
+        bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
+
+        energy_edges = bin_centers_to_edges(axis[0])
+        bias_edges = bin_centers_to_edges(axis[1])
+
+        eLow = np.power(10, [energy_edges[:-1]])[0]
+        eHigh = np.power(10, [energy_edges[1:]])[0]
+
+        bLow = np.array([bias_edges[:-1]])[0]
+        bHigh = np.array([bias_edges[1:]])[0]
+
+        ac = []
+        for aa in bias.transpose():
+            if np.sum(aa) > 0:
+                ab = aa / np.sum(aa * (bHigh - bLow))
+            else:
+                ab = aa
+            try:
+                ac = np.vstack((ac, ab))
+            except:
+                ac = ab
+
+        ac = ac.transpose()
+        x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
+                     dtype=[('ENERG_LO', '>f4', (len(eLow),)),
+                            ('ENERG_HI', '>f4', (len(eHigh),)),
+                            ('MIGRA_LO', '>f4', (len(bLow),)),
+                            ('MIGRA_HI', '>f4', (len(bHigh),)),
+                            ('THETA_LO', '>f4', (len(theta_low),)),
+                            ('THETA_HI', '>f4', (len(theta_high),)),
+                            ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
+
+        response_dict['FULL_MIGRATION'] = x
+        #
+        # Direction dispersion (for full-enclosure IRFs)
+        #
+        irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
+        direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
+
+        energy_edges = bin_centers_to_edges(axis[0])
+        rad_edges = bin_centers_to_edges(axis[1])
+
+        eLow = np.power(10, [energy_edges[:-1]])[0]
+        eHigh = np.power(10, [energy_edges[1:]])[0]
+
+        rLow = np.power(10, [rad_edges[:-1]])[0]
+        rHigh = np.power(10, [rad_edges[1:]])[0]
+
+        ac = []
+        for aa in direction_diff.transpose():
+            if np.sum(aa) > 0:
+                ab = aa / np.sum(aa * (rHigh - rLow))
+            else:
+                ab = aa
+            try:
+                ac = np.vstack((ac, ab))
+            except:
+                ac = ab
+
+        ac = ac.transpose()
+        x = np.array([(eLow, eHigh, rLow, rHigh, theta_low, theta_high, [ac, ac])],
+                     dtype=[('ENERG_LO', '>f4', (len(eLow),)),
+                            ('ENERG_HI', '>f4', (len(eHigh),)),
+                            ('RAD_LO', '>f4', (len(rLow),)),
+                            ('RAD_HI', '>f4', (len(rHigh),)),
+                            ('THETA_LO', '>f4', (len(theta_low),)),
+                            ('THETA_HI', '>f4', (len(theta_high),)),
+                            ('RPSF', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
+
+        response_dict['PSF'] = x
     return response_dict

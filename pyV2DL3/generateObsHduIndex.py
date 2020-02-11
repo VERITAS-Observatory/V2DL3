@@ -28,12 +28,27 @@ def gen_hdu_index(filelist, index_file_dir='./'):
         # open the fits file
         dl3_hdu = fits.open(_file)
         # informations to be stored
-        obs_id = 4 * [dl3_hdu[1].header['OBS_ID']]
-        hdu_type_name = ['gti', 'events', 'aeff', 'edisp']
-        hdu_type = ['gti', 'events', 'aeff_2d', 'edisp_2d']
-        file_dir = 4 * [_path]
-        file_name = 4 * [_filename]
-        hdu_name = ['GTI', 'EVENTS', 'EFFECTIVE AREA', 'ENERGY DISPERSION']
+        obs_id = []
+        hdu_type_name = []
+        hdu_type = []
+        hdu_name = []
+        file_dir = []
+        file_name = []
+        obsid = dl3_hdu[1].header['OBS_ID']
+        for hdu in dl3_hdu[1:]:
+            obs_id.append(obsid)            
+            type_,class_ = get_hdu_type_and_class(hdu.header)
+            hdu_type_name.append(type_)
+            hdu_type.append(class_)            
+            hdu_name.append(hdu.name)
+            file_dir.append(_path)
+            file_name.append(_filename)
+        #obs_id = 4 * [dl3_hdu[1].header['OBS_ID']]
+        #hdu_type_name = ['gti', 'events', 'aeff', 'edisp']
+        #hdu_type = ['gti', 'events', 'aeff_2d', 'edisp_2d']
+        #file_dir = 4 * [_path]
+        #file_name = 4 * [_filename]
+        #hdu_name = ['GTI', 'EVENTS', 'EFFECTIVE AREA', 'ENERGY DISPERSION']
 
         t = Table([obs_id, hdu_type_name, hdu_type, file_dir, file_name, hdu_name],
                   names=('OBS_ID', 'HDU_TYPE', 'HDU_CLASS', 'FILE_DIR', 'FILE_NAME', 'HDU_NAME'),

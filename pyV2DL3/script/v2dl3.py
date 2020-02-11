@@ -114,6 +114,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
                 datasource = loadROOTFiles(st5_str, ea_str, 'ED')
             else:
                 datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
+
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
                 datasource.fill_data()

@@ -1,0 +1,2 @@
+../../../VEGAS/DL3med/54809.med.ED.050.St5_Stereo.fits
+../../../VEGAS/DL3med/57993.med.ED.050.St5_Stereo.fits

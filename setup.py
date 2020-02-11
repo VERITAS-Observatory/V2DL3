@@ -7,6 +7,7 @@ setup(
     install_requires=[
         'click',
         'numpy',
+        'scipy',
         # 'gammapy',
         'astropy',
         'root_numpy',

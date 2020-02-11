@@ -20,6 +20,11 @@ class VegasDataSource(VtsDataSource):
         self.__zenith__ = 0
         self.__noise__ = 0
 
+    def __del__(self):
+        # Close the root files
+        self.__evt_file__.closeTheRootFile()
+        self.__ea_file__.closeTheRootFile()
+
     def __fill_evt__(self):
         gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)
         self.__gti__ = gti
@@ -34,5 +39,5 @@ class VegasDataSource(VtsDataSource):
     def __fill_response__(self):
         az = self.__azimuth__ 
         ze = self.__zenith__
-        nn = self.__noise__  
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5)
+        nn = self.__noise__
+        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, self.__irf_to_store__)
