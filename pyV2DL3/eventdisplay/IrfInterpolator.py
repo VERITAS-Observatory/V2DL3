@@ -40,6 +40,7 @@ class IrfInterpolator:
         self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
+        print("Interpolating coordinates: ", coordinate)
         # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
         if self.irf_name in self.implemented_irf_names_2d:
             # In this case, the interpolator needs to interpolate over 2 dimensions:

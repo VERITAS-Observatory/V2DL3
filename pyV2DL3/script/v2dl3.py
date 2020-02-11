@@ -79,9 +79,9 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
             datasource = loadROOTFiles(st5_str, ea_str, 'ED')
         else:
             datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
+        datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
-        datasource.set_irfs_to_store(irfs_to_store)
         hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
         hdulist.writeto(output, overwrite=True)
     else:
@@ -114,10 +114,9 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
                 datasource = loadROOTFiles(st5_str, ea_str, 'ED')
             else:
                 datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
-
+            datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
                 datasource.fill_data()
-            datasource.set_irfs_to_store(irfs_to_store)
             hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
             hdulist.writeto('{}/{}.fits'.format(output, fname_base), overwrite=True)
             flist.append('{}/{}.fits'.format(output, fname_base))

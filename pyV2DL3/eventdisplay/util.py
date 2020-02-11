@@ -132,10 +132,10 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         entry_with_max_bins = find_nearest(all_rec_nbins, all_rec_nbins.max())
     elif irf_name == 'gEffAreaNoTh2MC':
         eff_area_tree.SetBranchStatus("gEffAreaNoTh2MC", 1)
-        entry_with_max_bins = 0
+        entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     elif irf_name == 'gEffAreaNoTh2Rec':
         eff_area_tree.SetBranchStatus("gEffAreaNoTh2Rec", 1)
-        entry_with_max_bins = 0
+        entry_with_max_bins = find_nearest(all_rec_nbins, all_rec_nbins.max())
     elif irf_name == 'hEsysMCRelative2D':
         eff_area_tree.SetBranchStatus("hEsysMCRelative2D", 1)
         entry_with_max_bins = 0

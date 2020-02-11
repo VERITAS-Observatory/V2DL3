@@ -8,10 +8,9 @@ logger = logging.getLogger(__name__)
 def fill_response(datasource):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
-    irfs_to_store = response_dict['irfs_to_store']
 
     response_hdus = list()
-    if irfs_to_store['point-like']:
+    if datasource.__irf_to_store__['point-like']:
         #
         # Effective area (Point-like)
         #
@@ -63,7 +62,7 @@ def fill_response(datasource):
         hdu_edisp.header.set('CREF7', '(ETRUE_LO:ETRUE_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)', '')
         response_hdus.append(hdu_ea)
         response_hdus.append(hdu_edisp)
-    if irfs_to_store['full-enclosure']:
+    if datasource.__irf_to_store__['full-enclosure']:
         #
         # Effective area (full-enclosure)
         #

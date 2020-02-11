@@ -6,17 +6,19 @@ from astropy.io.fits import table_to_hdu
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 logger = logging.getLogger(__name__)
 
+
 class NoFitsFileError(Exception):
     pass
 
-def gen_hdu_index(filelist,index_file_dir='./'):
+
+def gen_hdu_index(filelist, index_file_dir='./'):
     # create the hdu-index.fits.gz
     hdu_tables = []
     # loop through the files
     for _file in filelist:
         # Get relative path from the index file output dir to
         # fits files.
-        _rel_path = os.path.relpath(_file,start=index_file_dir)
+        _rel_path = os.path.relpath(_file, start=index_file_dir)
         _filename = os.path.basename(_rel_path)
         _path = os.path.dirname(_rel_path)
      
@@ -39,16 +41,16 @@ def gen_hdu_index(filelist,index_file_dir='./'):
                   )
 
         hdu_tables.append(t)
-    if(len(hdu_tables) ==0):
+    if len(hdu_tables) == 0:
         raise NoFitsFileError('No fits file found in the list.')
 
     hdu_table = vstack(hdu_tables)
     hdu_table = table_to_hdu(hdu_table)
     hdu_table.name = 'HDU_INDEX'
-    hdu_table = addHDUClassKeyword(hdu_table,'INDEX',
-                                        class2='HDU')
+    hdu_table = addHDUClassKeyword(hdu_table,'INDEX', class2='HDU')
 
     return hdu_table
+
 
 def gen_obs_index(filelist,index_file_dir='./'):
      # empty lists with the quantities we want
@@ -189,14 +191,12 @@ def create_obs_hdu_index_file(filelist, index_file_dir='./',
                               'data/magic/run05029747_05029748/run05029748/20131004_05029748_CrabNebula.fits'])
     """
 
-    hdu_table = gen_hdu_index(filelist,index_file_dir)
+    hdu_table = gen_hdu_index(filelist, index_file_dir)
     logger.debug('Writing {} ...'.format(hdu_index_file))
-    hdu_table.writeto('{}/{}'.format(index_file_dir,hdu_index_file),
-                    overwrite=True)
+    hdu_table.writeto('{}/{}'.format(index_file_dir, hdu_index_file), overwrite=True)
 
     obs_table = gen_obs_index(filelist,index_file_dir)
     logger.debug('Writing {} ...'.format(obs_index_file))
-    obs_table.writeto('{}/{}'.format(index_file_dir,obs_index_file),
-                     overwrite=True)
+    obs_table.writeto('{}/{}'.format(index_file_dir, obs_index_file), overwrite=True)
 
 

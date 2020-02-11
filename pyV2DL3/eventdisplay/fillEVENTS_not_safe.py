@@ -52,7 +52,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     decArr = selectedEventsTree['DEC']
     azArr = selectedEventsTree['Az']
     altArr = selectedEventsTree['El']
-    energyArr = selectedEventsTree['Energy']
+    energyArr = selectedEventsTree['EnergyS']
     # Not used for the moment by science tools.
     nTelArr = selectedEventsTree['NImages']
 
