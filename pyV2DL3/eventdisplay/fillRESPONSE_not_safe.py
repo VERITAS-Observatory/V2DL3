@@ -100,6 +100,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
 
         response_dict['MIGRATION'] = x
+        response_dict['RAD_MAX'] = np.sqrt(theta2cut)
 
     if irf_to_store['full-enclosure']:
         #
@@ -120,6 +121,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('THETA_LO', '>f4', np.shape(theta_low)),
                             ('THETA_HI', '>f4', np.shape(theta_high)),
                             ('EFFAREA', '>f4', np.shape(ea))])
+        response_dict['LO_THRES'] = min(energy_low)
+        response_dict['HI_THRES'] = max(energy_high)
         response_dict['FULL_EA'] = x
         #
         # Energy dispersion (full-enclosure)

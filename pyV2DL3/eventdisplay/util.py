@@ -37,14 +37,22 @@ def remove_duplicities(array, atol):
     return array
 
 
+# This seems not to be working on ROOT 5 + python 6.
 def graph_to_array_y(graph):
     y = [g for g in graph.GetY()]
     return y
 
 
+# This seems not to be working on ROOT 5 + python 6.
 def graph_to_array_x(graph):
     x = [g for g in graph.GetX()]
     return x
+
+
+def graph_to_array(graph, nbins):
+    x = [graph.GetX()[i] for i in np.arange(0, nbins)]
+    y = [graph.GetY()[i] for i in np.arange(0, nbins)]
+    return x, y
 
 
 def bin_edges_to_centers(axis):
@@ -68,6 +76,7 @@ def find_nearest(array, value):
 
 def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
+    print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
     implemented_irf_names_1d = ['eff', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
@@ -161,11 +170,9 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 sample_irf = [j for j in entry.Rec_eff]
                 sample_energies = [j for j in entry.Rec_e0]
             elif irf_name == 'gEffAreaNoTh2MC':
-                sample_irf = graph_to_array_y(entry.gEffAreaNoTh2MC)
-                sample_energies = graph_to_array_x(entry.gEffAreaNoTh2MC)
+                sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
             elif irf_name == 'gEffAreaNoTh2Rec':
-                sample_irf = graph_to_array_y(entry.gEffAreaNoTh2Rec)
-                sample_energies = graph_to_array_x(entry.gEffAreaNoTh2Rec)
+                sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2Rec, all_rec_nbins[i])
             elif irf_name == 'hEsysMCRelative2D':
                 # Migration vs energy bias and true energy
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2D, return_edges=True)
@@ -257,11 +264,13 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 irf = [j for j in entry.Rec_eff]
                 energies = [j for j in entry.Rec_e0]
             elif irf_name == 'gEffAreaNoTh2MC':
-                irf = graph_to_array_y(entry.gEffAreaNoTh2MC)
-                energies = graph_to_array_x(entry.gEffAreaNoTh2MC)
+                energies, irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
+                # irf = graph_to_array_y(entry.gEffAreaNoTh2MC)
+                # energies = graph_to_array_x(entry.gEffAreaNoTh2MC)
             elif irf_name == 'gEffAreaNoTh2Rec':
-                irf = graph_to_array_y(entry.gEffAreaNoTh2Rec)
-                energies = graph_to_array_x(entry.gEffAreaNoTh2Rec)
+                energies, irf = graph_to_array(entry.gEffAreaNoTh2Rec, all_rec_nbins[i])
+                # irf = graph_to_array_y(entry.gEffAreaNoTh2Rec)
+                # energies = graph_to_array_x(entry.gEffAreaNoTh2Rec)
             elif irf_name == 'hEsysMCRelative2D':
                 irf = hist2array(entry.hEsysMCRelative2D)
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
@@ -342,7 +351,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 elif single_index:
                     try:
                         data[:, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
-                         find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                             find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
                     except Exception:
                         print("Unexpected error:", sys.exc_info()[0])
                         print("Entry number ", i)
@@ -388,10 +397,10 @@ def duplicate_dimension(data, axis):
     print(current_shape, corrected_shape)
     new_data = np.zeros(corrected_shape)
     sl = slice(None, None, None)
-    new_data[[0 if i == axis else sl for i, k in enumerate(current_shape)]] = \
-        data[[0 if i == axis else sl for i, k in enumerate(current_shape)]]
-    new_data[[1 if i == axis else sl for i, k in enumerate(current_shape)]] = \
-        data[[0 if i == axis else sl for i, k in enumerate(current_shape)]]
+    new_data[(0 if i == axis else sl for i, k in enumerate(current_shape))] = \
+        data[(0 if i == axis else sl for i, k in enumerate(current_shape))]
+    new_data[(1 if i == axis else sl for i, k in enumerate(current_shape))] = \
+        data[(0 if i == axis else sl for i, k in enumerate(current_shape))]
     return new_data
 
 
