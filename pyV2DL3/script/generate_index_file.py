@@ -39,7 +39,9 @@ def cli(folder_location, index_file_dir, debug):
 
     fits_files = [_file[:-1] for _file in list(os.popen(f'ls {folder_location}/*.fits'))]
 
-    logging.info('Found the following fits files:', fits_files)
+    logging.info('Found the following fits files:')
+    for f in fits_files:
+        logging.info(' -> {0}'.format(f))
 
     logging.info('Generating index files {}/obs-index.fits.gz and {}/hdu-index.fits.gz'.format(index_file_dir,
                                                                                                index_file_dir))
