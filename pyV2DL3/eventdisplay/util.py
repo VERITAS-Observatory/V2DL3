@@ -169,10 +169,18 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             elif irf_name == 'Rec_eff':
                 sample_irf = [j for j in entry.Rec_eff]
                 sample_energies = [j for j in entry.Rec_e0]
+            elif irf_name == 'effNoTh2':
+                sample_irf = [j for j in entry.eff]
+                sample_energies = [j for j in entry.e0]
+            elif irf_name == 'Rec_effNoTh2':
+                sample_irf = [j for j in entry.Rec_eff]
+                sample_energies = [j for j in entry.Rec_e0]
+            '''
             elif irf_name == 'gEffAreaNoTh2MC':
                 sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
             elif irf_name == 'gEffAreaNoTh2Rec':
                 sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2Rec, all_rec_nbins[i])
+            '''
             elif irf_name == 'hEsysMCRelative2D':
                 # Migration vs energy bias and true energy
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2D, return_edges=True)
