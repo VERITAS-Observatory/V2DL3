@@ -106,7 +106,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         #
         # Interpolate effective area (full-enclosure)
         #
-        irf_interpolator.set_irf('gEffAreaNoTh2MC')
+        #irf_interpolator.set_irf('gEffAreaNoTh2MC')
+        irf_interpolator.set_irf('effNoTh2MC')
         eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
         log_energy_tev = axis[0]
         energy_low = np.power(10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.)
