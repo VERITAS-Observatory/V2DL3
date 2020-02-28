@@ -16,6 +16,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict = {}
 
     # Load required trees within the anasum file:
+    filename = str(edFileIO.GetName())
     runSummary = tree2array(edFileIO.Get("total_1/stereo/tRunSummary"))
     runNumber = runSummary['runOn'][0]
     telConfig = tree2array(edFileIO.Get("run_{}/stereo/telconfig".format(runNumber)))
@@ -88,7 +89,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     # endTime_s = float(endTime.getDayNS()) / 1e9
 
     # Filling Header info
-    evt_dict['OBS_ID'] = runNumber
+    evt_dict['OBS_ID'] = runNumber  # this does not allow for event type files
     evt_dict['DATE-OBS'] = startDateTime[0]
     evt_dict['TIME-OBS'] = startDateTime[1]
     evt_dict['DATE-END'] = stopDateTime[0]

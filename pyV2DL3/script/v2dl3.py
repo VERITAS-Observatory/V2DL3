@@ -26,13 +26,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--save_multiplicity', '-m', is_flag=True,
               help='Save telescope multiplicity into event list')
 @click.option('--ed', '-e', is_flag=True, help='ED mode')
+@click.option('--filename_to_obsid', '-I', is_flag=True, help='Override OBS_ID with output filename')
 @click.option('--full-enclosure', is_flag=True, help='Store full-enclosure IRFs (no direction cut applied)')
 @click.option('--point-like', is_flag=True, help='Store point-like IRFs (direction cut applied)')
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--verbose', '-v', is_flag=True, help='Print root output')
 @click.argument('output', metavar='<output>')
 def cli(file_pair, runlist, gen_index_file, save_multiplicity,
-        ed, full_enclosure, point_like, debug, verbose, output):
+        ed, filename_to_obsid, full_enclosure, point_like, debug, verbose, output):
     """Command line tool for converting stage5 file to DL3
 
     \b
@@ -83,6 +84,10 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
         hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
+        fname_base = os.path.splitext(os.path.basename(output))[0]
+        if filename_to_obsid:
+            logging.info('Overwriting OBS_ID={0} with OBS_ID={1}'.format(hdulist[1].header['OBS_ID'],fname_base))
+            hdulist[1].header['OBS_ID'] = fname_base
         hdulist.writeto(output, overwrite=True)
     else:
         with open(runlist) as f:
@@ -119,6 +124,9 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
             with cpp_print_context(verbose=verbose):
                 datasource.fill_data()
             hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
+            if filename_to_obsid:
+                logging.info('Overwriting OBS_ID={0} with OBS_ID={1}'.format(hdulist[1].header['OBS_ID'],fname_base))
+                hdulist[1].header['OBS_ID'] = fname_base
             hdulist.writeto('{}/{}.fits'.format(output, fname_base), overwrite=True)
             flist.append('{}/{}.fits'.format(output, fname_base))
             # Generate hdu obs index file

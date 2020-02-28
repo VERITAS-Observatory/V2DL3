@@ -175,12 +175,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             elif irf_name == 'Rec_effNoTh2':
                 sample_irf = [j for j in entry.Rec_eff]
                 sample_energies = [j for j in entry.Rec_e0]
-            '''
-            elif irf_name == 'gEffAreaNoTh2MC':
-                sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
-            elif irf_name == 'gEffAreaNoTh2Rec':
-                sample_energies, sample_irf = graph_to_array(entry.gEffAreaNoTh2Rec, all_rec_nbins[i])
-            '''
             elif irf_name == 'hEsysMCRelative2D':
                 # Migration vs energy bias and true energy
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2D, return_edges=True)
@@ -403,12 +397,8 @@ def duplicate_dimension(data, axis):
     current_shape = np.shape(data)
     corrected_shape = [2 if i == axis else k for i, k in enumerate(current_shape)]
     print(current_shape, corrected_shape)
-    new_data = np.zeros(corrected_shape)
-    sl = slice(None, None, None)
-    new_data[(0 if i == axis else sl for i, k in enumerate(current_shape))] = \
-        data[(0 if i == axis else sl for i, k in enumerate(current_shape))]
-    new_data[(1 if i == axis else sl for i, k in enumerate(current_shape))] = \
-        data[(0 if i == axis else sl for i, k in enumerate(current_shape))]
+    tiles = [ 2 if k==1 else 1 for k in current_shape ]
+    new_data = np.tile(data,tiles)
     return new_data
 
 
