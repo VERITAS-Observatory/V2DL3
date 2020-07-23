@@ -10,6 +10,25 @@ logger = logging.getLogger(__name__)
 class NoFitsFileError(Exception):
     pass
 
+def get_hdu_type_and_class(header):
+    class1  = header['HDUCLAS1']
+    if(class1 == 'EVENTS'):
+        return 'events','events'
+    elif(class1 == 'GTI'):
+        return 'gti','gti' 
+    elif(class1 == 'RESPONSE'):
+        class2 = header['HDUCLAS2']
+        if(class2 == 'EFF_AREA'):
+            return 'aeff','aeff_2d'
+        elif(class2 == 'EDISP'):
+            return 'edisp','edisp_2d'
+        elif(class2 == 'PSF'):
+            class4 = header['HDUCLAS4']
+            return 'psf',class4.lower() 
+        elif(class2 == 'BKG'):
+            class4 = header['HDUCLAS4']
+            return 'bkg',class4.lower()
+
 
 def gen_hdu_index(filelist, index_file_dir='./'):
     # create the hdu-index.fits.gz
