@@ -17,5 +17,6 @@ setup(
     entry_points='''
         [console_scripts]
         v2dl3=pyV2DL3.script.v2dl3:cli
+        generate_index_file=pyV2DL3.script.generate_index_file:cli
     '''
 )
