@@ -20,6 +20,7 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = 0
         self.__zenith__ = 0
         self.__noise__ = 0
+        self.__offset__= 0 #new
 
     def __fill_evt__(self):
         gti, ea_config, events = __fillEVENTS_not_safe__(self.__evt_file__)
@@ -28,7 +29,6 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = ea_config['azimuth']
         self.__zenith__ = ea_config['zenith']
         self.__noise__ = ea_config['noise']
-   
     def __fill_gti__(self):
         pass
 
@@ -37,6 +37,8 @@ class EventDisplayDataSource(VtsDataSource):
         az = self.__azimuth__
         ze = self.__zenith__
         nn = self.__noise__
+        oo = self.__offset__ #new
+        print ("coordinates to pass to fillresponse:",az,ze,nn,oo)
         # TODO: for now, just on the 0.5 deg offset. Improve once we have all IRFs available
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, 0.5,
+        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, oo,
                                                       self.__irf_to_store__)

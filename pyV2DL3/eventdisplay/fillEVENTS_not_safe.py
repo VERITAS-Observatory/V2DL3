@@ -53,6 +53,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     decArr = selectedEventsTree['DEC']
     azArr = selectedEventsTree['Az']
     altArr = selectedEventsTree['El']
+    #offset = selectedEventsTree['Woff']
     energyArr = selectedEventsTree['EnergyS']
     # Not used for the moment by science tools.
     nTelArr = selectedEventsTree['NImages']
@@ -75,6 +76,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['DEC'] = decArr
     evt_dict['ALT'] = altArr
     evt_dict['AZ'] = azArr
+    #evt_dict['OFFSET'] = offset #new
     evt_dict['ENERGY'] = energyArr
     evt_dict['EVENT_TYPE'] = nTelArr
 

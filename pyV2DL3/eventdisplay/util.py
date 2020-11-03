@@ -78,7 +78,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
     print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
-    implemented_irf_names_1d = ['eff', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
+    implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                 'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
     # Get both the ROOT effective area TTree and the uproot one (much faster)
@@ -139,8 +139,9 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         eff_area_tree.SetBranchStatus("Rec_e0", 1)
         eff_area_tree.SetBranchStatus("Rec_eff", 1)
         entry_with_max_bins = find_nearest(all_rec_nbins, all_rec_nbins.max())
-    elif irf_name == 'gEffAreaNoTh2MC':
-        eff_area_tree.SetBranchStatus("gEffAreaNoTh2MC", 1)
+    elif irf_name == 'effNoTh2':
+        eff_area_tree.SetBranchStatus("e0", 1)
+        eff_area_tree.SetBranchStatus("effNoTh2", 1)
         entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     elif irf_name == 'gEffAreaNoTh2Rec':
         eff_area_tree.SetBranchStatus("gEffAreaNoTh2Rec", 1)
@@ -170,7 +171,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 sample_irf = [j for j in entry.Rec_eff]
                 sample_energies = [j for j in entry.Rec_e0]
             elif irf_name == 'effNoTh2':
-                sample_irf = [j for j in entry.eff]
+                sample_irf = [j for j in entry.effNoTh2]
                 sample_energies = [j for j in entry.e0]
             elif irf_name == 'Rec_effNoTh2':
                 sample_irf = [j for j in entry.Rec_eff]
@@ -265,6 +266,9 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             elif irf_name == 'Rec_eff':
                 irf = [j for j in entry.Rec_eff]
                 energies = [j for j in entry.Rec_e0]
+            elif irf_name == 'effNoTh2':
+                irf = [j for j in entry.effNoTh2]
+                energies = [j for j in entry.e0]
             elif irf_name == 'gEffAreaNoTh2MC':
                 energies, irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
                 # irf = graph_to_array_y(entry.gEffAreaNoTh2MC)

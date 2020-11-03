@@ -13,7 +13,7 @@ class EDStatus:
     def load_ed(self):
         if not self.__ed_loaded:
             logger.debug('Load eventDisplay libVAnaSum.so')
-            if gSystem.Load("$EVNDISPSYS/lib/libVAnaSum.so"):
+            if gSystem.Load("/afs/ifh.de/group/cta/scratch/tkleiner/software/EventDisplay_v4/lib/libVAnaSum.so"):
                 raise Exception("Problem loading eventDisplay libraries - please check this before proceeding")
             self.__ed_loaded = True
 

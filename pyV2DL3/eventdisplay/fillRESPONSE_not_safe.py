@@ -19,7 +19,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
     # Extract the camera offsets simulated within the effective areas file.
     fast_eff_area = uproot.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area.array('Woff'), decimals=2))
-
+    offset = camera_offsets  # new: to add all offsets
+    print("camera offsets: ", camera_offsets, offset, "noise:",noise,"zenith:",zenith)
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
@@ -35,7 +36,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         # not to actual bins.
         theta_low = camera_offsets
         theta_high = camera_offsets
-
+        print("theta low inside if clause if camera offset >1", theta_low)
+    print(theta_low)
     logger.debug('Getting Theta2 cut from EA file')
     theta2cut = cuts.fCut_Theta2_max
     logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
@@ -90,6 +92,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                 ac = ab
 
         ac = ac.transpose()
+        print("ac:", ac)
+        print(len(theta_low))
         x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
                             ('ENERG_HI', '>f4', (len(eHigh),)),
@@ -98,16 +102,17 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('THETA_LO', '>f4', (len(theta_low),)),
                             ('THETA_HI', '>f4', (len(theta_high),)),
                             ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
-
+        print('before')
+        print(x)
         response_dict['MIGRATION'] = x
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
-
+        print('IRF interpolation done')
     if irf_to_store['full-enclosure']:
         #
         # Interpolate effective area (full-enclosure)
         #
-        #irf_interpolator.set_irf('gEffAreaNoTh2MC')
-        irf_interpolator.set_irf('effNoTh2MC')
+        # irf_interpolator.set_irf('gEffAreaNoTh2MC')
+        irf_interpolator.set_irf('effNoTh2')
         eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
         log_energy_tev = axis[0]
         energy_low = np.power(10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.)
@@ -129,6 +134,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         # Energy dispersion (full-enclosure)
         #
         irf_interpolator.set_irf('hEsysMCRelative2DNoDirectionCut')
+        print(noise, zenith, offset)
         bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
 
         energy_edges = bin_centers_to_edges(axis[0])
@@ -152,6 +158,9 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                 ac = ab
 
         ac = ac.transpose()
+        print ("len, :eLow, eHigh, bLow, bHigh, theta_low, theta_high,ac",(len(eLow),),(len(eHigh),),(len(bLow),),(len(bHigh),),(len(theta_low),),(len(theta_high),),np.shape(ac)[0],np.shape(ac)[1])
+        # print ([ac,ac])
+        # print ("len [ac,ac]",len([ac,ac],))
         x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
                             ('ENERG_HI', '>f4', (len(eHigh),)),
