@@ -7,7 +7,6 @@ from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
 
 logger = logging.getLogger(__name__)
 
-
 def fillEVENTS(datasource, save_multiplicity=False):
     evt_dict = datasource.get_evt_data()
     logger.debug("Create EVENT HDU")    
