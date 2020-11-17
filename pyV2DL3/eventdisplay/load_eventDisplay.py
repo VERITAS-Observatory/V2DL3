@@ -16,6 +16,6 @@ class EDStatus:
             if gSystem.Load("$EVNDISPSYS/lib/libVAnaSum.so"):
                 raise Exception("Problem loading eventDisplay libraries - please check this before proceeding")
             self.__ed_loaded = True
-
+    print ("ED loaded")
 
 EDStatus = SingletonDecorator(EDStatus)

@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
-    from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
 
+    from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
     filename = effectiveArea.GetName()
     cuts = effectiveArea.Get("GammaHadronCuts")
     # EventDisplay IRF interpolator object
@@ -20,7 +20,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
     fast_eff_area = uproot.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area.array('Woff'), decimals=2))
     offset = camera_offsets  # new: to add all offsets
-    print("camera offsets: ", camera_offsets, offset, "noise:",noise,"zenith:",zenith)
+    print("camera offsets: ", camera_offsets, offset, "noise:", noise, "zenith:", zenith)
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
@@ -171,10 +171,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
 
             ac = ac.transpose()
             ac_final.append(ac)
-        print("len, :eLow, eHigh, bLow, bHigh, theta_low, theta_high,ac", (len(eLow),), (len(eHigh),), (len(bLow),),
-              (len(bHigh),), (len(theta_low),), (len(theta_high),), np.shape(ac)[0], np.shape(ac)[1])
-        # print ([ac,ac])
-        # print ("len [ac,ac]",len([ac,ac],))
+        #print("len, :eLow, eHigh, bLow, bHigh, theta_low, theta_high,ac", (len(eLow),), (len(eHigh),), (len(bLow),),(len(bHigh),), (len(theta_low),), (len(theta_high),), np.shape(ac)[0], np.shape(ac)[1])
+
         x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
                             ('ENERG_HI', '>f4', (len(eHigh),)),
@@ -189,7 +187,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         # Direction dispersion (for full-enclosure IRFs)
         #
         irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
-        #loop over camera_offsets
+        # loop over camera_offsets
         ac_final = []
         for offset in camera_offsets:
 
@@ -214,18 +212,22 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                     ac = np.vstack((ac, ab))
                 except:
                     ac = ab
-
+            print("elow,ehigh:", eLow, eHigh)
             ac = ac.transpose()
             ac_final.append(ac)
 
-        x = np.array([(eLow, eHigh, rLow, rHigh, theta_low, theta_high, ac_final)],
-                     dtype=[('ENERG_LO', '>f4', (len(eLow),)),
-                            ('ENERG_HI', '>f4', (len(eHigh),)),
-                            ('RAD_LO', '>f4', (len(rLow),)),
-                            ('RAD_HI', '>f4', (len(rHigh),)),
-                            ('THETA_LO', '>f4', (len(theta_low),)),
-                            ('THETA_HI', '>f4', (len(theta_high),)),
-                            ('RPSF', '>f4', (np.shape(ac_final)))])
+        print("elow,ehigh:", eLow, eHigh)
 
+        #PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
+        ac_final = np.swapaxes(ac_final, 0, 1)
+        print ("shape ac final:", np.shape(ac_final))
+        x = np.array([(eLow, eHigh,theta_low, theta_high,rLow, rHigh, ac_final)],
+                     dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
+                            ('ENERG_HI', '>f4', (np.shape(eHigh))),
+                            ('THETA_LO', '>f4', (np.shape(theta_low))),
+                            ('THETA_HI', '>f4', (np.shape(theta_high))),
+                            ('RAD_LO', '>f4', (np.shape(rLow))),
+                            ('RAD_HI', '>f4', (np.shape(rHigh))),
+                            ('RPSF', '>f4', (np.shape(ac_final)))])
         response_dict['PSF'] = x
     return response_dict
