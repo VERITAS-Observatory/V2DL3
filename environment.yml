@@ -9,7 +9,4 @@ dependencies:
   - astropy>=2.0 
   - cython>=0.27
   - pkgconfig
-  - pip:
-    - git+https://github.com/scikit-hep/root_numpy.git#egg=root_numpy
-    - uproot
-#    - git+https://github.com/gammapy/gammapy.git#egg=gammapy
+  - uproot4
