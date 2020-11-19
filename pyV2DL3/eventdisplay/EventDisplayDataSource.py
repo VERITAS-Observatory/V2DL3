@@ -1,5 +1,5 @@
 from pyV2DL3.VtsDataSource import VtsDataSource
-from pyV2DL3.eventdisplay.load_eventDisplay import EDStatus
+#from pyV2DL3.eventdisplay.load_eventDisplay import EDStatus
 from pyV2DL3.eventdisplay.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.eventdisplay.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 import ROOT
@@ -7,13 +7,15 @@ import ROOT
 
 class EventDisplayDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file):
-        print(etv_file)
+        print("filepath? or name?",etv_file)
         super(EventDisplayDataSource, self).__init__('EventDisplay', etv_file, ea_file)
 
         # Loading eventDisplay if not already done so
-        self.ed_status = EDStatus()
-        self.ed_status.load_ed()
-        self.__evt_file__ = ROOT.TFile.Open(etv_file)
+        #self.ed_status = EDStatus()
+        #self.ed_status.load_ed()
+        #ROOT not needed to open evt file anymore
+        #self.__evt_file__ = ROOT.TFile.Open(etv_file)
+        self.__evt_file__ = etv_file
         self.__ea_file__ = ROOT.TFile.Open(ea_file)
 
         # Auxiliary storage 
@@ -23,6 +25,7 @@ class EventDisplayDataSource(VtsDataSource):
         self.__offset__= 0 #new
 
     def __fill_evt__(self):
+        #can be simplified further:
         gti, ea_config, events = __fillEVENTS_not_safe__(self.__evt_file__)
         self.__gti__ = gti
         self.__evt__ = events

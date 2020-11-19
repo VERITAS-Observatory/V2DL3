@@ -1,5 +1,5 @@
-import uproot
 import numpy as np
+import uproot4
 import logging
 from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
@@ -10,15 +10,19 @@ logger = logging.getLogger(__name__)
 def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
 
-    from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
+    #from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
     filename = effectiveArea.GetName()
-    cuts = effectiveArea.Get("GammaHadronCuts")
+
+    #for the moment no cuts:
+    #cuts = effectiveArea.Get("GammaHadronCuts")
+
+
     # EventDisplay IRF interpolator object
     irf_interpolator = IrfInterpolator(filename, azimuth)
 
     # Extract the camera offsets simulated within the effective areas file.
-    fast_eff_area = uproot.open(filename)['fEffArea']
-    camera_offsets = np.unique(np.round(fast_eff_area.array('Woff'), decimals=2))
+    fast_eff_area = uproot4.open(filename)['fEffArea']
+    camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     offset = camera_offsets  # new: to add all offsets
     print("camera offsets: ", camera_offsets, offset, "noise:", noise, "zenith:", zenith)
     # Check the camera offset bins available in the effective area file.
@@ -37,10 +41,11 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         theta_low = camera_offsets
         theta_high = camera_offsets
         print("theta low inside if clause if camera offset >1", theta_low)
-    print(theta_low)
-    logger.debug('Getting Theta2 cut from EA file')
-    theta2cut = cuts.fCut_Theta2_max
-    logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
+
+    #logger.debug('Getting Theta2 cut from EA file')
+    #Is this cut important to keep?
+    #theta2cut = cuts.fCut_Theta2_max
+    #logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
 
     if irf_to_store['point-like']:
         #

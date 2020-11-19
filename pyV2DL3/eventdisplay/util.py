@@ -1,4 +1,4 @@
-import uproot
+import uproot4
 from root_numpy import hist2array
 import numpy as np
 import sys
@@ -82,31 +82,37 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                 'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
     # Get both the ROOT effective area TTree and the uproot one (much faster)
+    #try later with uproot only
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
-    fast_eff_area = uproot.open(filename)['fEffArea']
+    fast_eff_area = uproot4.open(filename)['fEffArea']
 
-    # Load parameters from each TTree on arrays with uproot (super fast)
-    all_zds = fast_eff_area.array('ze')
-    all_azs = fast_eff_area.array('az')
-    # all_azMins = fast_eff_area.array('azMin')
-    # all_azMaxs = fast_eff_area.array('azMax')
-    all_Woffs = fast_eff_area.array('Woff')
-    all_pedvars = fast_eff_area.array('pedvar')
-    all_indexs = fast_eff_area.array('index')
-    all_nbins = fast_eff_area.array('nbins')
-    all_rec_nbins = fast_eff_area.array('Rec_nbins')
-
+    # Load parameters from each TTree on arrays with uproot4 (super fast)
+    all_zds = fast_eff_area['ze'].array(library='np')
+    #all_azs = fast_eff_area.array('az')
+    all_azs = fast_eff_area['az'].array(library='np')
+    all_azMins = fast_eff_area['azMin'].array(library='np')
+    all_azMaxs = fast_eff_area['azMax'].array(library='np')
+    #all_Woffs = fast_eff_area.array('Woff')
+    all_Woffs = fast_eff_area['Woff'].array(library='np')
+    all_pedvars = fast_eff_area['pedvar'].array(library='np')
+    #all_pedvars = fast_eff_area.array('pedvar')
+    all_indexs = fast_eff_area['index'].array(library='np')
+    #all_indexs = fast_eff_area.array('index')
+    #all_nbins = fast_eff_area.array('nbins')
+    all_nbins = fast_eff_area['nbins'].array(library='np')
+    #all_rec_nbins = fast_eff_area.array('Rec_nbins')
+    all_rec_nbins = fast_eff_area['Rec_nbins'].array(library='np')
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
     if not coord_tuple:
-        zds, zes_counts = np.unique(np.round(fast_eff_area.array('ze'), decimals=2), return_counts=True)
-        azs = np.unique(fast_eff_area.array('az'))
-        azMins, azMins_counts = np.unique(np.round(fast_eff_area.array('azMin'), decimals=2), return_counts=True)
-        azMaxs, azMaxs_counts = np.unique(np.round(fast_eff_area.array('azMax'), decimals=2), return_counts=True)
-        woffs, Woffs_counts = np.unique(np.round(fast_eff_area.array('Woff'), decimals=2), return_counts=True)
-        pedvars, pedvars_counts = np.unique(np.round(fast_eff_area.array('pedvar'), decimals=2), return_counts=True)
-        indexs, indexs_counts = np.unique(np.round(fast_eff_area.array('index'), decimals=2), return_counts=True)
+        zds, zes_counts = np.unique(np.round(all_zds, decimals=2), return_counts=True)
+        azs = np.unique(all_azs)
+        azMins, azMins_counts = np.unique(np.round(all_azMins, decimals=2), return_counts=True)
+        azMaxs, azMaxs_counts = np.unique(np.round(all_azMaxs, decimals=2), return_counts=True)
+        woffs, Woffs_counts = np.unique(np.round(all_Woffs, decimals=2), return_counts=True)
+        pedvars, pedvars_counts = np.unique(np.round(all_pedvars, decimals=2), return_counts=True)
+        indexs, indexs_counts = np.unique(np.round(all_indexs, decimals=2), return_counts=True)
         # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
         # We remove the duplicities from the zenith and pedestal values arrays:
         zds = remove_duplicities(zds, 2.0)
