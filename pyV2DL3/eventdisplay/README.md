@@ -2,11 +2,11 @@
 
 * Install a conda environment with the required versions/packages
 
-`conda env create -f environment.yml
+`conda env create -f environment.yml`
 
 * With active environment install ROOT from conda forge
 
-`conda install -c conda-forge root 
+`conda install -c conda-forge root`
 
 
 ## Contacts 
