@@ -7,7 +7,7 @@ from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
 logger = logging.getLogger(__name__)
 
 
-def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
+def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
 
     #from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
@@ -40,7 +40,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
         # not to actual bins.
         theta_low = camera_offsets
         theta_high = camera_offsets
-        print("theta low inside if clause if camera offset >1", theta_low)
+        #print("theta low inside if clause if camera offset >1", theta_low)
 
     #logger.debug('Getting Theta2 cut from EA file')
     #Is this cut important to keep?
@@ -107,8 +107,8 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
                             ('THETA_LO', '>f4', (len(theta_low),)),
                             ('THETA_HI', '>f4', (len(theta_high),)),
                             ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
-        print('before')
-        print(x)
+        #print('before')
+        #print(x)
         response_dict['MIGRATION'] = x
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
         print('IRF interpolation done')
@@ -225,7 +225,7 @@ def __fillRESPONSE_not_safe__(effectiveArea, azimuth, zenith, noise, offset, irf
 
         #PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
         ac_final = np.swapaxes(ac_final, 0, 1)
-        print ("shape ac final:", np.shape(ac_final))
+        #print ("shape ac final:", np.shape(ac_final))
         x = np.array([(eLow, eHigh,theta_low, theta_high,rLow, rHigh, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
                             ('ENERG_HI', '>f4', (np.shape(eHigh))),

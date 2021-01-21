@@ -1,7 +1,7 @@
 from pyV2DL3.VtsDataSource import VtsDataSource
 #from pyV2DL3.eventdisplay.load_eventDisplay import EDStatus
-from pyV2DL3.eventdisplay.fillEVENTS_not_safe import __fillEVENTS_not_safe__
-from pyV2DL3.eventdisplay.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
+from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
+from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
 import ROOT
 
 
@@ -26,7 +26,7 @@ class EventDisplayDataSource(VtsDataSource):
 
     def __fill_evt__(self):
         #can be simplified further:
-        gti, ea_config, events = __fillEVENTS_not_safe__(self.__evt_file__)
+        gti, ea_config, events = __fillEVENTS__(self.__evt_file__)
         self.__gti__ = gti
         self.__evt__ = events
         self.__azimuth__ = ea_config['azimuth']
@@ -43,5 +43,5 @@ class EventDisplayDataSource(VtsDataSource):
         oo = self.__offset__ #new
         print ("coordinates to pass to fillresponse:",az,ze,nn,oo)
         # TODO: for now, just on the 0.5 deg offset. Improve once we have all IRFs available
-        self.__response__ = __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, oo,
+        self.__response__ = __fillRESPONSE__(self.__ea_file__, az, ze, nn, oo,
                                                       self.__irf_to_store__)

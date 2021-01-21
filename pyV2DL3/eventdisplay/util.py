@@ -76,32 +76,28 @@ def find_nearest(array, value):
 
 def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
+    print("azimuth", azimuth)
+    print("single index",single_index)
+    print("coordinate tuple",coord_tuple)
     print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
     implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                 'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
     # Get both the ROOT effective area TTree and the uproot one (much faster)
-    #try later with uproot only
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
     fast_eff_area = uproot4.open(filename)['fEffArea']
 
     # Load parameters from each TTree on arrays with uproot4 (super fast)
     all_zds = fast_eff_area['ze'].array(library='np')
-    #all_azs = fast_eff_area.array('az')
     all_azs = fast_eff_area['az'].array(library='np')
     all_azMins = fast_eff_area['azMin'].array(library='np')
     all_azMaxs = fast_eff_area['azMax'].array(library='np')
-    #all_Woffs = fast_eff_area.array('Woff')
     all_Woffs = fast_eff_area['Woff'].array(library='np')
     all_pedvars = fast_eff_area['pedvar'].array(library='np')
-    #all_pedvars = fast_eff_area.array('pedvar')
     all_indexs = fast_eff_area['index'].array(library='np')
-    #all_indexs = fast_eff_area.array('index')
-    #all_nbins = fast_eff_area.array('nbins')
     all_nbins = fast_eff_area['nbins'].array(library='np')
-    #all_rec_nbins = fast_eff_area.array('Rec_nbins')
     all_rec_nbins = fast_eff_area['Rec_nbins'].array(library='np')
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
@@ -131,8 +127,9 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             pedvars = coord_tuple[2]
             zds = coord_tuple[3]
             woffs = coord_tuple[4]
+            print("coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
 
-    print(azs, indexs, pedvars, zds, woffs)
+    print('extracting IRF azs,indexs,pedvars,zds,woffs:',azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
@@ -141,25 +138,15 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         eff_area_tree.SetBranchStatus("e0", 1)
         eff_area_tree.SetBranchStatus("eff", 1)
         entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
-    elif irf_name == 'Rec_eff':
-        eff_area_tree.SetBranchStatus("Rec_e0", 1)
-        eff_area_tree.SetBranchStatus("Rec_eff", 1)
-        entry_with_max_bins = find_nearest(all_rec_nbins, all_rec_nbins.max())
     elif irf_name == 'effNoTh2':
         eff_area_tree.SetBranchStatus("e0", 1)
         eff_area_tree.SetBranchStatus("effNoTh2", 1)
         entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
-    elif irf_name == 'gEffAreaNoTh2Rec':
-        eff_area_tree.SetBranchStatus("gEffAreaNoTh2Rec", 1)
-        entry_with_max_bins = find_nearest(all_rec_nbins, all_rec_nbins.max())
     elif irf_name == 'hEsysMCRelative2D':
         eff_area_tree.SetBranchStatus("hEsysMCRelative2D", 1)
         entry_with_max_bins = 0
     elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
         eff_area_tree.SetBranchStatus("hEsysMCRelative2DNoDirectionCut", 1)
-        entry_with_max_bins = 0
-    elif irf_name == 'hAngularLogDiff_2D':
-        eff_area_tree.SetBranchStatus("hAngularLogDiff_2D", 1)
         entry_with_max_bins = 0
     elif irf_name == 'hAngularLogDiffEmc_2D':
         eff_area_tree.SetBranchStatus("hAngularLogDiffEmc_2D", 1)
@@ -169,19 +156,14 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
     for i, entry in enumerate(eff_area_tree):
+        #print(entry)
         if i == entry_with_max_bins:
             if irf_name == 'eff':
                 sample_irf = [j for j in entry.eff]
                 sample_energies = [j for j in entry.e0]
-            elif irf_name == 'Rec_eff':
-                sample_irf = [j for j in entry.Rec_eff]
-                sample_energies = [j for j in entry.Rec_e0]
             elif irf_name == 'effNoTh2':
                 sample_irf = [j for j in entry.effNoTh2]
                 sample_energies = [j for j in entry.e0]
-            elif irf_name == 'Rec_effNoTh2':
-                sample_irf = [j for j in entry.Rec_eff]
-                sample_energies = [j for j in entry.Rec_e0]
             elif irf_name == 'hEsysMCRelative2D':
                 # Migration vs energy bias and true energy
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2D, return_edges=True)
@@ -190,19 +172,26 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
+                ##testing
+                hisst=fast_eff_area['hEsysMCRelative2DNoDirectionCut']
                 # Migration vs energy bias and true energy, without direction cut
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2DNoDirectionCut, return_edges=True)
                 # Bin edges (one more entry than migra!) for the true energy and
                 # energy bias (Erec/Etrue)
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
-            elif irf_name == 'hAngularLogDiff_2D':
-                # PSF vs true energy:
-                sample_irf, axes = hist2array(entry.hAngularLogDiff_2D, return_edges=True)
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
+
+                print("len sample irf hEsysMCRelative2DNoDirectionCut", len(sample_irf))
+                print("shape sample irf hEsysMCRelative2DNoDirectionCut", np.shape(sample_irf))
+                #sample IRF holds data 30x75
+                print("sample_irf[0]",sample_irf[0])
+                print("sample_irf[0]",sample_irf[15])
+
+                print("axes",axes)
+                print("np shape sample irf hEsysMCRelative2DNoDirectionCut", np.shape(sample_irf))
+                print("irf dim 1",irf_dimension_1)
+                print("irf dim 2",irf_dimension_2)
+
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 # PSF vs true energy:
                 sample_irf, axes = hist2array(entry.hAngularLogDiffEmc_2D, return_edges=True)
@@ -248,7 +237,9 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     print(np.shape(data))
     # Iterate over all IRFs within the file. If the entry i is close to the coordinates within
     # the coord_tuple, then store.
+    times_import = 0
     for i, entry in enumerate(eff_area_tree):
+        #print(entry)
         if i % 5000 == 0:
             print("{}/{}".format(i, len(all_zds)))
         # Parameters within the effective area files show some fluctuation, therefore
@@ -269,26 +260,21 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             if irf_name == 'eff':
                 irf = [j for j in entry.eff]
                 energies = [j for j in entry.e0]
-            elif irf_name == 'Rec_eff':
-                irf = [j for j in entry.Rec_eff]
-                energies = [j for j in entry.Rec_e0]
             elif irf_name == 'effNoTh2':
                 irf = [j for j in entry.effNoTh2]
                 energies = [j for j in entry.e0]
-            elif irf_name == 'gEffAreaNoTh2MC':
-                energies, irf = graph_to_array(entry.gEffAreaNoTh2MC, all_nbins[i])
-                # irf = graph_to_array_y(entry.gEffAreaNoTh2MC)
-                # energies = graph_to_array_x(entry.gEffAreaNoTh2MC)
-            elif irf_name == 'gEffAreaNoTh2Rec':
-                energies, irf = graph_to_array(entry.gEffAreaNoTh2Rec, all_rec_nbins[i])
-                # irf = graph_to_array_y(entry.gEffAreaNoTh2Rec)
-                # energies = graph_to_array_x(entry.gEffAreaNoTh2Rec)
             elif irf_name == 'hEsysMCRelative2D':
                 irf = hist2array(entry.hEsysMCRelative2D)
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
-                irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-            elif irf_name == 'hAngularLogDiff_2D':
-                irf = hist2array(entry.hAngularLogDiff_2D)
+                #using pyROOT for histogram TTree
+                #irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
+                x = entry.hEsysMCRelative2DNoDirectionCut.GetXaxis().GetNbins()
+                y = entry.hEsysMCRelative2DNoDirectionCut.GetYaxis().GetNbins()
+                irf = np.empty(shape=(x, y), dtype='f4')
+                for i in range(0, x):
+                    for j in range(0, y):
+                        irf[i][j] = (entry.hEsysMCRelative2DNoDirectionCut.GetBinContent(i, j, 1))
+
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 irf = hist2array(entry.hAngularLogDiffEmc_2D)
             else:

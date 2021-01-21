@@ -38,7 +38,6 @@ class IrfInterpolator:
         self.irf_data = irf_data
         self.irf_axes = irf_axes
         self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
-
     def interpolate(self, coordinate):
         print("Interpolating coordinates: ", coordinate)
         # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
@@ -49,8 +48,8 @@ class IrfInterpolator:
             return interpolated_irf, [self.irf_axes[0], self.irf_axes[1]]
         elif self.irf_name in self.implemented_irf_names_1d:
             # In this case, the interpolator needs to interpolate only over 1 dimension (true energy):
-            print(np.shape(self.irf_axes), np.shape(coordinate))
-            print ("sel.irf_axes:",self.irf_axes)
+            #print(np.shape(self.irf_axes), np.shape(coordinate))
+            #print ("sel.irf_axes:",self.irf_axes)
             interpolated_irf = self.interpolator((self.irf_axes[0], coordinate[0], coordinate[1],
                                                   coordinate[2]))
             return interpolated_irf, [self.irf_axes[0]]
