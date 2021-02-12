@@ -254,13 +254,13 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 irf = hist2array(entry.hEsysMCRelative2D)
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
                 #using pyROOT for histogram TTree
-                #irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-                x = entry.hEsysMCRelative2DNoDirectionCut.GetXaxis().GetNbins()
-                y = entry.hEsysMCRelative2DNoDirectionCut.GetYaxis().GetNbins()
-                irf = np.empty(shape=(x, y), dtype='f4')
-                for i in range(0, x):
-                    for j in range(0, y):
-                        irf[i][j] = (entry.hEsysMCRelative2DNoDirectionCut.GetBinContent(i, j, 1))
+                irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
+                #x = entry.hEsysMCRelative2DNoDirectionCut.GetXaxis().GetNbins()
+                #y = entry.hEsysMCRelative2DNoDirectionCut.GetYaxis().GetNbins()
+                #irf = np.empty(shape=(x, y), dtype='f4')
+                #for i in range(0, x):
+                #    for j in range(0, y):
+                #        irf[i][j] = (entry.hEsysMCRelative2DNoDirectionCut.GetBinContent(i, j, 1))
 
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 irf = hist2array(entry.hAngularLogDiffEmc_2D)
