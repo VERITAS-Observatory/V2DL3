@@ -172,25 +172,12 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
-                ##testing
-                hisst=fast_eff_area['hEsysMCRelative2DNoDirectionCut']
                 # Migration vs energy bias and true energy, without direction cut
                 sample_irf, axes = hist2array(entry.hEsysMCRelative2DNoDirectionCut, return_edges=True)
                 # Bin edges (one more entry than migra!) for the true energy and
                 # energy bias (Erec/Etrue)
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
-
-                print("len sample irf hEsysMCRelative2DNoDirectionCut", len(sample_irf))
-                print("shape sample irf hEsysMCRelative2DNoDirectionCut", np.shape(sample_irf))
-                #sample IRF holds data 30x75
-                print("sample_irf[0]",sample_irf[0])
-                print("sample_irf[0]",sample_irf[15])
-
-                print("axes",axes)
-                print("np shape sample irf hEsysMCRelative2DNoDirectionCut", np.shape(sample_irf))
-                print("irf dim 1",irf_dimension_1)
-                print("irf dim 2",irf_dimension_2)
 
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 # PSF vs true energy:
