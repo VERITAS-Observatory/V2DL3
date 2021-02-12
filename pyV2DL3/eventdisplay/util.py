@@ -227,7 +227,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     times_import = 0
     for i, entry in enumerate(eff_area_tree):
         #print(entry)
-        if i % 5000 == 0:
+        if i % 25000 == 0:
             print("{}/{}".format(i, len(all_zds)))
         # Parameters within the effective area files show some fluctuation, therefore
         # we need to use the "isclose".
