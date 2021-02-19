@@ -29,10 +29,10 @@ def __fillEVENTS__(edFileIO):
     start_mjd = file['total_1/stereo/tRunSummary/MJDrunstart'].array(library='np')[0]
     stop_mjd = file['total_1/stereo/tRunSummary/MJDrunstop'].array(library='np')[0]
     print ("start,stop mjd", start_mjd, stop_mjd)
-    #convert mjd to fits format
+    # convert mjd to fits format
     t_start_fits = Time(start_mjd, format='mjd', scale='utc').to_value('fits')
     t_stop_fits = Time(stop_mjd, format='mjd', scale='utc').to_value('fits')
-    print ("t_start_fits, stop fits",t_start_fits,t_stop_fits)
+    print ("t_start_fits, t_stop_fits",t_start_fits,t_stop_fits)
 
     deadtime = file['total_1/stereo/tRunSummary/DeadTimeFracOn'].array(library='np')[0]
 
@@ -77,7 +77,7 @@ def __fillEVENTS__(edFileIO):
     evt_dict['DEC'] = decArr
     evt_dict['ALT'] = altArr
     evt_dict['AZ'] = azArr
-    # evt_dict['OFFSET'] = offset #new
+    # evt_dict['OFFSET'] = offset
     evt_dict['ENERGY'] = energyArr
     evt_dict['EVENT_TYPE'] = nTelArr
 
@@ -93,7 +93,7 @@ def __fillEVENTS__(edFileIO):
 
     # Filling Header info
     evt_dict['OBS_ID'] = runNumber  # this does not allow for event type files
-    #check if one datetime in fits format is enough
+    # check if one datetime in fits format is enough
     evt_dict['DATE-OBS']= t_start_fits
     #evt_dict['TIME-OBS'] = startDateTime[1]
     evt_dict['DATE-END'] = t_stop_fits

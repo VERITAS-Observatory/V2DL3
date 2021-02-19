@@ -1,5 +1,4 @@
 from pyV2DL3.VtsDataSource import VtsDataSource
-#from pyV2DL3.eventdisplay.load_eventDisplay import EDStatus
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
 import ROOT
@@ -10,11 +9,6 @@ class EventDisplayDataSource(VtsDataSource):
         print("filepath? or name?",etv_file)
         super(EventDisplayDataSource, self).__init__('EventDisplay', etv_file, ea_file)
 
-        # Loading eventDisplay if not already done so
-        #self.ed_status = EDStatus()
-        #self.ed_status.load_ed()
-        #ROOT not needed to open evt file anymore
-        #self.__evt_file__ = ROOT.TFile.Open(etv_file)
         self.__evt_file__ = etv_file
         self.__ea_file__ = ROOT.TFile.Open(ea_file)
 
@@ -25,7 +19,7 @@ class EventDisplayDataSource(VtsDataSource):
         self.__offset__= 0 #new
 
     def __fill_evt__(self):
-        #can be simplified further:
+        # can be simplified further:
         gti, ea_config, events = __fillEVENTS__(self.__evt_file__)
         self.__gti__ = gti
         self.__evt__ = events
@@ -41,7 +35,6 @@ class EventDisplayDataSource(VtsDataSource):
         ze = self.__zenith__
         nn = self.__noise__
         oo = self.__offset__ #new
-        print ("coordinates to pass to fillresponse:",az,ze,nn,oo)
-        # TODO: for now, just on the 0.5 deg offset. Improve once we have all IRFs available
+        print ("Coordinates going to fillresponse:", az, ze, nn, oo)
         self.__response__ = __fillRESPONSE__(self.__ea_file__, az, ze, nn, oo,
                                                       self.__irf_to_store__)
