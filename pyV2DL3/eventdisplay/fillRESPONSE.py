@@ -9,13 +9,10 @@ logger = logging.getLogger(__name__)
 
 def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
-
-    #from ROOT import VPlotInstrumentResponseFunction, VGammaHadronCuts, TTree
     filename = effectiveArea.GetName()
 
-    #for the moment no cuts:
-    #cuts = effectiveArea.Get("GammaHadronCuts")
-
+    # no cuts for the moment
+    # cuts = effectiveArea.Get("GammaHadronCuts")
 
     # EventDisplay IRF interpolator object
     irf_interpolator = IrfInterpolator(filename, azimuth)
@@ -40,12 +37,12 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         # not to actual bins.
         theta_low = camera_offsets
         theta_high = camera_offsets
-        #print("theta low inside if clause if camera offset >1", theta_low)
+        # print("theta low inside if clause if camera offset >1", theta_low)
 
-    #logger.debug('Getting Theta2 cut from EA file')
-    #Is this cut important to keep?
-    #theta2cut = cuts.fCut_Theta2_max
-    #logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
+    # logger.debug('Getting Theta2 cut from EA file')
+    # Is this cut important to keep?
+    # theta2cut = cuts.fCut_Theta2_max
+    # logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
 
     if irf_to_store['point-like']:
         #
@@ -107,27 +104,24 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
                             ('THETA_LO', '>f4', (len(theta_low),)),
                             ('THETA_HI', '>f4', (len(theta_high),)),
                             ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
-        #print('before')
-        #print(x)
         response_dict['MIGRATION'] = x
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
         print('IRF interpolation done')
+
     if irf_to_store['full-enclosure']:
         #
         # Interpolate effective area (full-enclosure)
         #
-        # irf_interpolator.set_irf('gEffAreaNoTh2MC')
         irf_interpolator.set_irf('effNoTh2')
-        ##loop should start here
+
         ea_final = []
+        # Loop over offsets and store
         for offset in camera_offsets:
             eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
 
             y = np.array(eff_area)
             ea = y  # [y, y]
             ea_final.append(ea)
-
-        # Til here create ea_final with index
 
         # Always same axis values in loop, therefore calculate afterwards
         log_energy_tev = axis[0]
@@ -176,7 +170,6 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
 
             ac = ac.transpose()
             ac_final.append(ac)
-        #print("len, :eLow, eHigh, bLow, bHigh, theta_low, theta_high,ac", (len(eLow),), (len(eHigh),), (len(bLow),),(len(bHigh),), (len(theta_low),), (len(theta_high),), np.shape(ac)[0], np.shape(ac)[1])
 
         x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
@@ -192,7 +185,8 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         # Direction dispersion (for full-enclosure IRFs)
         #
         irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
-        # loop over camera_offsets
+
+        # Loop over offsets
         ac_final = []
         for offset in camera_offsets:
 
@@ -217,16 +211,13 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
                     ac = np.vstack((ac, ab))
                 except:
                     ac = ab
-            print("elow,ehigh:", eLow, eHigh)
             ac = ac.transpose()
             ac_final.append(ac)
 
-        print("elow,ehigh:", eLow, eHigh)
-
-        #PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
+        # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
         ac_final = np.swapaxes(ac_final, 0, 1)
-        #print ("shape ac final:", np.shape(ac_final))
-        x = np.array([(eLow, eHigh,theta_low, theta_high,rLow, rHigh, ac_final)],
+        # print ("shape ac final:", np.shape(ac_final))
+        x = np.array([(eLow, eHigh, theta_low, theta_high, rLow, rHigh, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
                             ('ENERG_HI', '>f4', (np.shape(eHigh))),
                             ('THETA_LO', '>f4', (np.shape(theta_low))),

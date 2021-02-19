@@ -131,7 +131,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             woffs = coord_tuple[4]
             print("Coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
 
-    print('extracting IRF azs,indexs,pedvars,zds,woffs:',azs, indexs, pedvars, zds, woffs)
+    #print('extracting IRF azs,indexs,pedvars,zds,woffs:',azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
