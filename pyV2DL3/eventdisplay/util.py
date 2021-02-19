@@ -3,6 +3,8 @@ from root_numpy import hist2array
 import numpy as np
 import sys
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
+#progress bars
+from tqdm import tqdm
 
 
 def produce_tel_list(tel_config):
@@ -127,7 +129,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             pedvars = coord_tuple[2]
             zds = coord_tuple[3]
             woffs = coord_tuple[4]
-            print("coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
+            print("Coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
 
     print('extracting IRF azs,indexs,pedvars,zds,woffs:',azs, indexs, pedvars, zds, woffs)
 
@@ -156,7 +158,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
     for i, entry in enumerate(eff_area_tree):
-        #print(entry)
         if i == entry_with_max_bins:
             if irf_name == 'eff':
                 sample_irf = [j for j in entry.eff]
@@ -221,14 +222,12 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     data_shape.append(len(zds))
     data_shape.append(len(woffs))
     data = np.zeros(data_shape)
-    print(np.shape(data))
     # Iterate over all IRFs within the file. If the entry i is close to the coordinates within
     # the coord_tuple, then store.
-    times_import = 0
-    for i, entry in enumerate(eff_area_tree):
-        #print(entry)
-        if i % 25000 == 0:
-            print("{}/{}".format(i, len(all_zds)))
+    #tqdm for progress bars, without: for i, entry in enumerate(eff_area_tree):
+    for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
+        #if i % 25000 == 0:
+        #    print("{}/{}".format(i, len(all_zds)))
         # Parameters within the effective area files show some fluctuation, therefore
         # we need to use the "isclose".
         if (np.isclose(azs, all_azs[i], atol=0.01).any() and
