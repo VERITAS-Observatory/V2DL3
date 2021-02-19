@@ -4,8 +4,7 @@ import numpy as np
 import sys
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
 #progress bars
-from tqdm import tqdm
-
+from tqdm.auto import tqdm
 
 def produce_tel_list(tel_config):
     # Convert the list of telescopes into a string for FITS header
