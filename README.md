@@ -5,10 +5,11 @@ Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
 	Tarek Hassan (tarek.hassan@desy.de)
 	Tony Lin (xyxlin@gmail.com)
+	Tobias Kleiner (tobias.kleiner@desy.de)
         
 ## Aim
 
-This repository is for the code that will be used to convert VERITAS data into DL3 format. Initially was developed for point-like IRFs (as included in the joint-Crab paper), with the objective of also allowing full-enclosure IRFs soon.
+This repository is for the code that will be used to convert VERITAS data into DL3 format. Initially was developed for point-like IRFs (as included in the joint-Crab paper), full-enclosure IRFs are now possible as well.
 
 The project follows the most recent DL3 format definition from the [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
@@ -19,18 +20,24 @@ The python package for converting stage5/anasum files to the DL3 FITS format. Ot
 
 ### Requirements
 
-1. pyROOT
-2. click
-3. astropy
-4. numpy
-
+  - python>=3.5 
+  - click 
+  - numpy>=1.13 
+  - astropy>=4.0
+  - cython>=0.27
+  - pkgconfig
+  - uproot4
+  - root_numpy
+  - root
+  - tqdm
+  - 
 #### VEGAS
 
 * vegas version >= 2.5.7
 
 #### EventDisplay
 
-* EventDisplay version >= v500
+* EventDisplay version >= v485
 
 ### Install pyV2DL3
 
@@ -103,7 +110,7 @@ v2dl3 -l ./runlist.txt  ./test
 
 #### EventDisplay
 
-Make sure you have ROOT (>=v6) with pyROOT enabled and EventDisplay (>=v500) installed to proceed.
+ROOT is installed directly into the environment from conda-forge following the above steps using the ```environment.yml```.
 Now, lets create the DL3 fits files from the anasum files in the ```./eventDisplay/``` folder. 
 
 ##### One file at a time
@@ -115,7 +122,13 @@ To convert an anasum file to DL3 you need to provide the path to the anasum file
 v2dl3 --ed -f ./eventDisplay/54809.anasum.root [Effective Area File] ./eventDisplay/54809.anasum.fits
 ```
 
-Note the effective area files of ED v500 are currently under review, so if you want to play around with ED DL3 files, please get in contact with the eventDisplay team.
+Note the effective area files of ED v485 are currently under review, so if you want to play around with ED DL3 files, please get in contact with the eventDisplay team.
+
+###### Full-enclosure
+For full-enclosure IRFs you need to pass the additional flag --full-enclosure and be sure to provide the proper effective area files:
+```
+v2dl3 -ed --full-enclosure -f 64080.anasum.root $VERITAS_EVNDISP_AUX_DIR/EffectiveAreas/effArea-v485-auxv01-CARE_June2020-Cut-NTel2-PointSource-Hard-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234.root ./FITS/64080.anasum.fits
+```
 
 ---
 ## Git pushing
