@@ -13,7 +13,7 @@ def __fillEVENTS__(edFileIO):
 
     evt_dict = {}
 
-    #reading out using uproot4
+    #reading variables with uproo4
     file = uproot4.open(edFileIO)
 
     runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
@@ -28,12 +28,10 @@ def __fillEVENTS__(edFileIO):
     # Get start and stop time within the run.
     start_mjd = file['total_1/stereo/tRunSummary/MJDrunstart'].array(library='np')[0]
     stop_mjd = file['total_1/stereo/tRunSummary/MJDrunstop'].array(library='np')[0]
-    print ("start,stop mjd", start_mjd, stop_mjd)
+
     # convert mjd to fits format
     t_start_fits = Time(start_mjd, format='mjd', scale='utc').to_value('fits')
     t_stop_fits = Time(stop_mjd, format='mjd', scale='utc').to_value('fits')
-    print ("t_start_fits, t_stop_fits",t_start_fits,t_stop_fits)
-
     deadtime = file['total_1/stereo/tRunSummary/DeadTimeFracOn'].array(library='np')[0]
 
     # Number of seconds between reference time and run MJD at 00:00:00:
@@ -43,9 +41,9 @@ def __fillEVENTS__(edFileIO):
     tstart_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
     tstop_from_reference = (Time(stop_mjd, format='mjd', scale='utc') - t_ref).sec
 
-
     DL3EventTree = file['run_{}/stereo/DL3EventTree'.format(runNumber)].arrays(library='np')
     evNumArr = DL3EventTree['eventNumber']
+
     # This should already have microsecond resolution if stored with double precision.
     time_of_day = DL3EventTree['timeOfDay']
     timeArr = seconds_from_reference + time_of_day
@@ -93,7 +91,6 @@ def __fillEVENTS__(edFileIO):
 
     # Filling Header info
     evt_dict['OBS_ID'] = runNumber  # this does not allow for event type files
-    # check if one datetime in fits format is enough
     evt_dict['DATE-OBS']= t_start_fits
     #evt_dict['TIME-OBS'] = startDateTime[1]
     evt_dict['DATE-END'] = t_stop_fits

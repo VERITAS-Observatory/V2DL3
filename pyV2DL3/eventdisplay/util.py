@@ -1,10 +1,10 @@
 import uproot4
-from root_numpy import hist2array
 import numpy as np
 import sys
+from root_numpy import hist2array
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
-#progress bars
 from tqdm.auto import tqdm
+
 
 def produce_tel_list(tel_config):
     # Convert the list of telescopes into a string for FITS header
@@ -77,15 +77,15 @@ def find_nearest(array, value):
 
 def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
-    print("azimuth", azimuth)
-    print("single index",single_index)
-    print("coordinate tuple",coord_tuple)
+    print("Azimuth", azimuth)
+    print("Single index", single_index)
+    print("Coordinate tuple", coord_tuple)
     print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
     implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                 'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
-    # Get both the ROOT effective area TTree and the uproot one (much faster)
+    # Get both the ROOT effective area TTree and the uproot4 one (much faster)
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
     fast_eff_area = uproot4.open(filename)['fEffArea']
@@ -102,6 +102,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     all_rec_nbins = fast_eff_area['Rec_nbins'].array(library='np')
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
+
     if not coord_tuple:
         zds, zes_counts = np.unique(np.round(all_zds, decimals=2), return_counts=True)
         azs = np.unique(all_azs)
@@ -117,6 +118,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(indexs):
             raise ValueError("Wrong dimensions extracted from IRF cube." +
                              "Probably due to the rounding applied to the IRF coordinates.")
+
     # If a specific coord_tuple is provided, only extract the IRFs wihin that range of dimensions
     else:
         if len(coord_tuple) != 5:
@@ -129,8 +131,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             zds = coord_tuple[3]
             woffs = coord_tuple[4]
             print("Coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
-
-    #print('extracting IRF azs,indexs,pedvars,zds,woffs:',azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
@@ -154,6 +154,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         entry_with_max_bins = 0
     else:
         raise Exception("WrongIrfName")
+
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
     for i, entry in enumerate(eff_area_tree):
@@ -178,7 +179,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 # energy bias (Erec/Etrue)
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
-
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 # PSF vs true energy:
                 sample_irf, axes = hist2array(entry.hAngularLogDiffEmc_2D, return_edges=True)
@@ -221,6 +221,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     data_shape.append(len(zds))
     data_shape.append(len(woffs))
     data = np.zeros(data_shape)
+
     # Iterate over all IRFs within the file. If the entry i is close to the coordinates within
     # the coord_tuple, then store.
     #tqdm for progress bars, without: for i, entry in enumerate(eff_area_tree):
@@ -251,15 +252,14 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             elif irf_name == 'hEsysMCRelative2D':
                 irf = hist2array(entry.hEsysMCRelative2D)
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
-                #using pyROOT for histogram TTree
                 irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
+                #using pyROOT for histogram TTree
                 #x = entry.hEsysMCRelative2DNoDirectionCut.GetXaxis().GetNbins()
                 #y = entry.hEsysMCRelative2DNoDirectionCut.GetYaxis().GetNbins()
                 #irf = np.empty(shape=(x, y), dtype='f4')
                 #for i in range(0, x):
                 #    for j in range(0, y):
                 #        irf[i][j] = (entry.hEsysMCRelative2DNoDirectionCut.GetBinContent(i, j, 1))
-
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 irf = hist2array(entry.hAngularLogDiffEmc_2D)
             else:

@@ -20,8 +20,8 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
     # Extract the camera offsets simulated within the effective areas file.
     fast_eff_area = uproot4.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
-    offset = camera_offsets  # new: to add all offsets
-    print("camera offsets: ", camera_offsets, offset, "noise:", noise, "zenith:", zenith)
+    offset = camera_offsets
+    print("camera offsets: ", camera_offsets, "noise:", noise, "zenith:", zenith)
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
@@ -37,12 +37,6 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         # not to actual bins.
         theta_low = camera_offsets
         theta_high = camera_offsets
-        # print("theta low inside if clause if camera offset >1", theta_low)
-
-    # logger.debug('Getting Theta2 cut from EA file')
-    # Is this cut important to keep?
-    # theta2cut = cuts.fCut_Theta2_max
-    # logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
 
     if irf_to_store['point-like']:
         #
@@ -94,8 +88,7 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
                 ac = ab
 
         ac = ac.transpose()
-        print("ac:", ac)
-        print(len(theta_low))
+
         x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
                             ('ENERG_HI', '>f4', (len(eHigh),)),
@@ -115,6 +108,7 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         irf_interpolator.set_irf('effNoTh2')
 
         ea_final = []
+
         # Loop over offsets and store
         for offset in camera_offsets:
             eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
@@ -142,8 +136,8 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         # Energy dispersion (full-enclosure)
         #
         irf_interpolator.set_irf('hEsysMCRelative2DNoDirectionCut')
-        print(noise, zenith, offset)
         ac_final = []
+
         for offset in camera_offsets:
             bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
 
@@ -185,9 +179,9 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         # Direction dispersion (for full-enclosure IRFs)
         #
         irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
+        ac_final = []
 
         # Loop over offsets
-        ac_final = []
         for offset in camera_offsets:
 
             direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
@@ -216,7 +210,6 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
 
         # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
         ac_final = np.swapaxes(ac_final, 0, 1)
-        # print ("shape ac final:", np.shape(ac_final))
         x = np.array([(eLow, eHigh, theta_low, theta_high, rLow, rHigh, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
                             ('ENERG_HI', '>f4', (np.shape(eHigh))),

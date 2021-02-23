@@ -1,12 +1,11 @@
+import ROOT
 from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
-import ROOT
 
 
 class EventDisplayDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file):
-        print("filepath? or name?",etv_file)
         super(EventDisplayDataSource, self).__init__('EventDisplay', etv_file, ea_file)
 
         self.__evt_file__ = etv_file
@@ -35,6 +34,6 @@ class EventDisplayDataSource(VtsDataSource):
         ze = self.__zenith__
         nn = self.__noise__
         oo = self.__offset__ #new
-        print ("Coordinates going to fillresponse:", az, ze, nn, oo)
+        print("Coordinates to fillresponse:", az, ze, nn, oo)
         self.__response__ = __fillRESPONSE__(self.__ea_file__, az, ze, nn, oo,
                                                       self.__irf_to_store__)
