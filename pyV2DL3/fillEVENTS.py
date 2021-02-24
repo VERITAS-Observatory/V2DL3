@@ -7,7 +7,6 @@ from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
 
 logger = logging.getLogger(__name__)
 
-
 def fillEVENTS(datasource, save_multiplicity=False):
     evt_dict = datasource.get_evt_data()
     logger.debug("Create EVENT HDU")    
@@ -45,16 +44,17 @@ def fillEVENTS(datasource, save_multiplicity=False):
 
     hdu1.header.set('DATE-OBS',
                     evt_dict['DATE-OBS'],
-                    'start date (UTC) of obs yy-mm-dd')
-    hdu1.header.set('TIME-OBS',
-                    evt_dict['TIME-OBS'],
-                    'start time (UTC) of obs hh-mm-ss')
+                    'start date (UTC) of obs yy-mm-dd hh:mm:ss')
+    #include time and date in DATE-OBS
+    #hdu1.header.set('TIME-OBS',
+    #                evt_dict['TIME-OBS'],
+    #                'start time (UTC) of obs hh-mm-ss')
     hdu1.header.set('DATE-END',
                     evt_dict['DATE-END'],
-                    'end date (UTC) of obs yy-mm-dd')
-    hdu1.header.set('TIME-END',
-                    evt_dict['TIME-END'],
-                    'end time (UTC) of obs hh-mm-ss')
+                    'end date (UTC) of obs yy-mm-dd hh:mm:ss')
+    #hdu1.header.set('TIME-END',
+    #                evt_dict['TIME-END'],
+    #                'end time (UTC) of obs hh-mm-ss')
     
     hdu1.header.set('TSTART  ',
                     evt_dict['TSTART'],

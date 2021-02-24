@@ -12,7 +12,7 @@ setup(
         'astropy',
         'root_numpy',
         'pkgconfig',
-        'uproot'
+        'uproot4'
     ],
     entry_points='''
         [console_scripts]

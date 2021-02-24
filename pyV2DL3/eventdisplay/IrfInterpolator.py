@@ -5,7 +5,7 @@ from scipy.interpolate import RegularGridInterpolator
 
 class IrfInterpolator:
     def __init__(self, filename, azimuth):
-        self.implemented_irf_names_1d = ['eff', 'Rec_eff', 'effNoTh2', 'Rec_effNoTh2'] #'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
+        self.implemented_irf_names_1d = ['eff', 'Rec_eff', 'effNoTh2', 'Rec_effNoTh2']
         self.implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                          'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
         self.irf_name = ""

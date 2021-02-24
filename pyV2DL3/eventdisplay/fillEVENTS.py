@@ -1,7 +1,7 @@
 import numpy as np
 import logging
+import uproot4
 from pyV2DL3.eventdisplay.util import produce_tel_list
-from root_numpy import tree2array
 from astropy.time import Time
 from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE_LON, VTS_REFERENCE_HEIGHT
 
@@ -9,53 +9,53 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(edFileIO):
-    # EventDisplay imports
-    from ROOT import VEvndispRunParameter, VSkyCoordinatesUtilities, VAnaSumRunParameter
+def __fillEVENTS__(edFileIO):
 
     evt_dict = {}
 
-    # Load required trees within the anasum file:
-    filename = str(edFileIO.GetName())
-    runSummary = tree2array(edFileIO.Get("total_1/stereo/tRunSummary"))
+    #reading variables with uproo4
+    file = uproot4.open(edFileIO)
+
+    runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
     runNumber = runSummary['runOn'][0]
-    telConfig = tree2array(edFileIO.Get("run_{}/stereo/telconfig".format(runNumber)))
-    vAnaSumRunParameter = edFileIO.Get("run_{}/stereo/VAnaSumRunParameter".format(runNumber))
-    runParametersV2 = edFileIO.Get("run_{}/stereo/runparameterV2".format(runNumber))
-    selectedEventsTree = tree2array(edFileIO.Get("run_{}/stereo/TreeWithEventsForCtools".format(runNumber)))
+    telConfig = file['run_{}/stereo/telconfig'.format(runNumber)].arrays(library='np')
+
     # qStatsData = edFileIO.loadTheQStatsData()
     # pixelData = edFileIO.loadThePixelStatusData()
     # arrayInfo          = edFileIO.loadTheArrayInfo(0)
     # cuts = edFileIO.loadTheCutsInfo()
 
     # Get start and stop time within the run.
-    startDateTime = (runParametersV2.fDBRunStartTimeSQL).split(" ")
-    stopDateTime = (runParametersV2.fDBRunStoppTimeSQL).split(" ")
+    start_mjd = file['total_1/stereo/tRunSummary/MJDrunstart'].array(library='np')[0]
+    stop_mjd = file['total_1/stereo/tRunSummary/MJDrunstop'].array(library='np')[0]
 
-    start_year, start_month, start_day = [int(k) for k in startDateTime[0].split("-")]
-    stop_year, stop_month, stop_day = [int(k) for k in stopDateTime[0].split("-")]
-
-    start_mjd = VSkyCoordinatesUtilities.getMJD(start_year, start_month, start_day)
-    stop_mjd = VSkyCoordinatesUtilities.getMJD(stop_year, stop_month, stop_day)
-
-    deadtime = vAnaSumRunParameter.fScalarDeadTimeFrac
+    # convert mjd to fits format
+    t_start_fits = Time(start_mjd, format='mjd', scale='utc').to_value('fits')
+    t_stop_fits = Time(stop_mjd, format='mjd', scale='utc').to_value('fits')
+    deadtime = file['total_1/stereo/tRunSummary/DeadTimeFracOn'].array(library='np')[0]
 
     # Number of seconds between reference time and run MJD at 00:00:00:
     t_ref = Time(VTS_REFERENCE_MJD, format='mjd', scale='utc')
     seconds_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
-    tstart_from_reference = (Time(runParametersV2.fDBRunStartTimeSQL, format='iso', scale='utc') - t_ref).sec
-    tstop_from_reference = (Time(runParametersV2.fDBRunStoppTimeSQL, format='iso', scale='utc') - t_ref).sec
 
-    evNumArr = selectedEventsTree['eventNumber']
+    tstart_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
+    tstop_from_reference = (Time(stop_mjd, format='mjd', scale='utc') - t_ref).sec
+
+    DL3EventTree = file['run_{}/stereo/DL3EventTree'.format(runNumber)].arrays(library='np')
+    evNumArr = DL3EventTree['eventNumber']
+
     # This should already have microsecond resolution if stored with double precision.
-    timeArr = seconds_from_reference + selectedEventsTree['timeOfDay']
-    raArr = selectedEventsTree['RA']
-    decArr = selectedEventsTree['DEC']
-    azArr = selectedEventsTree['Az']
-    altArr = selectedEventsTree['El']
-    energyArr = selectedEventsTree['EnergyS']
+    time_of_day = DL3EventTree['timeOfDay']
+    timeArr = seconds_from_reference + time_of_day
+
+    raArr = DL3EventTree['RA']
+    decArr = DL3EventTree['DEC']
+    azArr = DL3EventTree['Az']
+    altArr = DL3EventTree['El']
+    #offset = DL3EventTree['Woff']
+    energyArr = DL3EventTree['Energy']
     # Not used for the moment by science tools.
-    nTelArr = selectedEventsTree['NImages']
+    nTelArr = DL3EventTree['NImages']
 
     avAlt = np.mean(altArr)
     # Calculate average azimuth angle from average vector on a circle
@@ -75,6 +75,7 @@ def __fillEVENTS_not_safe__(edFileIO):
     evt_dict['DEC'] = decArr
     evt_dict['ALT'] = altArr
     evt_dict['AZ'] = azArr
+    # evt_dict['OFFSET'] = offset
     evt_dict['ENERGY'] = energyArr
     evt_dict['EVENT_TYPE'] = nTelArr
 
@@ -90,23 +91,22 @@ def __fillEVENTS_not_safe__(edFileIO):
 
     # Filling Header info
     evt_dict['OBS_ID'] = runNumber  # this does not allow for event type files
-    evt_dict['DATE-OBS'] = startDateTime[0]
-    evt_dict['TIME-OBS'] = startDateTime[1]
-    evt_dict['DATE-END'] = stopDateTime[0]
-    evt_dict['TIME-END'] = stopDateTime[1]
+    evt_dict['DATE-OBS']= t_start_fits
+    #evt_dict['TIME-OBS'] = startDateTime[1]
+    evt_dict['DATE-END'] = t_stop_fits
     evt_dict['TSTART'] = tstart_from_reference
     evt_dict['TSTOP'] = tstop_from_reference
     evt_dict['MJDREFI'] = int(VTS_REFERENCE_MJD)
     evt_dict['ONTIME'] = tstop_from_reference - tstart_from_reference
     evt_dict['LIVETIME'] = (tstop_from_reference - tstart_from_reference) * (1 - deadtime)
     evt_dict['DEADC'] = 1 - deadtime
-    evt_dict['OBJECT'] = runParametersV2.fTargetName
+    evt_dict['OBJECT'] = runSummary['TargetName'][0]
     evt_dict['RA_PNT'] = avRA
     evt_dict['DEC_PNT'] = avDec
     evt_dict['ALT_PNT'] = avAlt
     evt_dict['AZ_PNT'] = avAz
-    evt_dict['RA_OBJ'] = runParametersV2.fTargetRA
-    evt_dict['DEC_OBJ'] = runParametersV2.fTargetDec
+    evt_dict['RA_OBJ'] = runSummary['TargetRAJ2000'][0]
+    evt_dict['DEC_OBJ'] = runSummary['TargetDecJ2000'][0]
     evt_dict['TELLIST'] = produce_tel_list(telConfig)
     evt_dict['N_TELS'] = len(telConfig['TelID'])
     evt_dict['GEOLON'] = VTS_REFERENCE_LON
