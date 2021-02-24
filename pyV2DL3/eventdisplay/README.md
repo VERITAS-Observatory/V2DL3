@@ -1,13 +1,8 @@
 ## Installation
 
-* Install a conda environment with the required versions/packages
+* Install the conda environment with the required packages/versions.
 
 `conda env create -f environment.yml`
-
-* With active environment install ROOT from conda forge
-
-`conda install -c conda-forge root`
-
 
 ## Contacts 
 
