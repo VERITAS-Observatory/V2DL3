@@ -35,5 +35,5 @@ class EventDisplayDataSource(VtsDataSource):
         nn = self.__noise__
         oo = self.__offset__ #new
         print("Coordinates to fillresponse:", az, ze, nn, oo)
-        self.__response__ = __fillRESPONSE__(self.__evt_file__,self.__ea_file__, az, ze, nn, oo,
+        self.__response__ = __fillRESPONSE__(self.__evt_file__, self.__ea_file__, az, ze, nn, oo,
                                                       self.__irf_to_store__)

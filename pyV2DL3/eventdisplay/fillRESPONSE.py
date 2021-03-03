@@ -11,9 +11,6 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     response_dict = {}
     filename = effectiveArea.GetName()
 
-    # no cuts for the moment
-    # cuts = effectiveArea.Get("GammaHadronCuts")
-
     # EventDisplay IRF interpolator object
     irf_interpolator = IrfInterpolator(filename, azimuth)
 
@@ -21,7 +18,6 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     fast_eff_area = uproot4.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     offset = camera_offsets
-    print("camera offsets: ", camera_offsets, "noise:", noise, "zenith:", zenith)
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
@@ -39,6 +35,11 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         theta_high = camera_offsets
 
     if irf_to_store['point-like']:
+        offset = 0.5
+        theta_low = [0.0, 10.0]
+        theta_high = [0.0, 10.0]
+        print("Point-like IRF: ", "camera offset: ", offset, "noise:", noise, "zenith:", zenith)
+
         #
         # Interpolate effective area  (point-like)
         #
@@ -106,6 +107,8 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         print('IRF interpolation done')
 
     if irf_to_store['full-enclosure']:
+        print("Full-enclosure: ", "camera offsets: ", camera_offsets, "noise:", noise, "zenith:", zenith)
+
         #
         # Interpolate effective area (full-enclosure)
         #
