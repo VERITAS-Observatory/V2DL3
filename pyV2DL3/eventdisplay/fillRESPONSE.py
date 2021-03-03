@@ -7,7 +7,7 @@ from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
 logger = logging.getLogger(__name__)
 
 
-def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
+def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
     filename = effectiveArea.GetName()
 
@@ -60,6 +60,10 @@ def __fillRESPONSE__(effectiveArea, azimuth, zenith, noise, offset, irf_to_store
         response_dict['EA'] = x
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
+
+        file = uproot4.open(edFileIO)
+        runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
+        theta2cut = runSummary['Theta2Max'][0]
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
         #
         # Energy dispersion (point-like)
