@@ -7,7 +7,6 @@ from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
 class EventDisplayDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file):
         super(EventDisplayDataSource, self).__init__('EventDisplay', etv_file, ea_file)
-
         self.__evt_file__ = etv_file
         self.__ea_file__ = ROOT.TFile.Open(ea_file)
 

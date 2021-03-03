@@ -20,11 +20,6 @@ def __fillEVENTS__(edFileIO):
     runNumber = runSummary['runOn'][0]
     telConfig = file['run_{}/stereo/telconfig'.format(runNumber)].arrays(library='np')
 
-    # qStatsData = edFileIO.loadTheQStatsData()
-    # pixelData = edFileIO.loadThePixelStatusData()
-    # arrayInfo          = edFileIO.loadTheArrayInfo(0)
-    # cuts = edFileIO.loadTheCutsInfo()
-
     # Get start and stop time within the run.
     start_mjd = file['total_1/stereo/tRunSummary/MJDrunstart'].array(library='np')[0]
     stop_mjd = file['total_1/stereo/tRunSummary/MJDrunstop'].array(library='np')[0]

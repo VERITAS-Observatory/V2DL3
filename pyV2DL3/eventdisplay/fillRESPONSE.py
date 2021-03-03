@@ -17,7 +17,6 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     # Extract the camera offsets simulated within the effective areas file.
     fast_eff_area = uproot4.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
-    offset = camera_offsets
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
