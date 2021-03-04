@@ -119,7 +119,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             raise ValueError("Wrong dimensions extracted from IRF cube." +
                              "Probably due to the rounding applied to the IRF coordinates.")
 
-    # If a specific coord_tuple is provided, only extract the IRFs wihin that range of dimensions
+    # If a specific coord_tuple is provided, only extract the IRFs within that range of dimensions
     else:
         if len(coord_tuple) != 5:
             raise ValueError("coord_tuple needs to contain 5 dimensions, in this order: az, index, pedvar, zd and woff")
@@ -130,7 +130,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             pedvars = coord_tuple[2]
             zds = coord_tuple[3]
             woffs = coord_tuple[4]
-            print("Coordinates to sample:" ,azs,indexs,pedvars,zds,woffs)
+            print("Coordinates to sample:" , azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
@@ -193,15 +193,13 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     # Now we should know all the dimensions that need to be stored in the output irf_data
     # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
     # * If 'single_index' is True, then only store one index value (average of the simulated ones)
-    az_bin_to_store = 0
+    az_bin_to_store = 16
     if azimuth:
-        azMaxs[azMaxs > 180] = 180
-        azMins[azMins < -180] = -180
-        az_centers = [(azMaxs[i]+azMins[i])/2. for i in np.arange(len(azMaxs))]
+        az_centers = (azMaxs[:-1] + azMins[1:]) / 2.
         az_bin_to_store = find_nearest(az_centers, azimuth)
     if single_index:
         # Find the closest index to the average value simulated:
-        index_to_store = indexs[find_nearest(indexs, (indexs.min()+indexs.max())/2.)]
+        index_to_store = indexs[find_nearest(indexs, (indexs.min()+indexs.max()) / 2.)]
     # Create data container, filled with zeros, containing the required dimensions to store
     # the IRF for a given coord_tuple. Separated between 1 and 2 dimensions:
     data_shape = []
@@ -221,13 +219,10 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     data_shape.append(len(zds))
     data_shape.append(len(woffs))
     data = np.zeros(data_shape)
-
     # Iterate over all IRFs within the file. If the entry i is close to the coordinates within
     # the coord_tuple, then store.
-    #tqdm for progress bars, without: for i, entry in enumerate(eff_area_tree):
+    # tqdm for progress bars.
     for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
-        #if i % 25000 == 0:
-        #    print("{}/{}".format(i, len(all_zds)))
         # Parameters within the effective area files show some fluctuation, therefore
         # we need to use the "isclose".
         if (np.isclose(azs, all_azs[i], atol=0.01).any() and
@@ -253,13 +248,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 irf = hist2array(entry.hEsysMCRelative2D)
             elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
                 irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-                #using pyROOT for histogram TTree
-                #x = entry.hEsysMCRelative2DNoDirectionCut.GetXaxis().GetNbins()
-                #y = entry.hEsysMCRelative2DNoDirectionCut.GetYaxis().GetNbins()
-                #irf = np.empty(shape=(x, y), dtype='f4')
-                #for i in range(0, x):
-                #    for j in range(0, y):
-                #        irf[i][j] = (entry.hEsysMCRelative2DNoDirectionCut.GetBinContent(i, j, 1))
             elif irf_name == 'hAngularLogDiffEmc_2D':
                 irf = hist2array(entry.hAngularLogDiffEmc_2D)
             else:
