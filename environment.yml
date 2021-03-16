@@ -14,3 +14,4 @@ dependencies:
   - root
   - tqdm
   - ipywidgets
+  - pandas
