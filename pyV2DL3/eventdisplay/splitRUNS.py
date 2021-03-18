@@ -65,9 +65,7 @@ def check_dict_length():
     [len(x) for x in DL3EventTree.values()]
 
 def systematics_checks(effectiveArea, df, **kwargs):
-    # define standard parameters here for check
-    Emin, Emax, Tolerance = 0.1, 30, 0.1
-
+ 
     ##should accept the effective area file and an arbitrary number of split df to check parallel
     azimuth = np.mean(df['Az'])
     az_min = np.min(df['Az'])
@@ -94,23 +92,19 @@ def systematics_checks(effectiveArea, df, **kwargs):
 
     offset = 0.5  # Get this also from AnasumFile
     eff_area, axis0 = irf_interpolator.interpolate([noise, zenith, offset])
-
-    irf_interpolator_azmin = IrfInterpolator(irf_file, az_min)
-    irf_interpolator_azmin.set_irf('effNoTh2')
-    eff_area_00, axis00 = irf_interpolator_azmin.interpolate([noise, zenith_min, offset])
-    eff_area_01, axis01 = irf_interpolator_azmin.interpolate([noise, zenith_max, offset])
-
-    irf_interpolator_azmax = IrfInterpolator(irf_file, az_max)
-    irf_interpolator_azmax.set_irf('effNoTh2')
-    eff_area_10, axis10 = irf_interpolator_azmax.interpolate([noise, zenith_min, offset])
-    eff_area_11, axis11 = irf_interpolator_azmax.interpolate([noise, zenith_max, offset])
+    
+    eff_area_00, axis00 = irf_interpolator.interpolate([noise, zenith_min, offset])
+    eff_area_01, axis01 = irf_interpolator.interpolate([noise, zenith_max, offset])    
 
     change_start = (eff_area_00 - eff_area) / eff_area
-    change_end = (eff_area_11 - eff_area) / eff_area
+    change_end = (eff_area_01 - eff_area) / eff_area
     change_ave_s0 = []
     change_ave_e0 = []
     change_ave_s1 = []
     change_ave_e1 = []
+    
+    #define standard parameters here for check
+    Emin, Emax, Tolerance = get_ethreshold_at_zenith(zenith,'moderate'), 30, 0.05 #cut type needs to be read from RunSummary
 
     # Checking the Effective area changes below and above 1 TeV
     for i in range(axis00[0].size):
@@ -141,3 +135,33 @@ def __splitter__(effectiveArea, etv):
         counts = split_half.calls
 
     return dataframe, counts
+
+
+def get_ethreshold_at_zenith(zenith,cut):
+    #These are the values from the Figure 2 of ICRC 2015
+    #These numbers are kept just for reference
+    Zenith = np.array([11.5, 19.0, 28.5, 39.0, 48.7,  58.6])
+    Energy_threshold_soft     = np.array([133.63, 140.0, 184.54, 254.54, 458.18, 668.18])
+    Energy_threshold_moderate = np.array([222.72, 216.36,260.90, 375.45, 649.09, 1050.0]) 
+    Energy_threshold_hard     = np.array([311.81, 318.18,400.90, 598.18, 1030.90, 1501.81])
+    
+    #Following are the fit parameter for energy-threshold vs zenith with polynomial of order 6
+    soft_para = np.array([-3.85861543e-07,  4.14010537e-05, -2.42103742e-04, -1.12552414e-01,
+                         5.03169246e+00, -7.91225611e+01,  5.46075976e+02])
+    moderate_para = np.array([-2.56357442e-07,  2.79090148e-05, -1.61483213e-04, -7.46857615e-02,
+                              3.48114049e+00, -5.83724064e+01,  5.45013373e+02])
+    hard_para = np.array([-4.72081854e-07,  4.88485410e-05, -1.99392547e-04, -1.28812793e-01,
+                          5.73595442e+00, -9.14165628e+01,  7.95182812e+02])
+    
+    if cut=='soft':
+        poly = np.poly1d(soft_para)
+    elif cut=='moderate':    
+        poly = np.poly1d(moderate_para)
+    elif cut=='hard':
+        poly = np.poly1d(hard_para)
+    else:
+        print ('cut value invalid')
+    
+    ethreshold = poly(zenith)*1.0e-3
+    
+    return ethreshold
