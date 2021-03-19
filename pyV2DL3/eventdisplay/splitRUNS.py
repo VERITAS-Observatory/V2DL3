@@ -6,10 +6,11 @@ from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
 def __importer__(etv):
     file = uproot4.open(etv)
     runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
+    runSummary = pd.DataFrame.from_dict(runSummary)
     runNumber = runSummary['runOn'][0]
     DL3EventTree = file['run_{}/stereo/DL3EventTree'.format(runNumber)].arrays(library='np')
     dataframe = pd.DataFrame.from_dict(DL3EventTree)
-    return dataframe
+    return dataframe, runSummary
 
 def is_sorted(array):
     value = all(array[i] <= array[i + 1] for i in range(len(array) - 1))
@@ -64,75 +65,74 @@ def split_counter():
 def check_dict_length():
     [len(x) for x in DL3EventTree.values()]
 
-def systematics_checks(effectiveArea, df, **kwargs):
- 
+
+def systematics_checks(effectiveArea, df, runSummary, **kwargs):
+
     ##should accept the effective area file and an arbitrary number of split df to check parallel
-    azimuth = np.mean(df['Az'])
-    az_min = np.min(df['Az'])
-    az_max = np.max(df['Az'])
-    print('azimuth', azimuth, az_min, az_max)
-
-    elevation = np.mean(df['El'])
-    ele_min = np.min(df['El'])
-    ele_max = np.max(df['El'])
-    zenith = 90 - elevation
-    zenith_min = 90 - ele_max
-    zenith_max = 90 - ele_min
-    print('zenith', zenith, zenith_min, zenith_max)
-
-    # tRunSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
-    # noise = np.mean(tRunSummary['pedvarsOn'])
-    noise = 7.252038728534893  # Get this also from AnssumFile
-    print('noise', noise)
-
     irf_file = effectiveArea
     fast_eff_area = uproot4.open(irf_file)['fEffArea']
-    irf_interpolator = IrfInterpolator(irf_file, azimuth)
-    irf_interpolator.set_irf('effNoTh2')
-
-    offset = 0.5  # Get this also from AnasumFile
-    eff_area, axis0 = irf_interpolator.interpolate([noise, zenith, offset])
     
-    eff_area_00, axis00 = irf_interpolator.interpolate([noise, zenith_min, offset])
-    eff_area_01, axis01 = irf_interpolator.interpolate([noise, zenith_max, offset])    
+    # run systematics checks for each split df and append boolean value to this list:
+    tolerance_split = []
 
-    change_start = (eff_area_00 - eff_area) / eff_area
-    change_end = (eff_area_01 - eff_area) / eff_area
-    change_ave_s0 = []
-    change_ave_e0 = []
-    change_ave_s1 = []
-    change_ave_e1 = []
-    
-    #define standard parameters here for check
-    Emin, Emax, Tolerance = get_ethreshold_at_zenith(zenith,'moderate'), 30, 0.05 #cut type needs to be read from RunSummary
+    if (type(df) == pd.core.frame.DataFrame):
+        df = [df]
+    for df_split in df:
 
-    # Checking the Effective area changes below and above 1 TeV
-    for i in range(axis00[0].size):
-        if Emin <= 10.0 ** axis00[0][i] < 1.0:
-            # print (axis00[0][i], change_start[i])
-            change_ave_s0.append(change_start[i])
-            change_ave_e0.append(change_end[i])
+        azimuth, az_max, az_min = df_split['Az'].agg(['mean', 'max', 'min'])
+        elevation, el_max, el_min = df_split['El'].agg(['mean', 'max', 'min'])
+        zenith, zenith_max, zenith_min = 90 - elevation, 90 - el_max, 90 - el_min
+        noise = runSummary['pedvarsOn'][0]
 
-        if 1.0 <= 10.0 ** axis00[0][i] <= Emax:
-            # print (axis00[0][i], change_start[i])
-            change_ave_s1.append(change_start[i])
-            change_ave_e1.append(change_end[i])
+        irf_interpolator = IrfInterpolator(irf_file, azimuth)
+        irf_interpolator.set_irf('effNoTh2')
 
-    change = np.array([np.mean(change_ave_s0), np.mean(change_ave_e0), np.mean(change_ave_s1), np.mean(change_ave_e1)])
-    print('Average change below and above 1 TeV:', change)
+        offset = 0.5  # Get this also from AnasumFile
+        eff_area, axis0 = irf_interpolator.interpolate([noise, zenith, offset])
+        
+        eff_area_00, axis00 = irf_interpolator.interpolate([noise, zenith_min, offset])
+        eff_area_01, axis01 = irf_interpolator.interpolate([noise, zenith_max, offset])    
 
-    ind = change[np.abs(change) > Tolerance]
-    if ind.size == 0:
-        return 0
-    else:
-        return 1
+        change_start = (eff_area_00 - eff_area) / eff_area
+        change_end = (eff_area_01 - eff_area) / eff_area
+        change_ave_s0 = []
+        change_ave_e0 = []
+        change_ave_s1 = []
+        change_ave_e1 = []
+        
+        #define standard parameters here for check
+        Emin, Emax, Tolerance = get_ethreshold_at_zenith(zenith,'moderate'), 30, 0.05 #cut type needs to be read from RunSummary
+
+        # Checking the Effective area changes below and above 1 TeV
+        for i in range(axis00[0].size):
+            if Emin <= 10.0 ** axis00[0][i] < 1.0:
+                change_ave_s0.append(change_start[i])
+                change_ave_e0.append(change_end[i])
+
+            if 1.0 <= 10.0 ** axis00[0][i] <= Emax:
+                change_ave_s1.append(change_start[i])
+                change_ave_e1.append(change_end[i])
+
+        change = np.array(
+            [np.mean(change_ave_s0), np.mean(change_ave_e0), np.mean(change_ave_s1), np.mean(change_ave_e1)])
+        print('Average change below and above 1 TeV:', change)
+
+        ind = np.abs(change) < Tolerance
+        is_all_true = np.all((ind == True))
+
+        tolerance_split.append(is_all_true)
+        print(tolerance_split)
+
+    is_all_true = np.all((tolerance_split == True))
+    return is_all_true
+
 
 def __splitter__(effectiveArea, etv):
-    dataframe = __importer__(etv)
-    #repeat systematic checks and split
-    while systematics_checks(effectiveArea, dataframe):
+    dataframe, runSummary = __importer__(etv)
+    # repeat systematic checks and split
+    while not systematics_checks(effectiveArea, dataframe, runSummary):
         dataframe = split_half(dataframe)
-        counts = split_half.calls
+    counts = split_half.calls
 
     return dataframe, counts
 
