@@ -227,8 +227,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
         index_to_store = indexs[find_nearest(indexs, (indexs.min() + indexs.max()) / 2.)]
         # true energy IRFs are not index dependent, only lowest index is populated
         if irf_name == 'hAngularLogDiffEmc_2D' or irf_name == 'hEsysMCRelative2DNoDirectionCut' or irf_name == 'hEsysMCRelative2D':
-            index_to_store = 0
-        print('index to store test', index_to_store)
+            index_to_store = indexs.min()
     # Create data container, filled with zeros, containing the required dimensions to store
     # the IRF for a given coord_tuple. Separated between 1 and 2 dimensions:
     data_shape = []
