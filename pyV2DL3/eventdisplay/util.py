@@ -304,7 +304,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                         print("Entry number ", i)
                         raise
                 elif single_index:
-                    print('single index good')
                     try:
                         data[:, :, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
                         find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
