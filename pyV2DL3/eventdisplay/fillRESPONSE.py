@@ -228,8 +228,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
 
         # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
         rpsf_final = np.swapaxes(rpsf_final, 0, 1)
-        print('rpsf shape', rpsf_final.shape)
-        print('solid angle, rlow rhig', solid_angle.shape,rLow.shape, rHigh.shape)
+
         x = np.array([(eLow, eHigh, theta_low, theta_high, rLow, rHigh, rpsf_final)],
                      dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
                             ('ENERG_HI', '>f4', (np.shape(eHigh))),
