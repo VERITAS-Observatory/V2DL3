@@ -10,7 +10,6 @@ dependencies:
   - cython>=0.27
   - pkgconfig
   - uproot4
-  - root_numpy
   - root
   - tqdm
   - ipywidgets

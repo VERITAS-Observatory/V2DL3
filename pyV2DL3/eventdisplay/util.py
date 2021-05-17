@@ -1,7 +1,6 @@
 import uproot4
 import numpy as np
 import sys
-from root_numpy import hist2array
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
 from tqdm.auto import tqdm
 
@@ -73,6 +72,33 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+def hist2array(h, return_edges=False):
+    #extracted TH2D to numpy conversion part from root_numpy
+    cName = h.Class_Name()
+    if cName == "TH2D" or cName == "TH2F":
+        nBinsX = h.GetNbinsX()
+        nBinsY = h.GetNbinsY()
+        shape = (nBinsY + 2, nBinsX + 2)
+        if cName == "TH2F":
+            dtype = "f4"
+        else:
+            dtype = "f8"
+        array = np.ndarray(shape=shape, dtype=dtype, buffer=h.GetArray())
+    else:
+        print(cName)
+    array = array[tuple([slice(1, -1) for idim in range(array.ndim)])]
+    if return_edges:
+        ndims = h.GetDimension()
+        axis_getters = ['GetXaxis', 'GetYaxis', 'GetZaxis'][:ndims]
+        edges = []
+        for idim, axis_getter in zip(range(ndims), axis_getters):
+            ax = getattr(h, axis_getter)(*(()))
+            edges.append(np.empty(ax.GetNbins() + 1, dtype=np.double))
+            ax.GetLowEdge(edges[-1])
+            edges[-1][-1] = ax.GetBinUpEdge(ax.GetNbins())
+        return array.T, edges
+    else:
+        return array.T
 
 def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
