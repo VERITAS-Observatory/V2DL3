@@ -9,7 +9,7 @@ Contact:
         
 ## Aim
 
-This repository is for the code that will be used to convert VERITAS data into DL3 format. Initially was developed for point-like IRFs (as included in the joint-Crab paper), full-enclosure IRFs are now possible as well.
+This repository is for the code that will be used to convert VERITAS data into DL3 format. It can be used to convert point-like IRFs (as included in the joint-Crab paper), as well as full-enclosure IRFs.
 
 The project follows the most recent DL3 format definition from the [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
@@ -26,11 +26,11 @@ The python package for converting stage5/anasum files to the DL3 FITS format. Ot
   - astropy>=4.0
   - cython>=0.27
   - pkgconfig
-  - uproot4
-  - root_numpy
+  - uproot
   - root
   - tqdm
-  - 
+  - ipywidgets
+  
 #### VEGAS
 
 * vegas version >= 2.5.7
@@ -41,13 +41,13 @@ The python package for converting stage5/anasum files to the DL3 FITS format. Ot
 
 ### Install pyV2DL3
 
-To insatll all the needed python dependencies, use of conda is recomended. The necessary python environment can be created from ```environment.yml```.
+To install the needed python dependencies, use of conda is recomended. The necessary python environment can be created from ```environment.yml```.
 
 Just run:
 ```
 conda env create -f environment.yml
 ```
-and an environment named V2DL3 will be created. After activating the environment just install pyV2DL3 as follows.
+and an environment named v2dl3 will be created. After activating the environment just install pyV2DL3 as follows.
 
 ```
 pip install .
