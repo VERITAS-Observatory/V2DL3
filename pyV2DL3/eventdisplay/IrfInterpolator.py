@@ -53,5 +53,6 @@ class IrfInterpolator:
                                                   coordinate[2]))
             return interpolated_irf, [self.irf_axes[0]]
         else:
-            print("The interpolation of the irf you entered: {}  is either wrong or not implemented.".format(self.irf_name))
+            print("The interpolation of the irf you entered: {}"
+                  "  is either wrong or not implemented.".format(self.irf_name))
             raise WrongIrf

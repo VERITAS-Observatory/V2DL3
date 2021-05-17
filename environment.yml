@@ -9,7 +9,7 @@ dependencies:
   - astropy>=4.0
   - cython>=0.27
   - pkgconfig
-  - uproot4
+  - uproot
   - root
   - tqdm
   - ipywidgets

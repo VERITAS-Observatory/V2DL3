@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-import uproot4
+import uproot
 from pyV2DL3.eventdisplay.util import produce_tel_list
 from astropy.time import Time
 from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE_LON, VTS_REFERENCE_HEIGHT
@@ -10,11 +10,10 @@ windowSizeForNoise = 7
 
 
 def __fillEVENTS__(edFileIO):
-
     evt_dict = {}
 
-    #reading variables with uproo4
-    file = uproot4.open(edFileIO)
+    # reading variables with uproot
+    file = uproot.open(edFileIO)
 
     runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
     runNumber = runSummary['runOn'][0]
@@ -47,7 +46,7 @@ def __fillEVENTS__(edFileIO):
     decArr = DL3EventTree['DEC']
     azArr = DL3EventTree['Az']
     altArr = DL3EventTree['El']
-    #offset = DL3EventTree['Woff']
+    # offset = DL3EventTree['Woff']
     energyArr = DL3EventTree['Energy']
     # Not used for the moment by science tools.
     nTelArr = DL3EventTree['NImages']
@@ -56,7 +55,7 @@ def __fillEVENTS__(edFileIO):
     # Calculate average azimuth angle from average vector on a circle
     # https://en.wikipedia.org/wiki/Mean_of_circular_quantities
     avAz_rad = np.deg2rad(azArr)
-    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_rad)),np.sum(np.cos(avAz_rad))))
+    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_rad)), np.sum(np.cos(avAz_rad))))
     avAz = avAz if avAz > 0 else avAz + 360
 
     # RA and DEC already in degrees.
@@ -86,8 +85,8 @@ def __fillEVENTS__(edFileIO):
 
     # Filling Header info
     evt_dict['OBS_ID'] = runNumber  # this does not allow for event type files
-    evt_dict['DATE-OBS']= t_start_fits
-    #evt_dict['TIME-OBS'] = startDateTime[1]
+    evt_dict['DATE-OBS'] = t_start_fits
+    # evt_dict['TIME-OBS'] = startDateTime[1]
     evt_dict['DATE-END'] = t_stop_fits
     evt_dict['TSTART'] = tstart_from_reference
     evt_dict['TSTOP'] = tstop_from_reference

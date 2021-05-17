@@ -1,5 +1,5 @@
 import numpy as np
-import uproot4
+import uproot
 import logging
 from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
@@ -15,7 +15,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     irf_interpolator = IrfInterpolator(filename, azimuth)
 
     # Extract the camera offsets simulated within the effective areas file.
-    fast_eff_area = uproot4.open(filename)['fEffArea']
+    fast_eff_area = uproot.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     # Check the camera offset bins available in the effective area file.
     theta_low = []
@@ -61,7 +61,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
 
-        file = uproot4.open(edFileIO)
+        file = uproot.open(edFileIO)
         runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
         theta2cut = runSummary['Theta2Max'][0]
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)

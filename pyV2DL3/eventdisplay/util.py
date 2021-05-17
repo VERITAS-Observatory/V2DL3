@@ -1,4 +1,4 @@
-import uproot4
+import uproot
 import numpy as np
 import sys
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
@@ -73,7 +73,7 @@ def find_nearest(array, value):
     return idx
 
 def hist2array(h, return_edges=False):
-    #extracted TH2D to numpy conversion part from root_numpy
+    # extracted TH2D to numpy conversion part from root_numpy
     cName = h.Class_Name()
     if cName == "TH2D" or cName == "TH2F":
         nBinsX = h.GetNbinsX()
@@ -110,12 +110,12 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
                                 'hAngularLogDiffEmc_2D']
-    # Get both the ROOT effective area TTree and the uproot4 one (much faster)
+    # Get both the ROOT effective area TTree and the uproot one (much faster)
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
-    fast_eff_area = uproot4.open(filename)['fEffArea']
+    fast_eff_area = uproot.open(filename)['fEffArea']
 
-    # Load parameters from each TTree on arrays with uproot4 (super fast)
+    # Load parameters from each TTree on arrays with uproot (super fast)
     all_zds = fast_eff_area['ze'].array(library='np')
     all_azs = fast_eff_area['az'].array(library='np')
     all_azMins = fast_eff_area['azMin'].array(library='np')
@@ -125,8 +125,6 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     all_indexs = fast_eff_area['index'].array(library='np')
     all_nbins = fast_eff_area['nbins'].array(library='np')
     all_rec_nbins = fast_eff_area['Rec_nbins'].array(library='np')
-
-
 
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
