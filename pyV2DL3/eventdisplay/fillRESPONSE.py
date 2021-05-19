@@ -61,7 +61,9 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
 
+
         file = uproot.open(edFileIO)
+
         runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
         theta2cut = runSummary['Theta2Max'][0]
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
