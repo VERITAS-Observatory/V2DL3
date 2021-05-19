@@ -19,18 +19,8 @@ The project follows the most recent DL3 format definition from the [open gamma-r
 The python package for converting stage5/anasum files to the DL3 FITS format. Other than useful functions that can be called, a commandline tool `v2dl3` comes with the package.
 
 ### Requirements
+The requirements are listed in the environment.yml file.
 
-  - python>=3.5 
-  - click 
-  - numpy>=1.13 
-  - astropy>=4.0
-  - cython>=0.27
-  - pkgconfig
-  - uproot
-  - root
-  - tqdm
-  - ipywidgets
-  
 #### VEGAS
 
 * vegas version >= 2.5.7
@@ -41,7 +31,7 @@ The python package for converting stage5/anasum files to the DL3 FITS format. Ot
 
 ### Install pyV2DL3
 
-To install the needed python dependencies, use of conda is recomended. The necessary python environment can be created from ```environment.yml```.
+To install the needed python dependencies, use of conda is recommended. The necessary python environment can be created from ```environment.yml```.
 
 Just run:
 ```
