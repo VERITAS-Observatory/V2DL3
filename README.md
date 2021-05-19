@@ -19,7 +19,7 @@ The project follows the most recent DL3 format definition from the [open gamma-r
 The python package for converting stage5/anasum files to the DL3 FITS format. Other than useful functions that can be called, a commandline tool `v2dl3` comes with the package.
 
 ### Requirements
-The requirements are listed in the environment.yml file.
+The requirements are listed in the ```environment.yml``` file.
 
 #### VEGAS
 
