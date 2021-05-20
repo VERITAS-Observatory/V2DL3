@@ -241,11 +241,18 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             break
     # Now we should know all the dimensions that need to be stored in the output irf_data
     # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
+    # * az_bin_to_store = 16 # contains the average over all az bins. Not used.
+    # * note the different conventions for azimuth: anasum file (0..360), EA (-180..180)
     # * If 'single_index' is True, then only store one index value (average of the simulated ones)
-    az_bin_to_store = 16
+
     if azimuth:
         az_centers = (azMaxs[:-1] + azMins[1:]) / 2.
+        az_centers = np.array(az_centers)
+        az_centers[az_centers < 0] += 360
+        if np.any(az_centers < 0) or np.any(az_centers > 360):
+            raise ValueError("IRF azimuth bins not in the range 0-360")
         az_bin_to_store = find_nearest(az_centers, azimuth)
+        print("az bin to store: ", az_bin_to_store)
     if single_index:
         # Find the closest index to the average value simulated:
         index_to_store = indexs[find_nearest(indexs, (indexs.min() + indexs.max()) / 2.)]

@@ -14,3 +14,4 @@ dependencies:
   - tqdm
   - ipywidgets
   - pandas
+  - gammapy
