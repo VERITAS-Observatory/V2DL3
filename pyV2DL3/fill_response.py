@@ -18,6 +18,9 @@ def fill_response(datasource):
         x = response_dict['EA']
         hdu_ea = fits.BinTableHDU(data=x)
         hdu_ea.name = "EFFECTIVE AREA"
+        hdu_ea.header.set('TELESCOP ', 'VERITAS', "")
+        hdu_ea.header.set('INSTRUME ', 'Epoch V6', "")
+        
         # Fill Standard HDUCLASS keyword
         hdu_ea = addHDUClassKeyword(hdu_ea, class1='RESPONSE', class2='EFF_AREA',
                                     class3='POINT-LIKE', class4='AEFF_2D')
@@ -70,6 +73,9 @@ def fill_response(datasource):
         x = response_dict['FULL_EA']
         hdu_fe_ea = fits.BinTableHDU(data=x)
         hdu_fe_ea.name = "EFFECTIVE AREA"
+        hdu_fe_ea.header.set('TELESCOP ', 'VERITAS', "")
+        hdu_fe_ea.header.set('INSTRUME ', 'Epoch V6', "")
+        
         # Fill Standard HDUCLASS keyword
         hdu_fe_ea = addHDUClassKeyword(hdu_fe_ea, class1='RESPONSE', class2='EFF_AREA',
                                        class3='FULL-ENCLOSURE', class4='AEFF_2D')

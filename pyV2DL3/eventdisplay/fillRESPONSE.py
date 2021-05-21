@@ -1,5 +1,5 @@
 import numpy as np
-import uproot4
+import uproot
 import logging
 from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
@@ -15,7 +15,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     irf_interpolator = IrfInterpolator(filename, azimuth)
 
     # Extract the camera offsets simulated within the effective areas file.
-    fast_eff_area = uproot4.open(filename)['fEffArea']
+    fast_eff_area = uproot.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     # Check the camera offset bins available in the effective area file.
     theta_low = []
@@ -61,7 +61,9 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
 
-        file = uproot4.open(edFileIO)
+
+        file = uproot.open(edFileIO)
+
         runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
         theta2cut = runSummary['Theta2Max'][0]
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
@@ -185,9 +187,15 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         # Direction dispersion (for full-enclosure IRFs)
         #
         irf_interpolator.set_irf('hAngularLogDiffEmc_2D')
-        ac_final = []
 
-        # Loop over offsets
+        rpsf_final = []
+        # Loop over offsets, get rad index to cut
+        index_to_cut_a = []
+        for offset in camera_offsets:
+            direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            counts_below_zero_index = np.all(direction_diff < 10, axis=1)
+            index_to_cut_a.append(np.where(~counts_below_zero_index)[0][0])
+
         for offset in camera_offsets:
 
             direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
@@ -201,28 +209,35 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
             rLow = np.power(10, [rad_edges[:-1]])[0]
             rHigh = np.power(10, [rad_edges[1:]])[0]
 
-            ac = []
-            for aa in direction_diff.transpose():
-                if np.sum(aa) > 0:
-                    ab = aa / np.sum(aa * (rHigh - rLow))
-                else:
-                    ab = aa
-                try:
-                    ac = np.vstack((ac, ab))
-                except:
-                    ac = ab
-            ac = ac.transpose()
-            ac_final.append(ac)
+
+            #normalize rpsf by solid angle
+            rad_width_deg = np.diff(rad_edges)
+            solid_angle = (2 * np.pi * rad_width_deg * np.power(10, axis[1]))
+            index_to_cut = max(index_to_cut_a)
+
+            direction_diff_n = np.delete(direction_diff, np.s_[0:index_to_cut], axis=0)
+            solid_angle = solid_angle[index_to_cut:]
+            rLow =rLow[index_to_cut:]
+            rHigh = rHigh[index_to_cut:]
+
+            ##correct for removed counts
+            count_sum_per_energybin = direction_diff.sum(axis=0)
+            count_sum_per_energybin_n = direction_diff_n.sum(axis=0)
+            direction_diff[0, :] += (count_sum_per_energybin - count_sum_per_energybin_n)
+
+            rpsf = direction_diff_n / solid_angle[:, None]
+            rpsf_final.append(rpsf)
 
         # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
-        ac_final = np.swapaxes(ac_final, 0, 1)
-        x = np.array([(eLow, eHigh, theta_low, theta_high, rLow, rHigh, ac_final)],
+        rpsf_final = np.swapaxes(rpsf_final, 0, 1)
+
+        x = np.array([(eLow, eHigh, theta_low, theta_high, rLow, rHigh, rpsf_final)],
                      dtype=[('ENERG_LO', '>f4', (np.shape(eLow))),
                             ('ENERG_HI', '>f4', (np.shape(eHigh))),
                             ('THETA_LO', '>f4', (np.shape(theta_low))),
                             ('THETA_HI', '>f4', (np.shape(theta_high))),
                             ('RAD_LO', '>f4', (np.shape(rLow))),
                             ('RAD_HI', '>f4', (np.shape(rHigh))),
-                            ('RPSF', '>f4', (np.shape(ac_final)))])
+                            ('RPSF', '>f4', (np.shape(rpsf_final)))])
         response_dict['PSF'] = x
     return response_dict

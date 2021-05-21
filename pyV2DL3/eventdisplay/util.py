@@ -1,7 +1,6 @@
-import uproot4
+import uproot
 import numpy as np
 import sys
-from root_numpy import hist2array
 from ROOT import gSystem, TFile, TCanvas, TGraphAsymmErrors, TH1D, TH2D, TGraphAsymmErrors, TProfile
 from tqdm.auto import tqdm
 
@@ -15,12 +14,11 @@ def produce_tel_list(tel_config):
 
 
 def is_close(a, b, rel_tol=1e-04, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 
 class WrongIrf(Exception):
     def __init__(self, message, errors):
-
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
@@ -65,8 +63,8 @@ def bin_edges_to_centers(axis):
 def bin_centers_to_edges(axis):
     # This function assumes bins of equal width
     bin_size = axis[1] - axis[0]
-    extended_axis = np.insert(axis, 0, axis[0]-bin_size)
-    return extended_axis + bin_size/2.
+    extended_axis = np.insert(axis, 0, axis[0] - bin_size)
+    return extended_axis + bin_size / 2.
 
 
 def find_nearest(array, value):
@@ -74,6 +72,33 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+def hist2array(h, return_edges=False):
+    # extracted TH2D to numpy conversion part from root_numpy
+    cName = h.Class_Name()
+    if cName == "TH2D" or cName == "TH2F":
+        nBinsX = h.GetNbinsX()
+        nBinsY = h.GetNbinsY()
+        shape = (nBinsY + 2, nBinsX + 2)
+        if cName == "TH2F":
+            dtype = "f4"
+        else:
+            dtype = "f8"
+        array = np.ndarray(shape=shape, dtype=dtype, buffer=h.GetArray())
+    else:
+        print(cName)
+    array = array[tuple([slice(1, -1) for idim in range(array.ndim)])]
+    if return_edges:
+        ndims = h.GetDimension()
+        axis_getters = ['GetXaxis', 'GetYaxis', 'GetZaxis'][:ndims]
+        edges = []
+        for idim, axis_getter in zip(range(ndims), axis_getters):
+            ax = getattr(h, axis_getter)(*(()))
+            edges.append(np.empty(ax.GetNbins() + 1, dtype=np.double))
+            ax.GetLowEdge(edges[-1])
+            edges[-1][-1] = ax.GetBinUpEdge(ax.GetNbins())
+        return array.T, edges
+    else:
+        return array.T
 
 def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
                 return_irf_axes=False, single_index=False):
@@ -82,15 +107,15 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     print("Coordinate tuple", coord_tuple)
     print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
-    implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff', 'gEffAreaNoTh2MC', 'gEffAreaNoTh2Rec']
+    implemented_irf_names_1d = ['eff', 'effNoTh2', 'Rec_eff']
     implemented_irf_names_2d = ['hEsysMCRelative2D', 'hEsysMCRelative2DNoDirectionCut',
-                                'hAngularLogDiff_2D', 'hAngularLogDiffEmc_2D']
-    # Get both the ROOT effective area TTree and the uproot4 one (much faster)
+                                'hAngularLogDiffEmc_2D']
+    # Get both the ROOT effective area TTree and the uproot one (much faster)
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
-    fast_eff_area = uproot4.open(filename)['fEffArea']
+    fast_eff_area = uproot.open(filename)['fEffArea']
 
-    # Load parameters from each TTree on arrays with uproot4 (super fast)
+    # Load parameters from each TTree on arrays with uproot (super fast)
     all_zds = fast_eff_area['ze'].array(library='np')
     all_azs = fast_eff_area['az'].array(library='np')
     all_azMins = fast_eff_area['azMin'].array(library='np')
@@ -100,21 +125,43 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     all_indexs = fast_eff_area['index'].array(library='np')
     all_nbins = fast_eff_area['nbins'].array(library='np')
     all_rec_nbins = fast_eff_area['Rec_nbins'].array(library='np')
+
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
-
     if not coord_tuple:
-        zds, zes_counts = np.unique(np.round(all_zds, decimals=2), return_counts=True)
-        azs = np.unique(all_azs)
-        azMins, azMins_counts = np.unique(np.round(all_azMins, decimals=2), return_counts=True)
-        azMaxs, azMaxs_counts = np.unique(np.round(all_azMaxs, decimals=2), return_counts=True)
-        woffs, Woffs_counts = np.unique(np.round(all_Woffs, decimals=2), return_counts=True)
-        pedvars, pedvars_counts = np.unique(np.round(all_pedvars, decimals=2), return_counts=True)
-        indexs, indexs_counts = np.unique(np.round(all_indexs, decimals=2), return_counts=True)
+        # round all parameters for correct extraction
+        all_zds = np.round(all_zds, decimals=2)
+        zds, zes_counts = np.unique(all_zds, return_counts=True)
+
         # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
-        # We remove the duplicities from the zenith and pedestal values arrays:
+        # We remove the duplicities from the zenith and pedestal unique values arrays:
         zds = remove_duplicities(zds, 2.0)
+
+        all_azs = np.round(all_azs, decimals=2)
+        azs = np.unique(all_azs)
+
+        all_azMins = np.round(all_azMins, decimals=2)
+        azMins, azMins_counts = np.unique(all_azMins, return_counts=True)
+
+        all_azMaxs = np.round(all_azMaxs, decimals=2)
+        azMaxs, azMaxs_counts = np.unique(all_azMaxs, return_counts=True)
+
+        all_Woffs = np.round(all_Woffs, decimals=2)
+        woffs, Woffs_counts = np.unique(all_Woffs, return_counts=True)
+
+        all_pedvars = np.round(all_pedvars, decimals=2)
+        pedvars, pedvars_counts = np.unique(all_pedvars, return_counts=True)
+        #replace all_pedvars with values from pedvars unique list of values if they are close
+
+        # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
+        # We remove the duplicities from the zenith and pedestal unique values arrays:
         pedvars = remove_duplicities(pedvars, 0.21)
+        # replace all_pedvars values with nearest from pedvars list by calculating the difference between each element and taking the min
+        all_pedvars = pedvars[abs(all_pedvars[None, :] - pedvars[:, None]).argmin(axis=0)]
+
+        all_indexs = np.round(all_indexs, decimals=2)
+        indexs, indexs_counts = np.unique(all_indexs, return_counts=True)
+
         if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(indexs):
             raise ValueError("Wrong dimensions extracted from IRF cube." +
                              "Probably due to the rounding applied to the IRF coordinates.")
@@ -130,7 +177,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             pedvars = coord_tuple[2]
             zds = coord_tuple[3]
             woffs = coord_tuple[4]
-            print("Coordinates to sample:" , azs, indexs, pedvars, zds, woffs)
+            print("Coordinates to sample:", azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
@@ -157,6 +204,7 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
 
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
+    #Generate sample IRF
     for i, entry in enumerate(eff_area_tree):
         if i == entry_with_max_bins:
             if irf_name == 'eff':
@@ -189,17 +237,28 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
             else:
                 raise Exception("WrongIrfName")
         if i > entry_with_max_bins:
+        #Only extract the above defined IRF-name-specific "entry with max bins"
             break
     # Now we should know all the dimensions that need to be stored in the output irf_data
     # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
+    # * az_bin_to_store = 16 # contains the average over all az bins. Not used.
+    # * note the different conventions for azimuth: anasum file (0..360), EA (-180..180)
     # * If 'single_index' is True, then only store one index value (average of the simulated ones)
-    az_bin_to_store = 16
+
     if azimuth:
         az_centers = (azMaxs[:-1] + azMins[1:]) / 2.
+        az_centers = np.array(az_centers)
+        az_centers[az_centers < 0] += 360
+        if np.any(az_centers < 0) or np.any(az_centers > 360):
+            raise ValueError("IRF azimuth bins not in the range 0-360")
         az_bin_to_store = find_nearest(az_centers, azimuth)
+        print("az bin to store: ", az_bin_to_store)
     if single_index:
         # Find the closest index to the average value simulated:
-        index_to_store = indexs[find_nearest(indexs, (indexs.min()+indexs.max()) / 2.)]
+        index_to_store = indexs[find_nearest(indexs, (indexs.min() + indexs.max()) / 2.)]
+        # true energy IRFs are not index dependent, only lowest index is populated
+        if irf_name == 'hAngularLogDiffEmc_2D' or irf_name == 'hEsysMCRelative2DNoDirectionCut' or irf_name == 'hEsysMCRelative2D':
+            index_to_store = indexs.min()
     # Create data container, filled with zeros, containing the required dimensions to store
     # the IRF for a given coord_tuple. Separated between 1 and 2 dimensions:
     data_shape = []
@@ -223,121 +282,123 @@ def extract_irf(filename, irf_name, azimuth=False, coord_tuple=False,
     # the coord_tuple, then store.
     # tqdm for progress bars.
     for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
+
         # Parameters within the effective area files show some fluctuation, therefore
-        # we need to use the "isclose".
-        if (np.isclose(azs, all_azs[i], atol=0.01).any() and
-                np.isclose(indexs, all_indexs[i], atol=0.01).any() and
-                np.isclose(pedvars, all_pedvars[i], atol=0.21).any() and
-                np.isclose(zds, all_zds[i], atol=2.1).any() and
-                np.isclose(woffs, all_Woffs[i], atol=0.05).any()):
-            # If an azimuth value is given, only store closest azimuth bin
-            if azimuth:
-                if all_azs[i] != az_bin_to_store:
-                    continue
-            # If 'single_index' flag is given, also ignore other index values
-            if single_index:
-                if not np.isclose(all_indexs[i], index_to_store, atol=0.01):
-                    continue
-            if irf_name == 'eff':
-                irf = [j for j in entry.eff]
-                energies = [j for j in entry.e0]
-            elif irf_name == 'effNoTh2':
-                irf = [j for j in entry.effNoTh2]
-                energies = [j for j in entry.e0]
-            elif irf_name == 'hEsysMCRelative2D':
-                irf = hist2array(entry.hEsysMCRelative2D)
-            elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
-                irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-            elif irf_name == 'hAngularLogDiffEmc_2D':
-                irf = hist2array(entry.hAngularLogDiffEmc_2D)
-            else:
-                raise Exception("WrongIrfName")
-            # We separate now 1D and 2D irfs:
-            # 2D IRFs:
-            if irf_name in implemented_irf_names_2d:
-                if np.shape(irf) == np.shape(sample_irf):
-                    # I'm CERTAIN this part can be done more elegantly... For now, good enough
-                    if azimuth and single_index:
-                        try:
-                            data[:, :, find_nearest(pedvars, all_pedvars[i]), find_nearest(zds, all_zds[i]),
-                                 find_nearest(woffs, all_Woffs[i])] = irf
-                        except Exception:
-                            print("Unexpected error:", sys.exc_info()[0])
-                            print("Entry number ", i)
-                            raise
-                    elif azimuth:
-                        try:
-                            data[:, :, find_nearest(indexs, all_indexs[i]), find_nearest(pedvars, all_pedvars[i]),
-                                 find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
-                        except Exception:
-                            print("Unexpected error:", sys.exc_info()[0])
-                            print("Entry number ", i)
-                            raise
-                    elif single_index:
-                        try:
-                            data[:, :, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
-                                 find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
-                        except Exception:
-                            print("Unexpected error:", sys.exc_info()[0])
-                            print("Entry number ", i)
-                            raise
-                    else:
-                        try:
-                            data[:, :, find_nearest(azs, all_azs[i]), find_nearest(indexs, all_indexs[i]),
-                                 find_nearest(pedvars, all_pedvars[i]),
-                                 find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
-                        except Exception:
-                            print("Unexpected error:", sys.exc_info()[0])
-                            print("Entry number ", i)
-                            raise
-                else:
-                    print("2D IRFs of variable size...")
-                    raise Exception()
-            # 1D IRFs:
-            else:
-                # In case the extracted IRF has less bins than the "sample" one, pad it with zeros:
-                if len(irf) < len(sample_irf):
-                    new_irf = np.zeros(len(sample_energies))
-                    for j, ener in enumerate(energies):
-                        new_irf[find_nearest(sample_energies, ener)] = irf[j]
-                    irf = new_irf
+        # we need to use the "isclose". -- might not be necessary anymore
+        # if (np.isclose(azs, all_azs[i], atol=0.01).any()): #and
+        # np.isclose(indexs, all_indexs[i], atol=0.01).any() and
+        # np.isclose(pedvars, all_pedvars[i], atol=0.21).any() and
+        # np.isclose(zds, all_zds[i], atol=2.1).any() #and
+        # np.isclose(woffs, all_Woffs[i], atol=0.05).any()):
+
+        # If an azimuth value is given, only store closest azimuth bin
+        if azimuth:
+            if all_azs[i] != az_bin_to_store:
+                continue
+        # If 'single_index' flag is given, also ignore other index values
+        if single_index:
+            if not all_indexs[i] == index_to_store: ## might be also not necessary anymore #np.isclose(all_indexs[i], index_to_store, atol=0.01):
+                continue
+        if irf_name == 'eff':
+            irf = [j for j in entry.eff]
+            energies = [j for j in entry.e0]
+        elif irf_name == 'effNoTh2':
+            irf = [j for j in entry.effNoTh2]
+            energies = [j for j in entry.e0]
+        elif irf_name == 'hEsysMCRelative2D':
+            irf = hist2array(entry.hEsysMCRelative2D)
+        elif irf_name == 'hEsysMCRelative2DNoDirectionCut':
+            irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
+        elif irf_name == 'hAngularLogDiffEmc_2D':
+            irf = hist2array(entry.hAngularLogDiffEmc_2D)
+        else:
+            raise Exception("WrongIrfName")
+        # We separate now 1D and 2D irfs:
+        # 2D IRFs:
+        if irf_name in implemented_irf_names_2d:
+            if np.shape(irf) == np.shape(sample_irf):
+                # I'm CERTAIN this part can be done more elegantly... For now, good enough
                 if azimuth and single_index:
                     try:
-                        data[:, find_nearest(pedvars, all_pedvars[i]), find_nearest(zds, all_zds[i]),
-                             find_nearest(woffs, all_Woffs[i])] = irf
+                        data[:, :, find_nearest(pedvars, all_pedvars[i]), find_nearest(zds, all_zds[i]),
+                        find_nearest(woffs, all_Woffs[i])] = irf
                     except Exception:
                         print("Unexpected error:", sys.exc_info()[0])
                         print("Entry number ", i)
-                        print(energies, irf)
                         raise
                 elif azimuth:
                     try:
-                        data[:, find_nearest(indexs, all_indexs[i]), find_nearest(pedvars, all_pedvars[i]),
-                         find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                        data[:, :, find_nearest(indexs, all_indexs[i]), find_nearest(pedvars, all_pedvars[i]),
+                        find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
                     except Exception:
                         print("Unexpected error:", sys.exc_info()[0])
                         print("Entry number ", i)
-                        print(energies, irf)
                         raise
                 elif single_index:
                     try:
-                        data[:, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
-                             find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                        data[:, :, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
+                        find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
                     except Exception:
                         print("Unexpected error:", sys.exc_info()[0])
                         print("Entry number ", i)
-                        print(energies, irf)
                         raise
                 else:
                     try:
-                        data[:, find_nearest(azs, all_azs[i]), find_nearest(indexs, all_indexs[i]),
-                         find_nearest(pedvars, all_pedvars[i]),
-                         find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                        data[:, :, find_nearest(azs, all_azs[i]), find_nearest(indexs, all_indexs[i]),
+                        find_nearest(pedvars, all_pedvars[i]),
+                        find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
                     except Exception:
                         print("Unexpected error:", sys.exc_info()[0])
                         print("Entry number ", i)
-                        print(energies, irf)
                         raise
+            else:
+                print("2D IRFs of variable size...")
+                raise Exception()
+        # 1D IRFs:
+        else:
+            # In case the extracted IRF has less bins than the "sample" one, pad it with zeros:
+            if len(irf) < len(sample_irf):
+                new_irf = np.zeros(len(sample_energies))
+                for j, ener in enumerate(energies):
+                    new_irf[find_nearest(sample_energies, ener)] = irf[j]
+                irf = new_irf
+            if azimuth and single_index:
+                try:
+                    data[:, find_nearest(pedvars, all_pedvars[i]), find_nearest(zds, all_zds[i]),
+                    find_nearest(woffs, all_Woffs[i])] = irf
+                except Exception:
+                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Entry number ", i)
+                    print(energies, irf)
+                    raise
+            elif azimuth:
+                try:
+                    data[:, find_nearest(indexs, all_indexs[i]), find_nearest(pedvars, all_pedvars[i]),
+                    find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                except Exception:
+                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Entry number ", i)
+                    print(energies, irf)
+                    raise
+            elif single_index:
+                try:
+                    data[:, find_nearest(azs, all_azs[i]), find_nearest(pedvars, all_pedvars[i]),
+                    find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                except Exception:
+                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Entry number ", i)
+                    print(energies, irf)
+                    raise
+            else:
+                try:
+                    data[:, find_nearest(azs, all_azs[i]), find_nearest(indexs, all_indexs[i]),
+                    find_nearest(pedvars, all_pedvars[i]),
+                    find_nearest(zds, all_zds[i]), find_nearest(woffs, all_Woffs[i])] = irf
+                except Exception:
+                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Entry number ", i)
+                    print(energies, irf)
+                    raise
     if return_irf_axes:
         if irf_name in implemented_irf_names_2d:
             if azimuth and single_index:
@@ -366,8 +427,8 @@ def duplicate_dimension(data, axis):
     current_shape = np.shape(data)
     corrected_shape = [2 if i == axis else k for i, k in enumerate(current_shape)]
     print(current_shape, corrected_shape)
-    tiles = [ 2 if k==1 else 1 for k in current_shape ]
-    new_data = np.tile(data,tiles)
+    tiles = [2 if k == 1 else 1 for k in current_shape]
+    new_data = np.tile(data, tiles)
     return new_data
 
 
