@@ -1,5 +1,5 @@
 # V2DL3
-VERITAS (VEGAS and ED) to DL3 Converter
+VERITAS (VEGAS and Eventdisplay) to DL3 Converter
 
 Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
@@ -37,7 +37,7 @@ Just run:
 ```
 conda env create -f environment.yml
 ```
-and an environment named v2dl3 will be created. After activating the environment just install pyV2DL3 as follows.
+and an environment named v2dl3 will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
 
 ```
 pip install .
@@ -67,14 +67,14 @@ Options:
   -g, --gen_index_file     Generate hdu and observation index list files. Only
                            have effect in file list mode.
   -m, --save_multiplicity  Save telescope multiplicity into event list
-  -e, --ed                 ED mode
+  -e, --ed                 Eventdisplay mode
   -d, --debug
   -v, --verbose            Print root output
   --help                   Show this message and exit.
 ```
 
 
-### Simple Examples
+### Examples
 
 #### VEGAS
 
