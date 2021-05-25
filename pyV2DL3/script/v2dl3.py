@@ -25,7 +25,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Generate hdu and observation index list files. Only have effect in file list mode.')
 @click.option('--save_multiplicity', '-m', is_flag=True,
               help='Save telescope multiplicity into event list')
-@click.option('--ed', '-e', is_flag=True, help='ED mode')
+@click.option('--ed', '-e', is_flag=True, help='Eventdisplay mode')
 @click.option('--filename_to_obsid', '-I', is_flag=True, help='Override OBS_ID with output filename')
 @click.option('--full-enclosure', is_flag=True, help='Store full-enclosure IRFs (no direction cut applied)')
 @click.option('--point-like', is_flag=True, help='Store point-like IRFs (direction cut applied)')
