@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 def produce_tel_list(tel_config):
     # Convert the list of telescopes into a string for FITS header
     tel_list = ""
-    for tel in tel_config['TelID']:
+    for tel in tel_config['TelType']:
         tel_list += "T" + str(tel) + ","
     return tel_list[:-1]
 
