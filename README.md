@@ -27,7 +27,7 @@ The requirements are listed in the ```environment.yml``` file.
 
 #### EventDisplay
 
-* The converter does not depend on EventDisplay. However, make sure that the EventDisplay ansum stage runs with version >= v485 to include the DL3EventTree in the ansum file.
+* The converter does not depend on EventDisplay. However, make sure that the EventDisplay anasum stage runs with version >= v485 to include the DL3EventTree in the ansum file.
 
 ### Install pyV2DL3
 
@@ -126,7 +126,7 @@ Then in your bash run
 ```
 ./v2dl3_for_runlist_from_ED485-anasum.sh
 ```
-to create the fits files one after another. Alternatively you can use this script to submit each line to your batch farm to run in parallel.
+to create the fits files one after another. Alternatively you can use this script to submit each line to your batch farm to run in parallel. As an example see here: https://github.com/tobiaskleiner/V2DL3/blob/V485-DL3/pyV2DL3/script/qsub_v2dl3.sh 
 
 ---
 ### Git pushing
