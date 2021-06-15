@@ -27,7 +27,7 @@ The requirements are listed in the ```environment.yml``` file.
 
 #### EventDisplay
 
-* EventDisplay version >= v485
+* The converter does not depend on EventDisplay. However, make sure that the EventDisplay ansum stage runs with version >= v485 to include the DL3EventTree in the ansum file.
 
 ### Install pyV2DL3
 
@@ -37,7 +37,7 @@ Just run:
 ```
 conda env create -f environment.yml
 ```
-and an environment named v2dl3 will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
+and the environment ```v2dl3``` will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
 
 ```
 pip install .
@@ -73,10 +73,10 @@ Options:
   --help                   Show this message and exit.
 ```
 
-
+---
 ### Examples
 
-#### VEGAS
+### VEGAS
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
@@ -98,7 +98,7 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 v2dl3 -l ./runlist.txt  ./test
 ```
 
-#### EventDisplay
+### EventDisplay
 
 ROOT is installed directly into the environment from conda-forge following the above steps using the ```environment.yml```.
 Now, lets create the DL3 fits files from the anasum files in the ```./eventDisplay/``` folder. 
@@ -112,16 +112,24 @@ To convert an anasum file to DL3 you need to provide the path to the anasum file
 v2dl3 --ed -f ./eventDisplay/54809.anasum.root [Effective Area File] ./eventDisplay/54809.anasum.fits
 ```
 
-Note the effective area files of ED v485 are currently under review, so if you want to play around with ED DL3 files, please get in contact with the eventDisplay team.
+##### Full-enclosure
 
-###### Full-enclosure
 For full-enclosure IRFs you need to pass the additional flag --full-enclosure and be sure to provide the proper effective area files:
 ```
 v2dl3 -ed --full-enclosure -f 64080.anasum.root $VERITAS_EVNDISP_AUX_DIR/EffectiveAreas/effArea-v485-auxv01-CARE_June2020-Cut-NTel2-PointSource-Hard-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234.root ./FITS/64080.anasum.fits
 ```
 
+##### Multi file processing
+
+To convert many runs at once with different Effective Area files there is a modified anasum script here ( ``` VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/scripts/ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh ``` ), that can be used to create a ``` v2dl3_for_runlist_from_ED485-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the full-enclosure case. 
+Then in your bash run 
+```
+./v2dl3_for_runlist_from_ED485-anasum.sh
+```
+to create the fits files one after another. Alternatively you can use this script to submit each line to your batch farm to run in parallel.
+
 ---
-## Git pushing
+### Git pushing
 If two people have used the same notebook at the same time it gets a bit nasty with a merge due to differences in outputs and cell run counts.  To overcome this I have followed the instructions in http://timstaley.co.uk/posts/making-git-and-jupyter-notebooks-play-nice/
 
 Specifically, this requires that you have jq (https://stedolan.github.io/jq/) which should be easy enough to install, I get it through brew on my mac (I'm not sure what happens if you don't have jq installed - maybe you will find out!).
