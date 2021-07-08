@@ -17,6 +17,17 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     # Extract the camera offsets simulated within the effective areas file.
     fast_eff_area = uproot.open(filename)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
+    zeniths_irf = np.unique(np.round(fast_eff_area['ze'].array(library='np'), decimals=0))
+    pedvar_irf = np.unique(np.round(fast_eff_area['pedvar'].array(library='np'), decimals=2))
+
+    # check that coordinates are in range of provided IRF
+    if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
+        raise ValueError('Coordinate not inside IRF zenith range')
+    if np.all(pedvar_irf < noise) or np.all(pedvar_irf > noise):
+        raise ValueError('Coordinate not inside IRF noise range')
+    if np.all(camera_offsets < offset) or np.all(camera_offsets > offset):
+        raise ValueError('Coordinate not inside IRF offset angle range')
+
     # Check the camera offset bins available in the effective area file.
     theta_low = []
     theta_high = []
