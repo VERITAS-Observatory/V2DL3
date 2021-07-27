@@ -59,8 +59,9 @@ def __fillEVENTS__(edFileIO):
     avAz = avAz if avAz > 0 else avAz + 360
 
     # RA and DEC already in degrees.
-    avRA = np.mean(raArr)
-    avDec = np.mean(decArr)
+    pointingDataReduced = file["run_{}/stereo/pointingDataReduced".format(runNumber)].arrays(library='np')
+    avRA = np.mean(np.rad2deg(pointingDataReduced["TelRAJ2000"]))
+    avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     # Filling Event List
     evt_dict['EVENT_ID'] = evNumArr
