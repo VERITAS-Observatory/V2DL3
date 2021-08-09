@@ -19,14 +19,11 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     zeniths_irf = np.unique(np.round(fast_eff_area['ze'].array(library='np'), decimals=0))
     pedvar_irf = np.unique(np.round(fast_eff_area['pedvar'].array(library='np'), decimals=2))
-
     # check that coordinates are in range of provided IRF
     if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
         raise ValueError('Coordinate not inside IRF zenith range')
     if np.all(pedvar_irf < noise) or np.all(pedvar_irf > noise):
         raise ValueError('Coordinate not inside IRF noise range')
-    if np.all(camera_offsets < offset) or np.all(camera_offsets > offset):
-        raise ValueError('Coordinate not inside IRF offset angle range')
 
     # Check the camera offset bins available in the effective area file.
     theta_low = []
@@ -49,7 +46,9 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         theta_low = [0.0, 10.0]
         theta_high = [0.0, 10.0]
         print("Point-like IRF: ", "camera offset: ", offset, "noise:", noise, "zenith:", zenith)
-
+        # check that IRF includes 0.5 offset:
+        if not np.any(camera_offsets == offset):
+            raise ValueError('0.5 offset not contained in IRF')
         #
         # Interpolate effective area  (point-like)
         #
@@ -121,6 +120,10 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     if irf_to_store['full-enclosure']:
         print("Full-enclosure: ", "camera offsets: ", camera_offsets, "noise:", noise, "zenith:", zenith)
 
+        # check if IRF contains multiple offsets:
+        if len(camera_offsets) <= 1:
+            logger.warning("IRF used for interpolation should be "
+                           "defined for several offsets for Full-Enclosure conversion")
         #
         # Interpolate effective area (full-enclosure)
         #
