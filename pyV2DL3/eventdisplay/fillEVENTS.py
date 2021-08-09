@@ -63,8 +63,8 @@ def __fillEVENTS__(edFileIO):
 
     # Calculate circular mean RA and average DEC
     pointingDataReduced = file["run_{}/stereo/pointingDataReduced".format(runNumber)].arrays(library='np')
-    avRA = np.rad2deg(np.arctan2(np.sum(np.sin(pointingDataReduced["TelDecJ2000"])),
-                                 np.sum(np.cos(pointingDataReduced["TelDecJ2000"]))))
+    avRA = np.rad2deg(np.arctan2(np.sum(np.sin(pointingDataReduced["TelRAJ2000"])),
+                                 np.sum(np.cos(pointingDataReduced["TelRAJ2000"]))))
     avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     # Filling Event List
