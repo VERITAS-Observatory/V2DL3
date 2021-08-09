@@ -30,7 +30,7 @@ def __fillEVENTS__(edFileIO):
 
     # Number of seconds between reference time and run MJD at 00:00:00:
     t_ref = Time(VTS_REFERENCE_MJD, format='mjd', scale='utc')
-    seconds_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
+    seconds_from_reference = (Time(np.trunc(start_mjd), format='mjd', scale='utc') - t_ref).sec
 
     tstart_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
     tstop_from_reference = (Time(stop_mjd, format='mjd', scale='utc') - t_ref).sec
@@ -38,8 +38,11 @@ def __fillEVENTS__(edFileIO):
     DL3EventTree = file['run_{}/stereo/DL3EventTree'.format(runNumber)].arrays(library='np')
     evNumArr = DL3EventTree['eventNumber']
 
-    # This should already have microsecond resolution if stored with double precision.
+    # This should already have microsecond resolution if stored with double precision. Max 24*60*60 seconds
     time_of_day = DL3EventTree['timeOfDay']
+    if time_of_day.max() > 24*60*60:
+        raise ValueError('Max value in time_of_day array exceeds length of a day')
+    # mjd time in full days since reference time + event time
     timeArr = seconds_from_reference + time_of_day
 
     raArr = DL3EventTree['RA']
