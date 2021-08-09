@@ -30,7 +30,7 @@ def __fillEVENTS__(edFileIO):
 
     # Number of seconds between reference time and run MJD at 00:00:00:
     t_ref = Time(VTS_REFERENCE_MJD, format='mjd', scale='utc')
-    seconds_from_reference = (Time(np.round(start_mjd, decimals=0), format='mjd', scale='utc') - t_ref).sec
+    seconds_from_reference = (Time(np.floor(start_mjd), format='mjd', scale='utc') - t_ref).sec
 
     tstart_from_reference = (Time(start_mjd, format='mjd', scale='utc') - t_ref).sec
     tstop_from_reference = (Time(stop_mjd, format='mjd', scale='utc') - t_ref).sec
