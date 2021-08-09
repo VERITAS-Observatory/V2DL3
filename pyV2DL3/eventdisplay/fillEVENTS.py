@@ -61,9 +61,10 @@ def __fillEVENTS__(edFileIO):
     avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_rad)), np.sum(np.cos(avAz_rad))))
     avAz = avAz if avAz > 0 else avAz + 360
 
-    # RA and DEC already in degrees.
+    # Calculate circular mean RA and average DEC
     pointingDataReduced = file["run_{}/stereo/pointingDataReduced".format(runNumber)].arrays(library='np')
-    avRA = np.mean(np.rad2deg(pointingDataReduced["TelRAJ2000"]))
+    avRA = np.rad2deg(np.arctan2(np.sum(np.sin(pointingDataReduced["TelRAJ2000"])),
+                                 np.sum(np.cos(pointingDataReduced["TelRAJ2000"]))))
     avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     # Filling Event List
