@@ -107,7 +107,10 @@ def __fillEVENTS__(edFileIO):
     evt_dict['RA_OBJ'] = runSummary['TargetRAJ2000'][0]
     evt_dict['DEC_OBJ'] = runSummary['TargetDecJ2000'][0]
     evt_dict['TELLIST'] = produce_tel_list(telConfig)
-    evt_dict['N_TELS'] = len(telConfig['TelID'])
+    #evt_dict['N_TELS'] = len(telConfig['TelID'])
+    MaxImgSel = np.max(DL3EventTree['ImgSel'])
+    evt_dict['N_TELS'] = np.binary_repr(MaxImgSel).count('1')
+    print('No. of Tel:', evt_dict['N_TELS'])
     evt_dict['GEOLON'] = VTS_REFERENCE_LON
     evt_dict['GEOLAT'] = VTS_REFERENCE_LAT
     evt_dict['ALTITUDE'] = VTS_REFERENCE_HEIGHT
