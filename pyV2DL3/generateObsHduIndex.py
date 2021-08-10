@@ -99,6 +99,8 @@ def gen_obs_index(filelist,index_file_dir='./'):
     deadc = []
     tstart = []
     tstop = []
+    events = []
+    energylo = []
     N_TELS = []
     TELLIST = []
 
@@ -125,16 +127,18 @@ def gen_obs_index(filelist,index_file_dir='./'):
         deadc.append(dl3_hdu[1].header['DEADC'])
         tstart.append(dl3_hdu[1].header['TSTART'])
         tstop.append(dl3_hdu[1].header['TSTOP'])
+        events.append(dl3_hdu[1].header['NAXIS2']) #EVENT_COUNT
+        energylo.append(dl3_hdu[4].header['LO_THRES']) #energy threshold derived from EA
         N_TELS.append(4)
         TELLIST.append(dl3_hdu[1].header['TELLIST'])
 
     obs_table = Table(
-        [obs_id, ra_pnt, dec_pnt, zen_pnt, alt_pnt, az_pnt, ontime, livetime, deadc, tstart, tstop, N_TELS, TELLIST],
+        [obs_id, ra_pnt, dec_pnt, zen_pnt, alt_pnt, az_pnt, ontime, livetime, deadc, tstart, tstop, energylo, events, N_TELS, TELLIST],
         names=(
             'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
-            'TSTOP',
+            'TSTOP', 'SAFE_ENERGY_LO', 'EVENT_COUNT',
             'N_TELS', 'TELLIST'),
-        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20')
+        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', '>i8', 'S20')
     )
     #obs_table = Table(
     #    [obs_id, ra_pnt, dec_pnt, tstart, tstop],
@@ -154,6 +158,7 @@ def gen_obs_index(filelist,index_file_dir='./'):
 
     obs_table['TSTART'].unit  = 's'
     obs_table['TSTOP'].unit   = 's'
+    obs_table['SAFE_ENERGY_LO'].unit   = 'TeV'
     if(len(obs_table) ==0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
@@ -232,5 +237,3 @@ def create_obs_hdu_index_file(filelist, index_file_dir='./',
     obs_table = gen_obs_index(filelist,index_file_dir)
     logger.debug('Writing {} ...'.format(obs_index_file))
     obs_table.writeto('{}/{}'.format(index_file_dir, obs_index_file), overwrite=True)
-
-
