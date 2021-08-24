@@ -128,6 +128,13 @@ Then in your bash run
 ```
 to create the fits files one after another. Alternatively you can use this script to submit each line to your batch farm to run in parallel. As an example see here: https://github.com/tobiaskleiner/V2DL3/blob/V485-DL3/pyV2DL3/script/qsub_v2dl3.sh 
 
+#### Filter events
+Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 
+yaml file that stores conditions. E.g. to select only events between 0.5 and 1.0 TeV:
+```yaml
+Energy: [0.5, 1.0]
+```
+
 ---
 ### Git pushing
 If two people have used the same notebook at the same time it gets a bit nasty with a merge due to differences in outputs and cell run counts.  To overcome this I have followed the instructions in http://timstaley.co.uk/posts/making-git-and-jupyter-notebooks-play-nice/

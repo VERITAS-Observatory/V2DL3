@@ -8,8 +8,7 @@ from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE
 logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
-
-def __fillEVENTS__(edFileIO):
+def __fillEVENTS__(edFileIO, select={}):
     evt_dict = {}
 
     # reading variables with uproot
@@ -45,14 +44,34 @@ def __fillEVENTS__(edFileIO):
     # mjd time in full days since reference time + event time
     timeArr = seconds_from_reference + time_of_day
 
-    raArr = DL3EventTree['RA']
-    decArr = DL3EventTree['DEC']
-    azArr = DL3EventTree['Az']
-    altArr = DL3EventTree['El']
+
+    mask = np.ones(len(DL3EventTree["RA"]), bool)
+    if select:
+        print(select)
+        for key, value in select.items():
+            if isinstance(value, (list, tuple)):
+                mask = mask & (DL3EventTree[key] >= value[0]) & (DL3EventTree[key] <= value[1])
+            else:
+                raise TypeError("select condition required a list or tuple of ranges")
+        print(f"{np.sum(mask)} of {len(mask)} events after selection.")
+
+    raArr = DL3EventTree['RA'][mask]
+    decArr = DL3EventTree['DEC'][mask]
+    azArr = DL3EventTree['Az'][mask]
+    altArr = DL3EventTree['El'][mask]
     # offset = DL3EventTree['Woff']
-    energyArr = DL3EventTree['Energy']
+    energyArr = DL3EventTree['Energy'][mask]
     # Not used for the moment by science tools.
-    nTelArr = DL3EventTree['NImages']
+    nTelArr = DL3EventTree['NImages'][mask]
+    try:
+        # Test if anasum file was created using the all events option.
+        # In this case write out the additional output.
+        IsGamma = DL3EventTree["IsGamma"][mask]
+        bdtScore = DL3EventTree["MVA"][mask]
+        all_events = True
+    except KeyError:
+        all_events = False
+
 
     avAlt = np.mean(altArr)
     # Calculate average azimuth angle from average vector on a circle
@@ -77,6 +96,9 @@ def __fillEVENTS__(edFileIO):
     # evt_dict['OFFSET'] = offset
     evt_dict['ENERGY'] = energyArr
     evt_dict['EVENT_TYPE'] = nTelArr
+    if all_events:
+        evt_dict['BDT_SCORE'] = bdtScore
+        evt_dict['IS_GAMMA'] = IsGamma
 
     # FIXME: Get Time Cuts and build GTI start and stop time array
     # for k in cuts:
