@@ -126,7 +126,18 @@ Then in your bash run
 ```
 ./v2dl3_for_runlist_from_ED485-anasum.sh
 ```
-to create the fits files one after another. Alternatively you can use this script to submit each line to your batch farm to run in parallel. As an example see here: https://github.com/tobiaskleiner/V2DL3/blob/V485-DL3/pyV2DL3/script/qsub_v2dl3.sh 
+to create the fits files one after another. 
+
+Alternatively, you can submit one job for each entry of this script using
+```bash
+v2dl3_qsub --v2dl3_script <script>
+```
+where `<script>` is the script that was written out by `ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh`.
+`v2dl3_qsub` has the following options:
+ - `--conda_env` name of the conda environment. Default is `v2dl3` 
+ - `--conda_exe` path to the conda executable. Only needed if `$CONDA_EXE` is not set.
+ - `--rootsys` path to rootsys. Only needed if `$ROOTSYS` is not set
+ - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml`)
 
 #### Filter events
 Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 
