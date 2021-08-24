@@ -24,22 +24,15 @@ CONDA_EXE=$2
 ENV=$3
 ROOTSYS=$4
 
-CONDADIRNAME=$(dirname "$CONDA_EXE")
-
 # set up root
 export PATH=${ROOTSYS}/bin:${PATH}
 export LD_LIBRARY_PATH=${ROOTSYS}/lib:${LD_LIBRARY_PATH}
-echo $PATH
-where root-config
-
-# source $ROOTSYS/bin/thisroot.sh
-echo "---"
 cd $ROOTSYS
 source ./bin/thisroot.sh
 cd -
 
-echo ""
 # set up conda environment
+CONDADIRNAME=$(dirname "$CONDA_EXE")
 source $CONDADIRNAME/../etc/profile.d/conda.sh
 conda activate $ENV
 
