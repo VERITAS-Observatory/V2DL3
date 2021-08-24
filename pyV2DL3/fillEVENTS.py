@@ -21,6 +21,12 @@ def fillEVENTS(datasource, save_multiplicity=False):
                # fits.Column(name='AZ', format='1E', array=evt_dict['AZ'], unit = "deg"),
                fits.Column(name='ENERGY', format='1E', array=evt_dict['ENERGY'], unit="TeV")
                ]
+    try:
+        columns.append(fits.Column('IS_GAMMA', format='1L', array=evt_dict['IS_GAMMA']))
+        columns.append(fits.Column('BDT_SCORE', format='1E', array=evt_dict['BDT_SCORE']))
+    except KeyError:
+        pass
+
     # Add number of triggered telescope if necessary 
     if save_multiplicity:
         columns.append(fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict['EVENT_TYPE']))
