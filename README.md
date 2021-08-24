@@ -137,7 +137,7 @@ where `<script>` is the script that was written out by `ANALYSIS.anasum_parallel
  - `--conda_env` name of the conda environment. Default is `v2dl3` 
  - `--conda_exe` path to the conda executable. Only needed if `$CONDA_EXE` is not set.
  - `--rootsys` path to rootsys. Only needed if `$ROOTSYS` is not set
- - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml`)
+ - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml'`)
 
 #### Filter events
 Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 
