@@ -440,3 +440,82 @@ def duplicate_dimensions(data):
         if dim == 1:
             new_data = duplicate_dimension(new_data, i)
     return new_data
+
+def getGTI(BitArray):
+
+    n=BitArray.size
+    array = []
+    for i in range(n):
+        array.append(np.binary_repr(BitArray[i]).count('1'))
+
+    duration = (n-1)*8
+    livetime = np.sum(array[0:n-1])
+    print(n, 'Duration:', duration, duration/60.)
+    print('Livetime:', livetime, livetime/60.)
+
+    ind = np.where(BitArray == 0)
+    n = np.size(ind)
+    print(n)
+
+    length = []
+
+    if (n == 0):
+        Nmask = 0
+    else:
+        Nmask = 1
+
+    for i in range(n):
+        length.append(ind[0][i])
+
+    length_disjoint = []
+    length_disjoint.append(length[0])
+
+    for i in range(n - 1):
+        if (length[i + 1] - length[i]) > 1:
+            Nmask += 1
+            length_disjoint.append(length[i])
+            length_disjoint.append(length[i + 1])
+
+    length_disjoint.append(length[-1])
+
+    print('No. of time cuts:', Nmask)
+    if (length[0] == 0 | length[-1] == 0):
+        Ngti = 1
+    else:
+        Ngti = Nmask + 1
+
+    print('No. of gti:', Ngti)
+
+    mask = []
+    for m in range(0, 2 * Nmask, 2):
+        if (Nmask > 0):
+            start = (length_disjoint[m]) * 8 - (8 - np.binary_repr(BitArray[length_disjoint[m] - 1]).count('1'))
+            end = (length_disjoint[m + 1] + 1) * 8 + (8 - np.binary_repr(BitArray[length_disjoint[m + 1] + 1]).count('1'))
+            mask.append([start, end])
+
+    print('Time mask: ', mask)
+    print(np.shape(mask))
+
+    gti_start = []
+    gti_end = []
+    for i in range(Ngti):
+        if (i == 0):
+            gti_start.append(0)
+            gti_end.append(mask[i][i])
+        elif (i == (Ngti - 1)):
+            gti_start.append(mask[i - 1][1])
+            gti_end.append(duration)
+        else:
+            gti_start.append(mask[i - 1][1])
+            gti_end.append(mask[i][0])
+
+    # Its better to remove null gti at the end, becasue there can be multiple time masks, and the first one begining at run start
+    if (gti_start[0] == 0) & (gti_end[0] <= 0):
+        print('Hi, I am having time cut at the start of the Run')
+        gti_start = np.delete(gti_start, 0)
+        gti_end = np.delete(gti_end, 0)
+
+    print('GTI: ', gti_start, gti_end)
+    print(np.shape(gti_start), np.shape(gti_end))
+
+    return gti_start, gti_end
