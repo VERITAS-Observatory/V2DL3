@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 import uproot
-from pyV2DL3.eventdisplay.util import produce_tel_list
+from pyV2DL3.eventdisplay.util import produce_tel_list, getGTI
 from astropy.time import Time
 from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE_LON, VTS_REFERENCE_HEIGHT
 
@@ -139,9 +139,12 @@ def __fillEVENTS__(edFileIO, select={}):
 
     avNoise = runSummary['pedvarsOn'][0]
 
+    BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"]["maskBits"].member("fAllBits")
+    gti_tstart, gti_tstop = getGTI(BitArray)
+
     # FIXME: For now we are not including any good time interval (GTI).
     # This should be improved in the future, reading the time masks.
-    return ({'goodTimeStart': [tstart_from_reference], 'goodTimeStop': [tstop_from_reference],
+    return ({'goodTimeStart': gti_tstart, 'goodTimeStop': gti_tstop,
              'TSTART': tstart_from_reference, 'TSTOP': tstop_from_reference},
             {'azimuth': avAz, 'zenith': (90. - avAlt), 'noise': avNoise},
             evt_dict)
