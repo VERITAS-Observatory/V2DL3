@@ -42,15 +42,21 @@ class IrfInterpolator:
     def interpolate(self, coordinate):
         print("Interpolating coordinates: ", coordinate)
         # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
+        if self.azimuth == 0:
+            if len(coordinate) != 4:
+                raise ValueError('When azimuth is 0, requires 4 coordinates (azimuth, pedvar, zenith, offset)')
+        else:
+            if len(coordinate) != 3:
+                raise ValueError('Requires 3 coordinates (pedvar, zenith, offset)')
+
         if self.irf_name in self.implemented_irf_names_2d:
             # In this case, the interpolator needs to interpolate over 2 dimensions:
             xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
-            interpolated_irf = self.interpolator((xx, yy, coordinate[0], coordinate[1], coordinate[2]))
+            interpolated_irf = self.interpolator((xx, yy, *coordinate))
             return interpolated_irf, [self.irf_axes[0], self.irf_axes[1]]
         elif self.irf_name in self.implemented_irf_names_1d:
             # In this case, the interpolator needs to interpolate only over 1 dimension (true energy):
-            interpolated_irf = self.interpolator((self.irf_axes[0], coordinate[0], coordinate[1],
-                                                  coordinate[2]))
+            interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
             return interpolated_irf, [self.irf_axes[0]]
         else:
             print("The interpolation of the irf you entered: {}"

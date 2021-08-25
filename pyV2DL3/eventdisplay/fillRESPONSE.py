@@ -9,13 +9,12 @@ logger = logging.getLogger(__name__)
 
 def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}):
     response_dict = {}
-    filename = effectiveArea.GetName()
 
     # EventDisplay IRF interpolator object
-    irf_interpolator = IrfInterpolator(filename, azimuth)
+    irf_interpolator = IrfInterpolator(effectiveArea, azimuth)
 
     # Extract the camera offsets simulated within the effective areas file.
-    fast_eff_area = uproot.open(filename)['fEffArea']
+    fast_eff_area = uproot.open(effectiveArea)['fEffArea']
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     zeniths_irf = np.unique(np.round(fast_eff_area['ze'].array(library='np'), decimals=0))
     pedvar_irf = np.unique(np.round(fast_eff_area['pedvar'].array(library='np'), decimals=2))
