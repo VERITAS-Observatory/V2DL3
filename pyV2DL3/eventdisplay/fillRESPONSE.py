@@ -18,14 +18,11 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     camera_offsets = np.unique(np.round(fast_eff_area['Woff'].array(library='np'), decimals=2))
     zeniths_irf = np.unique(np.round(fast_eff_area['ze'].array(library='np'), decimals=0))
     pedvar_irf = np.unique(np.round(fast_eff_area['pedvar'].array(library='np'), decimals=2))
-
     # check that coordinates are in range of provided IRF
     if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
         raise ValueError('Coordinate not inside IRF zenith range')
     if np.all(pedvar_irf < noise) or np.all(pedvar_irf > noise):
         raise ValueError('Coordinate not inside IRF noise range')
-    if np.all(camera_offsets < offset) or np.all(camera_offsets > offset):
-        raise ValueError('Coordinate not inside IRF offset angle range')
 
     # Check the camera offset bins available in the effective area file.
     theta_low = []
@@ -44,36 +41,36 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         theta_high = camera_offsets
 
     if irf_to_store['point-like']:
-        offset = 0.5
-        theta_low = [0.0, 10.0]
-        theta_high = [0.0, 10.0]
-        print("Point-like IRF: ", "camera offset: ", offset, "noise:", noise, "zenith:", zenith)
-
+        print("Point-like IRF: ", "camera offset: ", camera_offsets, "noise:", noise, "zenith:", zenith)
         #
         # Interpolate effective area  (point-like)
         #
         irf_interpolator.set_irf('eff')
-        eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
+
+        ea_final = []
+
+        # Loop over offsets
+        for offset in camera_offsets:
+            eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            ea_final.append(np.array(eff_area))
+
+        # Always same axis in loop
         log_energy_tev = axis[0]
         energy_low = np.power(10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.)
         energy_high = np.power(10, log_energy_tev + (log_energy_tev[1] - log_energy_tev[0]) / 2.)
 
-        y = np.array(eff_area)
-        ea = [y, y]
-
-        x = np.array([(energy_low, energy_high, theta_low, theta_high, ea)],
+        x = np.array([(energy_low, energy_high, theta_low, theta_high, ea_final)],
                      dtype=[('ENERG_LO', '>f4', np.shape(energy_low)),
                             ('ENERG_HI', '>f4', np.shape(energy_high)),
                             ('THETA_LO', '>f4', np.shape(theta_low)),
                             ('THETA_HI', '>f4', np.shape(theta_high)),
-                            ('EFFAREA', '>f4', np.shape(ea))])
+                            ('EFFAREA', '>f4', np.shape(ea_final))])
         response_dict['EA'] = x
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
 
-
+        # Get RAD_MAX; cuts don't depend on energy/wobble
         file = uproot.open(edFileIO)
-
         runSummary = file['total_1/stereo/tRunSummary'].arrays(library='np')
         theta2cut = runSummary['Theta2Max'][0]
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
@@ -81,38 +78,40 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         # Energy dispersion (point-like)
         #
         irf_interpolator.set_irf('hEsysMCRelative2D')
-        bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
+        ac_final = []
+        for offset in camera_offsets:
+            bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
 
-        energy_edges = bin_centers_to_edges(axis[0])
-        bias_edges = bin_centers_to_edges(axis[1])
+            energy_edges = bin_centers_to_edges(axis[0])
+            bias_edges = bin_centers_to_edges(axis[1])
 
-        eLow = np.power(10, [energy_edges[:-1]])[0]
-        eHigh = np.power(10, [energy_edges[1:]])[0]
+            eLow = np.power(10, [energy_edges[:-1]])[0]
+            eHigh = np.power(10, [energy_edges[1:]])[0]
 
-        bLow = np.array([bias_edges[:-1]])[0]
-        bHigh = np.array([bias_edges[1:]])[0]
+            bLow = np.array([bias_edges[:-1]])[0]
+            bHigh = np.array([bias_edges[1:]])[0]
 
-        ac = []
-        for aa in bias.transpose():
-            if np.sum(aa) > 0:
-                ab = aa / np.sum(aa * (bHigh - bLow))
-            else:
-                ab = aa
-            try:
-                ac = np.vstack((ac, ab))
-            except:
-                ac = ab
+            ac = []
+            for aa in bias.transpose():
+                if np.sum(aa) > 0:
+                    ab = aa / np.sum(aa * (bHigh - bLow))
+                else:
+                    ab = aa
+                try:
+                    ac = np.vstack((ac, ab))
+                except:
+                    ac = ab
+            ac = ac.transpose()
+            ac_final.append(ac)
 
-        ac = ac.transpose()
-
-        x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, [ac, ac])],
+        x = np.array([(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
                      dtype=[('ENERG_LO', '>f4', (len(eLow),)),
                             ('ENERG_HI', '>f4', (len(eHigh),)),
                             ('MIGRA_LO', '>f4', (len(bLow),)),
                             ('MIGRA_HI', '>f4', (len(bHigh),)),
                             ('THETA_LO', '>f4', (len(theta_low),)),
                             ('THETA_HI', '>f4', (len(theta_high),)),
-                            ('MATRIX', '>f4', (len(theta_low), np.shape(ac)[0], np.shape(ac)[1]))])
+                            ('MATRIX', '>f4', (np.shape(ac_final)))])
         response_dict['MIGRATION'] = x
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
         print('IRF interpolation done')
@@ -120,6 +119,10 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
     if irf_to_store['full-enclosure']:
         print("Full-enclosure: ", "camera offsets: ", camera_offsets, "noise:", noise, "zenith:", zenith)
 
+        # check if IRF contains multiple offsets:
+        if len(camera_offsets) <= 1:
+            logger.warning("IRF used for interpolation should be "
+                           "defined for several offsets for Full-Enclosure conversion")
         #
         # Interpolate effective area (full-enclosure)
         #
@@ -149,7 +152,6 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
         response_dict['LO_THRES'] = min(energy_low)
         response_dict['HI_THRES'] = max(energy_high)
         response_dict['FULL_EA'] = x
-
         #
         # Energy dispersion (full-enclosure)
         #
@@ -219,8 +221,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
             rLow = np.power(10, [rad_edges[:-1]])[0]
             rHigh = np.power(10, [rad_edges[1:]])[0]
 
-
-            #normalize rpsf by solid angle
+            # Normalize rpsf by solid angle
             rad_width_deg = np.diff(rad_edges)
             solid_angle = (2 * np.pi * rad_width_deg * np.power(10, axis[1]))
             index_to_cut = max(index_to_cut_a)
@@ -230,7 +231,7 @@ def __fillRESPONSE__(edFileIO, effectiveArea, azimuth, zenith, noise, offset, ir
             rLow =rLow[index_to_cut:]
             rHigh = rHigh[index_to_cut:]
 
-            ##correct for removed counts
+            # Correct for removed counts
             count_sum_per_energybin = direction_diff.sum(axis=0)
             count_sum_per_energybin_n = direction_diff_n.sum(axis=0)
             direction_diff[0, :] += (count_sum_per_energybin - count_sum_per_energybin_n)
