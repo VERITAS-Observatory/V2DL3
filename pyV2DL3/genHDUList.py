@@ -14,7 +14,7 @@ def genPrimaryHDU():
     Generate primary hdu
     """
     hdu0 = fits.PrimaryHDU()
-    hdu0.header.set('TELESCOP', 
+    hdu0.header.set('TELESCOP',
                     'VERITAS',
                     'Telescope')
     hdu0.header.set('LICENSE ',
