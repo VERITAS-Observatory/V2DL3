@@ -93,7 +93,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
 
     if len(file_pair) > 0:
         st5_str, ea_str = file_pair
-        if ed:
+        if ed or st5_str.find('.anasum.root') >= 0:
             datasource = loadROOTFiles(st5_str, ea_str, 'ED')
         else:
             datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
