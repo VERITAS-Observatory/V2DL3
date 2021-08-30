@@ -34,10 +34,10 @@ def loadROOTFiles(data_file, effective_area_file, file_type='VEGAS'):
         raise Exception('File type not supported: {}'.format(file_type))
 
 
-def genHDUlist(datasource, save_multiplicity=False):
+def genHDUlist(datasource, save_multiplicity=False, trans_finder=False):
     hdus = list()
     hdus.append(genPrimaryHDU())
-    hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity))
+    hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity, trans_finder=trans_finder))
     hdus.append(fillGTI(datasource))
     hdus.extend(fill_response(datasource))
     hdulist = fits.HDUList(hdus)

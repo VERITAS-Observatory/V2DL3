@@ -33,9 +33,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--verbose', '-v', is_flag=True, help='Print root output')
 @click.option('--evt_filter', type=click.Path(exists=True),
               help='Load condition to filter events form json or yaml file.')
+
+@click.option('--trans_finder', is_flag=True)
 @click.argument('output', metavar='<output>')
 def cli(file_pair, runlist, gen_index_file, save_multiplicity,
-        ed, filename_to_obsid, full_enclosure, point_like, debug, verbose, output, evt_filter):
+        ed, filename_to_obsid, full_enclosure, point_like, debug, verbose, trans_finder, evt_filter, output):
     """Command line tool for converting stage5 file to DL3
 
     \b
@@ -50,6 +52,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
 
     Note: One one mode can be used at a time.
     """
+    print(trans_finder)
     if len(file_pair) == 0 and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
@@ -84,8 +87,8 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
             datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
-            datasource.fill_data(evt_filter=evt_filter)
-        hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
+            datasource.fill_data(evt_filter=evt_filter, trans_finder=trans_finder)
+            hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, trans_finder=trans_finder)
         fname_base = os.path.splitext(os.path.basename(output))[0]
         if filename_to_obsid:
             logging.info('Overwriting OBS_ID={0} with OBS_ID={1}'.format(hdulist[1].header['OBS_ID'],fname_base))

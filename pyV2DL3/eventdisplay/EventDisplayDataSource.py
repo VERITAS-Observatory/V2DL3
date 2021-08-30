@@ -30,7 +30,12 @@ class EventDisplayDataSource(VtsDataSource):
             warnings.warn("yaml file not found. Event filter will be ignored.")
             evt_filter = {}
 
-        gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
+        try:
+            trans_finder = kwargs["trans_finder"]
+        except(KeyError, TypeError):
+            trans_finder = False
+
+        gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter, trans_finder)
         self.__gti__ = gti
         self.__evt__ = events
         self.__azimuth__ = ea_config['azimuth']

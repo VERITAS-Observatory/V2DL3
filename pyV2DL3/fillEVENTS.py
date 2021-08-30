@@ -7,7 +7,7 @@ from pyV2DL3.constant import (VERSION,VTS_REFERENCE_MJD,VTS_REFERENCE_LAT,
 
 logger = logging.getLogger(__name__)
 
-def fillEVENTS(datasource, save_multiplicity=False):
+def fillEVENTS(datasource, save_multiplicity=False, trans_finder=False):
     evt_dict = datasource.get_evt_data()
     logger.debug("Create EVENT HDU")    
 
@@ -22,12 +22,18 @@ def fillEVENTS(datasource, save_multiplicity=False):
                fits.Column(name='ENERGY', format='1E', array=evt_dict['ENERGY'], unit="TeV")
                ]
     try:
-        columns.append(fits.Column('IS_GAMMA', format='1L', array=evt_dict['IS_GAMMA']))
+        columns.append(fits.Column('IS_GAMMA', format='1K', array=evt_dict['IS_GAMMA']))
         columns.append(fits.Column('BDT_SCORE', format='1E', array=evt_dict['BDT_SCORE']))
     except KeyError:
         pass
 
-    # Add number of triggered telescope if necessary 
+    if trans_finder:
+        columns.append(fits.Column(name="ALT", format="1E", array=evt_dict['ALT']))
+        columns.append(fits.Column(name="AZ", format="1E", array=evt_dict['AZ']))
+        columns.append(fits.Column(name="Xoff", format="1E", array=evt_dict['Xoff']))
+        columns.append(fits.Column(name="Yoff", format="1E", array=evt_dict['Yoff']))
+
+    # Add number of triggered telescope if necessary
     if save_multiplicity:
         columns.append(fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict['EVENT_TYPE']))
 

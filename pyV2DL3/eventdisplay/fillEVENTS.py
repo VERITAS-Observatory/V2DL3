@@ -8,7 +8,7 @@ from pyV2DL3.constant import VTS_REFERENCE_MJD, VTS_REFERENCE_LAT, VTS_REFERENCE
 logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
-def __fillEVENTS__(edFileIO, select={}):
+def __fillEVENTS__(edFileIO, select={}, trans_finder=False):
     evt_dict = {}
 
     # reading variables with uproot
@@ -72,6 +72,9 @@ def __fillEVENTS__(edFileIO, select={}):
     except KeyError:
         all_events = False
 
+    if trans_finder:
+        Xoff = DL3EventTree["Xoff"][mask]
+        Yoff = DL3EventTree["Yoff"][mask]
 
     avAlt = np.mean(altArr)
     # Calculate average azimuth angle from average vector on a circle
@@ -99,6 +102,10 @@ def __fillEVENTS__(edFileIO, select={}):
     if all_events:
         evt_dict['BDT_SCORE'] = bdtScore
         evt_dict['IS_GAMMA'] = IsGamma
+
+    if trans_finder:
+        evt_dict['Xoff'] = Xoff
+        evt_dict['Yoff'] = Yoff
 
     # FIXME: Get Time Cuts and build GTI start and stop time array
     # for k in cuts:
