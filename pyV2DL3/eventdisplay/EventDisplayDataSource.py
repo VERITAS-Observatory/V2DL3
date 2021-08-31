@@ -44,13 +44,19 @@ class EventDisplayDataSource(VtsDataSource):
         pass
 
     def __fill_response__(self, **kwargs):
-        pass
-        az = self.__azimuth__
-        ze = self.__zenith__
-        nn = self.__noise__
-        oo = self.__offset__
-        print("Coordinates to fillresponse:", az, ze, nn, oo)
+        print(('Parameters used to query IRFs:'
+               ' az=%.2f deg,'
+               ' ze=%.2f deg,'
+               ' noise=%.1f,'
+               ' offset=%.2f deg')%\
+               (self.__azimuth__,
+                self.__zenith__,
+                self.__noise__,
+                self.__offset__) )
         self.__response__ = __fillRESPONSE__(self.__evt_file__,
                                              self.__ea_file__,
-                                             az, ze, nn, oo,
+                                             self.__azimuth__,
+                                             self.__zenith__,
+                                             self.__noise__,
+                                             self.__offset__,
                                              self.__irf_to_store__)
