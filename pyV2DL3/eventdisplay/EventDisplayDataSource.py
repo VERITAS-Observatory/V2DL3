@@ -22,12 +22,7 @@ class EventDisplayDataSource(VtsDataSource):
             with open(kwargs["evt_filter"], "r") as file:
                 evt_filter = yaml.load(file, Loader=yaml.FullLoader)
         except (KeyError, TypeError):
-            evt_filter = {}
-        except ModuleNotFoundError as e:
-            warnings.warn("Failed to import yaml. Event filter will be ignored.")
-            evt_filter = {}
-        except FileNotFoundError:
-            warnings.warn("yaml file not found. Event filter will be ignored.")
+            # evt_filter option not used
             evt_filter = {}
 
         gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
