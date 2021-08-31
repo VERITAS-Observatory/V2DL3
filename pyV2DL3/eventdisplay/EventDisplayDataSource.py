@@ -19,7 +19,6 @@ class EventDisplayDataSource(VtsDataSource):
         self.__offset__ = 0
 
     def __fill_evt__(self, **kwargs):
-        # can be simplified further:
         try:
             import yaml
             with open(kwargs["evt_filter"], "r") as file:
