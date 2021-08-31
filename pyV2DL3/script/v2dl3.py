@@ -83,6 +83,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
     # By default we will only store point-like IRFs.
     if not full_enclosure and not point_like:
         point_like = True
+        full_enclosure = False
     irfs_to_store = {'full-enclosure': full_enclosure,
                      'point-like': point_like}
 
@@ -136,7 +137,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
             logging.info('Processing file: {}'.format(st5_str))
             logging.debug('Stage5 file:{}, EA file:{}'.format(st5_str, ea_str))
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            if ed:
+            if ed or st5_str.find('.anasum.root') >= 0:
                 datasource = loadROOTFiles(st5_str, ea_str, 'ED')
             else:
                 datasource = loadROOTFiles(st5_str, ea_str, 'VEGAS')
