@@ -24,10 +24,6 @@ class EventDisplayDataSource(VtsDataSource):
         except (KeyError, TypeError):
             # evt_filter option not used
             evt_filter = {}
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError(f"{e}\n Try installing using `pip install pyyaml` "
-                                      f"or `conda install -c conda-forge pyyaml`")
-
 
         gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
         self.__gti__ = gti
