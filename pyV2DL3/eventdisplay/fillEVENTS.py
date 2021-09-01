@@ -127,7 +127,6 @@ def __fillEVENTS__(edFileIO, select={}):
             evt_dict["BDT_SCORE"] = bdtScore
             evt_dict["IS_GAMMA"] = IsGamma
 
-        
         # Filling Header info
         evt_dict["OBS_ID"] = runNumber
         evt_dict["DATE-OBS"] = t_start_fits
@@ -158,16 +157,20 @@ def __fillEVENTS__(edFileIO, select={}):
         avNoise = runSummary["pedvarsOn"][0]
 
         try:
-             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"]["maskBits"].member(
-                 "fAllBits"
-             )
-             gti_tstart_from_reference, gti_tstop_from_reference = getGTI(BitArray, tstart_from_reference)
+            BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
+                "maskBits"
+            ].member("fAllBits")
+            gti_tstart_from_reference, gti_tstop_from_reference = getGTI(
+                BitArray, tstart_from_reference
+            )
         except (KeyError):
-            print('maskBits not found, Available keys:',
-                  file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys())
+            print(
+                "maskBits not found, Available keys:",
+                file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys(),
+            )
             gti_tstart_from_reference = [tstart_from_reference]
             gti_tstop_from_reference = [tstop_from_reference]
-    
+
     return (
         {
             "goodTimeStart": gti_tstart_from_reference,
