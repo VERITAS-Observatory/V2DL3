@@ -61,7 +61,8 @@ class IrfInterpolator:
         self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
-        print("Interpolating coordinates: ", coordinate)
+        fmt_str = "IRF interpolation for noise, zenith (deg), camera offset (deg) = " + ', '.join(["{:.2f}"]*len(coordinate))
+        print(fmt_str.format(*coordinate))
         # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
         if self.azimuth == 0:
             if len(coordinate) != 4:
