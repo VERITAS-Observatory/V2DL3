@@ -110,36 +110,34 @@ def extract_irf(
     return_irf_axes=False,
     single_index=False,
     implemented_irf_names_1d=None,
-    implemented_irf_names_2d=None
+    implemented_irf_names_2d=None,
 ):
     print("Extracting IRFs of type: {}".format(irf_name))
-    print("\tAzimuth %.1f deg"%azimuth)
-    print("\tSingle index", single_index)
-    print("\tCoordinate tuple", coord_tuple)
-    # Get both the ROOT effective area TTree and the uproot one (much faster)
+    print("\tAzimuth: %.1f deg" % azimuth)
+    print("\tSingle index: ", single_index)
+    print("\tCoordinate tuple: ", coord_tuple)
+
+    # Load parameters from each TTree on arrays with uproot (fast)
+    with uproot.open(filename)["fEffArea"] as fast_eff_area:
+        all_zds = fast_eff_area["ze"].array(library="np")
+        all_azs = fast_eff_area["az"].array(library="np")
+        all_azMins = fast_eff_area["azMin"].array(library="np")
+        all_azMaxs = fast_eff_area["azMax"].array(library="np")
+        all_Woffs = fast_eff_area["Woff"].array(library="np")
+        all_pedvars = fast_eff_area["pedvar"].array(library="np")
+        all_indexs = fast_eff_area["index"].array(library="np")
+        all_nbins = fast_eff_area["nbins"].array(library="np")
+
+    # effective area tree with regular ROOT
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
-    fast_eff_area = uproot.open(filename)["fEffArea"]
-
-    # Load parameters from each TTree on arrays with uproot (super fast)
-    all_zds = fast_eff_area["ze"].array(library="np")
-    all_azs = fast_eff_area["az"].array(library="np")
-    all_azMins = fast_eff_area["azMin"].array(library="np")
-    all_azMaxs = fast_eff_area["azMax"].array(library="np")
-    all_Woffs = fast_eff_area["Woff"].array(library="np")
-    all_pedvars = fast_eff_area["pedvar"].array(library="np")
-    all_indexs = fast_eff_area["index"].array(library="np")
-    all_nbins = fast_eff_area["nbins"].array(library="np")
 
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
     if not coord_tuple:
-        # round all parameters for correct extraction
+        # round all parameters for correct extraction and remove duplicities
         all_zds = np.round(all_zds, decimals=2)
         zds, zes_counts = np.unique(all_zds, return_counts=True)
-
-        # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
-        # We remove the duplicities from the zenith and pedestal unique values arrays:
         zds = remove_duplicities(zds, 2.0)
 
         all_azs = np.round(all_azs, decimals=2)
@@ -154,12 +152,9 @@ def extract_irf(
         all_Woffs = np.round(all_Woffs, decimals=2)
         woffs, Woffs_counts = np.unique(all_Woffs, return_counts=True)
 
+        # round all parameters for correct extraction and remove duplicities
         all_pedvars = np.round(all_pedvars, decimals=2)
         pedvars, pedvars_counts = np.unique(all_pedvars, return_counts=True)
-        # replace all_pedvars with values from pedvars unique list of values if they are close
-
-        # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
-        # We remove the duplicities from the zenith and pedestal unique values arrays:
         pedvars = remove_duplicities(pedvars, 0.21)
         # replace all_pedvars values with nearest from pedvars list by calculating the difference between each element and taking the min
         all_pedvars = pedvars[
@@ -181,7 +176,7 @@ def extract_irf(
     else:
         if len(coord_tuple) != 5:
             raise ValueError(
-                "coord_tuple needs to contain 5 dimensions, in this order: az, index, pedvar, zd and woff"
+                "coord_tuple needs to contain 5 dimensions, in this order: az, spectral index, pedvar, zd and woff"
             )
         else:
             # Get the coordinates to sample:
@@ -195,22 +190,15 @@ def extract_irf(
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
     eff_area_tree.SetBranchStatus("*", 0)
-    if irf_name == "eff":
-        eff_area_tree.SetBranchStatus("e0", 1)
-        eff_area_tree.SetBranchStatus("eff", 1)
+    if irf_name in implemented_irf_names_1d:
+        if irf_name.find("Rec") >= 0:
+            eff_area_tree.SetBranchStatus("Rec_e0", 1)
+        else:
+            eff_area_tree.SetBranchStatus("e0", 1)
+        eff_area_tree.SetBranchStatus(irf_name, 1)
         entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
-    elif irf_name == "effNoTh2":
-        eff_area_tree.SetBranchStatus("e0", 1)
-        eff_area_tree.SetBranchStatus("effNoTh2", 1)
-        entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
-    elif irf_name == "hEsysMCRelative2D":
-        eff_area_tree.SetBranchStatus("hEsysMCRelative2D", 1)
-        entry_with_max_bins = 0
-    elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-        eff_area_tree.SetBranchStatus("hEsysMCRelative2DNoDirectionCut", 1)
-        entry_with_max_bins = 0
-    elif irf_name == "hAngularLogDiffEmc_2D":
-        eff_area_tree.SetBranchStatus("hAngularLogDiffEmc_2D", 1)
+    elif irf_name in implemented_irf_names_2d:
+        eff_area_tree.SetBranchStatus(irf_name, 1 )
         entry_with_max_bins = 0
     else:
         raise Exception("WrongIrfName")
@@ -266,10 +254,11 @@ def extract_irf(
 
     if azimuth:
         az_centers = (azMaxs[:-1] + azMins[1:]) / 2.0
+        print(azMaxs,azMins,az_centers)
         az_centers = np.array(az_centers)
         az_centers[az_centers < 0] += 360
         if np.any(az_centers < 0) or np.any(az_centers > 360):
-            raise ValueError("IRF azimuth bins not in the range 0-360")
+            raise ValueError("IRF azimuth bins not in the range 0-360 deg")
         az_bin_to_store = find_nearest(az_centers, azimuth)
         print("az bin to store: ", az_bin_to_store)
     if single_index:
