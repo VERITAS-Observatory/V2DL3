@@ -60,7 +60,7 @@ def __fillRESPONSE__(
     if irf_to_store["point-like"]:
         print("Point-like IRF: ")
         print("\tcamera offset: ", camera_offsets)
-        print("\tnoise: %.1f" % noise, end=" ")
+        print("\tpedvar: %.1f" % noise, end=" ")
         print(", zenith: %.1f deg" % zenith)
         #
         # Interpolate effective area  (point-like)
