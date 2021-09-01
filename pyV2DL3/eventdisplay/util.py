@@ -109,18 +109,13 @@ def extract_irf(
     coord_tuple=False,
     return_irf_axes=False,
     single_index=False,
+    implemented_irf_names_1d=None,
+    implemented_irf_names_2d=None
 ):
-    print("Azimuth", azimuth)
-    print("Single index", single_index)
-    print("Coordinate tuple", coord_tuple)
     print("Extracting IRFs of type: {}".format(irf_name))
-    # List of implemented IRFs
-    implemented_irf_names_1d = ["eff", "effNoTh2", "Rec_eff"]
-    implemented_irf_names_2d = [
-        "hEsysMCRelative2D",
-        "hEsysMCRelative2DNoDirectionCut",
-        "hAngularLogDiffEmc_2D",
-    ]
+    print("\tAzimuth %.1f deg"%azimuth)
+    print("\tSingle index", single_index)
+    print("\tCoordinate tuple", coord_tuple)
     # Get both the ROOT effective area TTree and the uproot one (much faster)
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")

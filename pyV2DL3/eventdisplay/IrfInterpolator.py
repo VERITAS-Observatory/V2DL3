@@ -45,6 +45,8 @@ class IrfInterpolator:
             azimuth=self.azimuth,
             single_index=True,
             return_irf_axes=True,
+            implemented_irf_names_1d=self.implemented_irf_names_1d,
+            implemented_irf_names_2d=self.implemented_irf_names_2d
         )
         # This is an important technical step: the regular grid interpolator does not accept
         # interpolating on a dimension with size = 1.
@@ -60,8 +62,7 @@ class IrfInterpolator:
         self.irf_axes = irf_axes
         self.interpolator = RegularGridInterpolator(self.irf_axes,
                                                     self.irf_data,
-                                                    bounds_error=True,
-                                                    fill_value=nan)
+                                                    bounds_error=True)
 
     def interpolate(self, coordinate):
         fmt_str = "IRF interpolation for pedvar, zenith (deg), camera offset (deg) = " + ', '.join(["{:.2f}"]*len(coordinate))
@@ -77,12 +78,12 @@ class IrfInterpolator:
                 raise ValueError("IRF Interpolation: require 3 coordinates (pedvar, zenith, offset)")
 
         if self.irf_name in self.implemented_irf_names_2d:
-            # interpolate over 2 dimensions
+            # 2D interpolation
             xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
             interpolated_irf = self.interpolator((xx, yy, *coordinate))
             return interpolated_irf, [self.irf_axes[0], self.irf_axes[1]]
         elif self.irf_name in self.implemented_irf_names_1d:
-            # interpolate over 1 dimension (true energy)
+            # 1D interpolate (true energy)
             interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
             return interpolated_irf, [self.irf_axes[0]]
         else:
