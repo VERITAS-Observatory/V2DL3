@@ -203,49 +203,35 @@ def extract_irf(
     else:
         raise Exception("WrongIrfName")
 
-    # Now we know which entry we need to get in order to have a sample IRF
-    #     sample_irf = sample_energies = []
-    # Generate sample IRF
-    for i, entry in enumerate(eff_area_tree):
-        if i == entry_with_max_bins:
-            if irf_name == "eff":
-                sample_irf = [j for j in entry.eff]
-                sample_energies = [j for j in entry.e0]
-            elif irf_name == "effNoTh2":
-                sample_irf = [j for j in entry.effNoTh2]
-                sample_energies = [j for j in entry.e0]
-            elif irf_name == "hEsysMCRelative2D":
-                # Migration vs energy bias and true energy
-                sample_irf, axes = hist2array(
-                    entry.hEsysMCRelative2D, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-            elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-                # Migration vs energy bias and true energy, without direction cut
-                sample_irf, axes = hist2array(
-                    entry.hEsysMCRelative2DNoDirectionCut, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-            elif irf_name == "hAngularLogDiffEmc_2D":
-                # PSF vs true energy:
-                sample_irf, axes = hist2array(
-                    entry.hAngularLogDiffEmc_2D, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-            else:
-                raise Exception("WrongIrfName")
-        if i > entry_with_max_bins:
-            # Only extract the above defined IRF-name-specific "entry with max bins"
-            break
+    # generate sample IRFs with max number of expected bins
+    eff_area_tree.GetEntry(entry_with_max_bins)
+    if irf_name == "eff":
+        sample_irf = [j for j in eff_area_tree.eff]
+        sample_energies = [j for j in eff_area_tree.e0]
+    elif irf_name == "effNoTh2":
+        sample_irf = [j for j in eff_area_tree.effNoTh2]
+        sample_energies = [j for j in eff_area_tree.e0]
+    elif irf_name in implemented_irf_names_2d:
+        # Migration vs energy bias and true energy
+        if irf_name == "hEsysMCRelative2D":
+            sample_irf, axes = hist2array(
+                eff_area_tree.hEsysMCRelative2D, return_edges=True
+            )
+        # Migration vs energy bias and true energy, without direction cut
+        elif irf_name == "hEsysMCRelative2DNoDirectionCut":
+            sample_irf, axes = hist2array(
+                eff_area_tree.hEsysMCRelative2DNoDirectionCut, return_edges=True
+            )
+        # PSF vs true energy:
+        elif irf_name == "hAngularLogDiffEmc_2D":
+            sample_irf, axes = hist2array(
+                eff_area_tree.hAngularLogDiffEmc_2D, return_edges=True
+            )
+        # Bin edges (one more entry than migra!) for the true energy and
+        # energy bias (Erec/Etrue)
+        irf_dimension_1 = bin_edges_to_centers(axes[0])
+        irf_dimension_2 = bin_edges_to_centers(axes[1])
+
     # Now we should know all the dimensions that need to be stored in the output irf_data
     # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
     # * az_bin_to_store = 16 # contains the average over all az bins. Not used.
@@ -254,24 +240,19 @@ def extract_irf(
 
     if azimuth:
         az_centers = (azMaxs[:-1] + azMins[1:]) / 2.0
-        print(azMaxs,azMins,az_centers)
         az_centers = np.array(az_centers)
         az_centers[az_centers < 0] += 360
         if np.any(az_centers < 0) or np.any(az_centers > 360):
             raise ValueError("IRF azimuth bins not in the range 0-360 deg")
         az_bin_to_store = find_nearest(az_centers, azimuth)
-        print("az bin to store: ", az_bin_to_store)
+        print("\tNumber of azimuth bins: ", az_bin_to_store)
     if single_index:
-        # Find the closest index to the average value simulated:
+        # Find the closest spectral index to the average value simulated:
         index_to_store = indexs[
             find_nearest(indexs, (indexs.min() + indexs.max()) / 2.0)
         ]
         # true energy IRFs are not index dependent, only lowest index is populated
-        if (
-            irf_name == "hAngularLogDiffEmc_2D"
-            or irf_name == "hEsysMCRelative2DNoDirectionCut"
-            or irf_name == "hEsysMCRelative2D"
-        ):
+        if irf_name.find("Rec") < 0:
             index_to_store = indexs.min()
     # Create data container, filled with zeros, containing the required dimensions to store
     # the IRF for a given coord_tuple. Separated between 1 and 2 dimensions:
@@ -284,7 +265,7 @@ def extract_irf(
     # If an azimuth was provided, this dimension will not be included
     if not azimuth:
         data_shape.append(len(azs))
-    # This dimension will not be included if we only want to store one single index
+    # This dimension will not be included if we only want to store one single spectral index
     if not single_index:
         data_shape.append(len(indexs))
     # These dimensions will be always included:
