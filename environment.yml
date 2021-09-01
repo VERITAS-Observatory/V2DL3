@@ -1,4 +1,4 @@
-name: v2dl3-dev
+name: v2dl3
 channels:
   - astropy
   - conda-forge
@@ -15,3 +15,4 @@ dependencies:
   - ipywidgets
   - pandas
   - gammapy
+  - pyyaml
