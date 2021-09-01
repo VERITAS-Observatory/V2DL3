@@ -1,4 +1,4 @@
-name: v2dl3 
+name: v2dl3
 channels:
   - astropy
   - conda-forge

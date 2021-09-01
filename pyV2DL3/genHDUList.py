@@ -1,27 +1,28 @@
 from astropy.io import fits
 import logging
-from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fill_response import fill_response
+from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fillEVENTS import fillEVENTS
-from pyV2DL3.vegas.VegasDataSource import VegasDataSource
 from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
+from pyV2DL3.vegas.VegasDataSource import VegasDataSource
 
 logger = logging.getLogger(__name__)
 
 
 def genPrimaryHDU():
-    """
-    Generate primary hdu
-    """
+    """Generate primary hdu"""
+
     hdu0 = fits.PrimaryHDU()
-    hdu0.header.set('TELESCOP', 
+    hdu0.header.set('TELESCOP',
                     'VERITAS',
                     'Telescope')
     hdu0.header.set('LICENSE ',
                     '',
                     'Copyright (c) 2018,The VERITAS Collaboration')
-    hdu0.header['COMMENT'] = "FITS (Flexible Image Transport System) format is defined in 'Astronomy"
-    hdu0.header['COMMENT'] = "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
+    hdu0.header['COMMENT'] = "FITS (Flexible Image Transport System) \
+                              format is defined in 'Astronomy"
+    hdu0.header['COMMENT'] = "and Astrophysics', volume 376, page 359; \
+                              bibcode: 2001A&A...376..359H"
     return hdu0
 
 

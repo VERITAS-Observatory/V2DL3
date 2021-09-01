@@ -1,6 +1,5 @@
-import ROOT
-from ROOT import gSystem,gROOT
 import contextlib
+from ROOT import gROOT
 
 
 @contextlib.contextmanager
@@ -15,11 +14,11 @@ def cpp_print_context(verbose=True):
 
 
 class SingletonDecorator:
-    def __init__(self,klass):
+    def __init__(self, klass):
         self.klass = klass
         self.instance = None
-    def __call__(self,*args,**kwds):
-        if self.instance == None:
-            self.instance = self.klass(*args,**kwds)
-        return self.instance
 
+    def __call__(self, *args, **kwds):
+        if self.instance is None:
+            self.instance = self.klass(*args, **kwds)
+        return self.instance
