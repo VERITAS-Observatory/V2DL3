@@ -5,8 +5,8 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.eventdisplay.util import produce_tel_list
 from pyV2DL3.eventdisplay.util import getGTI
+from pyV2DL3.eventdisplay.util import produce_tel_list
 import uproot
 
 logger = logging.getLogger(__name__)
