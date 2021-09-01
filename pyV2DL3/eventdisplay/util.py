@@ -102,20 +102,13 @@ def hist2array(h, return_edges=False):
         return array.T
 
 
-def extract_irf(
-    filename,
-    irf_name,
-    azimuth=False,
-    coord_tuple=False,
-    return_irf_axes=False,
-    single_index=False,
-    implemented_irf_names_1d=None,
-    implemented_irf_names_2d=None,
-):
-    print("Extracting IRFs of type: {}".format(irf_name))
-    print("\tAzimuth: %.1f deg" % azimuth)
-    print("\tSingle index: ", single_index)
-    print("\tCoordinate tuple: ", coord_tuple)
+def getIRFParameterSpace(filename, irf_name, azimuth, single_index, coord_tuple):
+
+    """read parameter space from effective area file
+
+    return vectores without duplicated entries
+
+    """
 
     # Load parameters from each TTree on arrays with uproot (fast)
     with uproot.open(filename)["fEffArea"] as fast_eff_area:
@@ -128,9 +121,8 @@ def extract_irf(
         all_indexs = fast_eff_area["index"].array(library="np")
         all_nbins = fast_eff_area["nbins"].array(library="np")
 
-    # effective area tree with regular ROOT
-    eff_area_file = TFile.Open(filename)
-    eff_area_tree = eff_area_file.Get("fEffArea")
+    # entry with maximum bins
+    entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
 
     # If no coord_tuple is provided, extract the IRF over all dimensions
     azs = indexs = pedvars = zds = woffs = []
@@ -187,6 +179,80 @@ def extract_irf(
             woffs = coord_tuple[4]
             print("Coordinates to sample:", azs, indexs, pedvars, zds, woffs)
 
+    # Now we should know all the dimensions that need to be stored in the output irf_data
+    # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
+    # * az_bin_to_store = 16 # contains the average over all az bins. Not used.
+    # * note the different conventions for azimuth: anasum file (0..360), EA (-180..180)
+    # * If 'single_index' is True, then only store one index value (average of the simulated ones)
+    if azimuth:
+        az_centers = (azMaxs[:-1] + azMins[1:]) / 2.0
+        az_centers = np.array(az_centers)
+        az_centers[az_centers < 0] += 360
+        if np.any(az_centers < 0) or np.any(az_centers > 360):
+            raise ValueError("IRF azimuth bins not in the range 0-360 deg")
+        az_bin_to_store = find_nearest(az_centers, azimuth)
+        print("\tNumber of azimuth bins: ", az_bin_to_store)
+    if single_index:
+        # Find the closest spectral index to the average value simulated:
+        index_to_store = indexs[
+            find_nearest(indexs, (indexs.min() + indexs.max()) / 2.0)
+        ]
+        # true energy IRFs are not index dependent, only lowest index is populated
+        if irf_name.find("Rec") < 0:
+            index_to_store = indexs.min()
+
+    return (
+        all_zds,
+        zds,
+        all_azs,
+        azs,
+        all_Woffs,
+        woffs,
+        all_pedvars,
+        pedvars,
+        all_indexs,
+        indexs,
+        az_bin_to_store,
+        index_to_store,
+        entry_with_max_bins,
+    )
+
+
+def extract_irf(
+    filename,
+    irf_name,
+    azimuth=False,
+    coord_tuple=False,
+    return_irf_axes=False,
+    single_index=False,
+    implemented_irf_names_1d=None,
+    implemented_irf_names_2d=None,
+):
+    print("Extracting IRFs of type: {}".format(irf_name))
+    print("\tAzimuth: %.1f deg" % azimuth)
+    print("\tSingle index: ", single_index)
+    print("\tCoordinate tuple: ", coord_tuple)
+
+    (
+        all_zds,
+        zds,
+        all_azs,
+        azs,
+        all_Woffs,
+        woffs,
+        all_pedvars,
+        pedvars,
+        all_indexs,
+        indexs,
+        az_bin_to_store,
+        index_to_store,
+        entry_with_max_bins,
+    ) = getIRFParameterSpace(filename, irf_name, azimuth, single_index, coord_tuple)
+
+    # effective area tree with regular ROOT
+    eff_area_file = TFile.Open(filename)
+    eff_area_tree = eff_area_file.Get("fEffArea")
+
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
     eff_area_tree.SetBranchStatus("*", 0)
@@ -196,9 +262,8 @@ def extract_irf(
         else:
             eff_area_tree.SetBranchStatus("e0", 1)
         eff_area_tree.SetBranchStatus(irf_name, 1)
-        entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     elif irf_name in implemented_irf_names_2d:
-        eff_area_tree.SetBranchStatus(irf_name, 1 )
+        eff_area_tree.SetBranchStatus(irf_name, 1)
         entry_with_max_bins = 0
     else:
         raise Exception("WrongIrfName")
@@ -232,28 +297,6 @@ def extract_irf(
         irf_dimension_1 = bin_edges_to_centers(axes[0])
         irf_dimension_2 = bin_edges_to_centers(axes[1])
 
-    # Now we should know all the dimensions that need to be stored in the output irf_data
-    # * If an azimuth was given, only store the IRF for the closest value (remove that dimension)
-    # * az_bin_to_store = 16 # contains the average over all az bins. Not used.
-    # * note the different conventions for azimuth: anasum file (0..360), EA (-180..180)
-    # * If 'single_index' is True, then only store one index value (average of the simulated ones)
-
-    if azimuth:
-        az_centers = (azMaxs[:-1] + azMins[1:]) / 2.0
-        az_centers = np.array(az_centers)
-        az_centers[az_centers < 0] += 360
-        if np.any(az_centers < 0) or np.any(az_centers > 360):
-            raise ValueError("IRF azimuth bins not in the range 0-360 deg")
-        az_bin_to_store = find_nearest(az_centers, azimuth)
-        print("\tNumber of azimuth bins: ", az_bin_to_store)
-    if single_index:
-        # Find the closest spectral index to the average value simulated:
-        index_to_store = indexs[
-            find_nearest(indexs, (indexs.min() + indexs.max()) / 2.0)
-        ]
-        # true energy IRFs are not index dependent, only lowest index is populated
-        if irf_name.find("Rec") < 0:
-            index_to_store = indexs.min()
     # Create data container, filled with zeros, containing the required dimensions to store
     # the IRF for a given coord_tuple. Separated between 1 and 2 dimensions:
     data_shape = []
