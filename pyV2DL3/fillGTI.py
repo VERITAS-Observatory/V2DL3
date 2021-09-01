@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     gti_dict = datasource.get_gti_data()
-    goodTimeStart = [*gti_dict['goodTimeStart']]
-    goodTimeStop = [*gti_dict['goodTimeStop']]
+    goodTimeStart = gti_dict['goodTimeStart']
+    goodTimeStop = gti_dict['goodTimeStop']
     startTime_s = gti_dict['TSTART']
     endTime_s = gti_dict['TSTOP']
 
