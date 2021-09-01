@@ -65,8 +65,8 @@ class IrfInterpolator:
                                                     bounds_error=True)
 
     def interpolate(self, coordinate):
-        fmt_str = "IRF interpolation for pedvar, zenith (deg), camera offset (deg) = " + ', '.join(["{:.2f}"]*len(coordinate))
-        print(fmt_str.format(*coordinate))
+        #fmt_str = "IRF interpolation for pedvar, zenith (deg), camera offset (deg) = " + ', '.join(["{:.2f}"]*len(coordinate))
+        #print(fmt_str.format(*coordinate))
         # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
         if self.azimuth == 0:
             if len(coordinate) != 4:
