@@ -36,24 +36,6 @@ def remove_duplicities(array, atol):
     return array
 
 
-# This seems not to be working on ROOT 5 + python 6.
-def graph_to_array_y(graph):
-    y = [g for g in graph.GetY()]
-    return y
-
-
-# This seems not to be working on ROOT 5 + python 6.
-def graph_to_array_x(graph):
-    x = [g for g in graph.GetX()]
-    return x
-
-
-def graph_to_array(graph, nbins):
-    x = [graph.GetX()[i] for i in np.arange(0, nbins)]
-    y = [graph.GetY()[i] for i in np.arange(0, nbins)]
-    return x, y
-
-
 def bin_edges_to_centers(axis):
     # This function assumes bins of equal width
     bin_size = axis[1] - axis[0]
@@ -337,7 +319,7 @@ def extract_irf(
         if single_index:
             if (
                 not all_indexs[i] == index_to_store
-            ):  ## might be also not necessary anymore #np.isclose(all_indexs[i], index_to_store, atol=0.01):
+            ):  # might be also not necessary anymore #np.isclose(all_indexs[i], index_to_store, atol=0.01):
                 continue
         if irf_name == "eff":
             irf = [j for j in entry.eff]
