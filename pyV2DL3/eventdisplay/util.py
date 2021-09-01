@@ -539,3 +539,60 @@ def duplicate_dimensions(data):
         if dim == 1:
             new_data = duplicate_dimension(new_data, i)
     return new_data
+
+
+def getGTI(BitArray, run_start_from_reference):
+    """
+     Function to decode the time masks which is stored as 'TBits' in anasum ROOT file
+     and extract the GTIs for a given run
+
+     Parameters
+     ----------
+     maskBits :  array of uint8 numbers, read from anasum root file
+     run_start_from_reference: Start time of the run in second from reference time
+
+     Retuns
+     ------
+     gti_start_from_reference : numpy array of start time of GTIs in second from reference time
+     gti_end_from_reference: numpy array of stop time of GTIs in second from reference time
+
+    """
+
+    n = BitArray.size
+    TimeArray_s = []
+    for i in range(n):
+        TimeArray_s.append(np.binary_repr(BitArray[i]).count('1'))
+
+    duration_s = (n - 1) * 8 + TimeArray_s[-1]
+    ontime_s = np.sum(TimeArray_s[0:n - 1])
+    print('Duration:', duration_s, '(sec.)', duration_s / 60., '(min.)')
+    print('Ontime', ontime_s, '(sec.)', ontime_s / 60., '(min.)')
+
+    gti_start = []
+    gti_end = []
+
+    if (TimeArray_s[0] != 0):
+        gti_start.append(0)
+
+    for i in range(1, n - 1, 1):
+        if ((TimeArray_s[i] == 0) & (TimeArray_s[i - 1] != 0)):
+            end = (i * 8 - (8 - TimeArray_s[i - 1]))
+            gti_end.append(end)
+
+        if ((TimeArray_s[i] == 0) & (TimeArray_s[i + 1] != 0)):
+            start = ((i + 1) * 8 + (8 - TimeArray_s[i + 1]))
+            gti_start.append(start)
+
+    if (TimeArray_s[-1] != 0):
+        gti_end.append(duration_s)
+
+    print('GTIs start and stop in second since run start:', gti_start, gti_end)
+
+    gti_start_from_reference = np.zeros(np.size(gti_start))
+    gti_end_from_reference = np.zeros(np.size(gti_end))
+
+    for i in range(np.size(gti_start)):
+        gti_start_from_reference[i] = gti_start[i] + run_start_from_reference
+        gti_end_from_reference[i] = gti_end[i] + run_start_from_reference
+
+    return gti_start_from_reference, gti_end_from_reference

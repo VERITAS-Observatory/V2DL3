@@ -5,6 +5,7 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
+from pyV2DL3.eventdisplay.util import getGTI
 from pyV2DL3.eventdisplay.util import produce_tel_list
 import uproot
 
@@ -126,16 +127,6 @@ def __fillEVENTS__(edFileIO, select={}):
             evt_dict["BDT_SCORE"] = bdtScore
             evt_dict["IS_GAMMA"] = IsGamma
 
-        # FIXME: Get Time Cuts and build GTI start and stop time array
-        # for k in cuts:
-        #     tmp =k.fCutsFileText
-        #     tc = getTimeCut(k.fCutsFileText)
-        #
-        # goodTimeStart,goodTimeStop = getGTArray(startTime_s,endTime_s,mergeTimeCut(tc))
-        # real_live_time = np.sum(goodTimeStop - goodTimeStart)
-        # startTime_s = float(startTime.getDayNS()) / 1e9
-        # endTime_s = float(endTime.getDayNS()) / 1e9
-
         # Filling Header info
         evt_dict["OBS_ID"] = runNumber
         evt_dict["DATE-OBS"] = t_start_fits
@@ -165,12 +156,25 @@ def __fillEVENTS__(edFileIO, select={}):
 
         avNoise = runSummary["pedvarsOn"][0]
 
-    # FIXME: For now we are not including any good time interval (GTI).
-    # This should be improved in the future, reading the time masks.
+        try:
+            BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
+                "maskBits"
+            ].member("fAllBits")
+            gti_tstart_from_reference, gti_tstop_from_reference = getGTI(
+                BitArray, tstart_from_reference
+            )
+        except (KeyError):
+            print(
+                "maskBits not found, Available keys:",
+                file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys(),
+            )
+            gti_tstart_from_reference = [tstart_from_reference]
+            gti_tstop_from_reference = [tstop_from_reference]
+
     return (
         {
-            "goodTimeStart": [tstart_from_reference],
-            "goodTimeStop": [tstop_from_reference],
+            "goodTimeStart": gti_tstart_from_reference,
+            "goodTimeStop": gti_tstop_from_reference,
             "TSTART": tstart_from_reference,
             "TSTOP": tstop_from_reference,
         },
