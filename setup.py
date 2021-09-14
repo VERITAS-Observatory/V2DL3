@@ -8,11 +8,8 @@ setup(
         'click',
         'numpy',
         'scipy',
-        # 'gammapy',
         'astropy',
-        'root_numpy',
         'pkgconfig',
-        'uproot4'
     ],
     entry_points='''
         [console_scripts]
