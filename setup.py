@@ -5,11 +5,14 @@ setup(
     version='0.1',
     packages=find_packages(),
     install_requires=[
+        'astropy',
         'click',
         'numpy',
-        'scipy',
-        'astropy',
         'pkgconfig',
+        'pyyaml',
+        'scipy',
+        'tqdm',
+        'uproot',
     ],
     entry_points='''
         [console_scripts]

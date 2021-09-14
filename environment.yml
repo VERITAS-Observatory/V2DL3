@@ -3,16 +3,16 @@ channels:
   - astropy
   - conda-forge
 dependencies:
-  - python>=3.5 
-  - click 
-  - numpy>=1.13 
   - astropy>=4.0
+  - click
   - cython>=0.27
+  - gammapy
+  - ipywidgets
+  - numpy>=1.13
+  - pandas
   - pkgconfig
-  - uproot
+  - python>=3.8
+  - pyyaml
   - root
   - tqdm
-  - ipywidgets
-  - pandas
-  - gammapy
-  - pyyaml
+  - uproot
