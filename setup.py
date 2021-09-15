@@ -13,6 +13,7 @@ setup(
         'scipy',
         'tqdm',
         'uproot',
+        'root_numpy'
     ],
     entry_points='''
         [console_scripts]
