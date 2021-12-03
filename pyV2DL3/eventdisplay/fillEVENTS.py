@@ -154,7 +154,7 @@ def __fillEVENTS__(edFileIO, select={}):
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
 
-        avNoise = runSummary["pedvarsOn"][0]
+        avPedvar = runSummary["pedvarsOn"][0]
 
         try:
             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
@@ -178,6 +178,6 @@ def __fillEVENTS__(edFileIO, select={}):
             "TSTART": tstart_from_reference,
             "TSTOP": tstop_from_reference,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
+        {"azimuth": avAz, "zenith": (90.0 - avAlt), "pedvar": avPedvar},
         evt_dict,
     )
