@@ -27,6 +27,7 @@ def __fillRESPONSE__(
         np.round(fast_eff_area["pedvar"].array(library="np"), decimals=2)
     )
     # check that coordinates are in range of provided IRF
+
     print("\tzenith range of a given IRF:", np.min(zeniths_irf), "-", np.max(zeniths_irf))
     print("\tpedvar range of a given IRF:", np.min(pedvar_irf), "-", np.max(pedvar_irf))
 
@@ -254,17 +255,11 @@ def __fillRESPONSE__(
         irf_interpolator.set_irf("hAngularLogDiffEmc_2D")
 
         rpsf_final = []
-        # Loop over offsets, get rad index to cut
-        index_to_cut_a = []
-        for offset in camera_offsets:
-            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
-            counts_below_zero_index = np.all(direction_diff < 10, axis=1)
-            index_to_cut_a.append(np.where(~counts_below_zero_index)[0][0])
 
         for offset in camera_offsets:
 
-            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
-
+            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset]
+                                                                
             energy_edges = bin_centers_to_edges(axis[0])
             rad_edges = bin_centers_to_edges(axis[1])
 
@@ -275,22 +270,13 @@ def __fillRESPONSE__(
             rHigh = np.power(10, [rad_edges[1:]])[0]
 
             # Normalize rpsf by solid angle
-            rad_width_deg = np.diff(rad_edges)
-            solid_angle = 2 * np.pi * rad_width_deg * np.power(10, axis[1])
-            index_to_cut = max(index_to_cut_a)
+            rad_width_deg = np.diff(np.power(10, rad_edges))
+            e_sum = np.sum(direction_diff * 2 * rad_width_deg[:, np.newaxis]
+                           * np.pi * np.power(10, axis[1])[:, np.newaxis], axis=0)
+            normsum = np.divide(((180 / np.pi) ** 2), e_sum, where=e_sum != 0)
 
-            direction_diff_n = np.delete(direction_diff, np.s_[0:index_to_cut], axis=0)
-            solid_angle = solid_angle[index_to_cut:]
-            rLow = rLow[index_to_cut:]
-            rHigh = rHigh[index_to_cut:]
-
-            # Correct for removed counts
-            count_sum_per_energybin = direction_diff.sum(axis=0)
-            count_sum_per_energybin_n = direction_diff_n.sum(axis=0)
-            direction_diff[0, :] += count_sum_per_energybin - count_sum_per_energybin_n
-
-            rpsf = direction_diff_n / solid_angle[:, None]
-            rpsf_final.append(rpsf)
+            rpsf = direction_diff * normsum
+            rpsf_final.append(np.nan_to_num(rpsf).cumsum(axis=0))
 
         # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
         rpsf_final = np.swapaxes(rpsf_final, 0, 1)
