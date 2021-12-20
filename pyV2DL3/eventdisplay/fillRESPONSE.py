@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def __fillRESPONSE__(
-    edFileIO, effectiveArea, azimuth, zenith, noise, offset, irf_to_store={}
+    edFileIO, effectiveArea, azimuth, zenith, pedvar, offset, irf_to_store={}
 ):
     response_dict = {}
 
@@ -27,10 +27,13 @@ def __fillRESPONSE__(
         np.round(fast_eff_area["pedvar"].array(library="np"), decimals=2)
     )
     # check that coordinates are in range of provided IRF
+    print("\tzenith range of a given IRF:", np.min(zeniths_irf), "-", np.max(zeniths_irf))
+    print("\tpedvar range of a given IRF:", np.min(pedvar_irf), "-", np.max(pedvar_irf))
+
     if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
         raise ValueError("Coordinate not inside IRF zenith range")
-    if np.all(pedvar_irf < noise) or np.all(pedvar_irf > noise):
-        raise ValueError("Coordinate not inside IRF noise range")
+    if np.all(pedvar_irf < pedvar) or np.all(pedvar_irf > pedvar):
+        raise ValueError("Coordinate not inside IRF pedvar range")
 
     # Check the camera offset bins available in the effective area file.
     theta_low = []
@@ -60,7 +63,7 @@ def __fillRESPONSE__(
     if irf_to_store["point-like"]:
         print("Point-like IRF: ")
         print("\tcamera offset: ", camera_offsets)
-        print("\tnoise: %.1f" % noise, end=" ")
+        print("\tpedvar: %.1f" % pedvar, end=" ")
         print(", zenith: %.1f deg" % zenith)
         #
         # Interpolate effective area  (point-like)
@@ -71,7 +74,7 @@ def __fillRESPONSE__(
 
         # Loop over offsets
         for offset in camera_offsets:
-            eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
             ea_final.append(np.array(eff_area))
 
         # Always same axis in loop
@@ -108,7 +111,7 @@ def __fillRESPONSE__(
         irf_interpolator.set_irf("hEsysMCRelative2D")
         ac_final = []
         for offset in camera_offsets:
-            bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
             energy_edges = bin_centers_to_edges(axis[0])
             bias_edges = bin_centers_to_edges(axis[1])
@@ -151,7 +154,7 @@ def __fillRESPONSE__(
     if irf_to_store["full-enclosure"]:
         print("Full-enclosure: ")
         print("\tcamera offset: ", camera_offsets)
-        print("\tnoise: %.1f" % noise, end=" ")
+        print("\tpedvar: %.1f" % pedvar, end=" ")
         print(", zenith: %.1f deg" % zenith)
 
         # check if IRF contains multiple offsets:
@@ -170,7 +173,7 @@ def __fillRESPONSE__(
 
         # Loop over offsets and store
         for offset in camera_offsets:
-            eff_area, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
             y = np.array(eff_area)
             ea = y  # [y, y]
@@ -205,7 +208,7 @@ def __fillRESPONSE__(
         ac_final = []
 
         for offset in camera_offsets:
-            bias, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
             energy_edges = bin_centers_to_edges(axis[0])
             bias_edges = bin_centers_to_edges(axis[1])
@@ -254,13 +257,13 @@ def __fillRESPONSE__(
         # Loop over offsets, get rad index to cut
         index_to_cut_a = []
         for offset in camera_offsets:
-            direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
             counts_below_zero_index = np.all(direction_diff < 10, axis=1)
             index_to_cut_a.append(np.where(~counts_below_zero_index)[0][0])
 
         for offset in camera_offsets:
 
-            direction_diff, axis = irf_interpolator.interpolate([noise, zenith, offset])
+            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
             energy_edges = bin_centers_to_edges(axis[0])
             rad_edges = bin_centers_to_edges(axis[1])

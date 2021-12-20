@@ -13,7 +13,7 @@ class EventDisplayDataSource(VtsDataSource):
         # Auxiliary storage
         self.__azimuth__ = 0
         self.__zenith__ = 0
-        self.__noise__ = 0
+        self.__pedvar__ = 0
         self.__offset__ = 0
 
     def __fill_evt__(self, **kwargs):
@@ -31,7 +31,7 @@ class EventDisplayDataSource(VtsDataSource):
         self.__evt__ = events
         self.__azimuth__ = ea_config["azimuth"]
         self.__zenith__ = ea_config["zenith"]
-        self.__noise__ = ea_config["noise"]
+        self.__pedvar__ = ea_config["pedvar"]
 
     def __fill_gti__(self, **kwargs):
         pass
@@ -42,17 +42,17 @@ class EventDisplayDataSource(VtsDataSource):
                 "Parameters used to query IRFs:"
                 " az=%.2f deg,"
                 " ze=%.2f deg,"
-                " noise=%.1f,"
+                " pedvar=%.1f,"
                 " offset=%.2f deg"
             )
-            % (self.__azimuth__, self.__zenith__, self.__noise__, self.__offset__)
+            % (self.__azimuth__, self.__zenith__, self.__pedvar__, self.__offset__)
         )
         self.__response__ = __fillRESPONSE__(
             self.__evt_file__,
             self.__ea_file__,
             self.__azimuth__,
             self.__zenith__,
-            self.__noise__,
+            self.__pedvar__,
             self.__offset__,
             self.__irf_to_store__,
         )
