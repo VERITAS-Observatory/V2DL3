@@ -607,11 +607,15 @@ def getGTI(BitArray, run_start_from_reference):
 
     return gti_start_from_reference, gti_end_from_reference
 
-def get_run_quality(logdata):
+def getRunQuality(logdata):
     """
     Function to evaluate the run quality based on VPM data used or not in the evndisp.
     L to R: bit0 not used, bit[1-4] set when VPM data not used for corresponding telescope,
             bit[5-7] reserved for QUALITY flag defined in GADF and not used currently.
+
+    eg: flag: 64  (01000000) means for T1 VPM data are not used
+        flag: 120 (01111000) means for T1, T2, T3, T4 VPM data are not used
+        flag: 0   (00000000) means for all four telescopes VPM data are used
 
     Parameters
     ----------

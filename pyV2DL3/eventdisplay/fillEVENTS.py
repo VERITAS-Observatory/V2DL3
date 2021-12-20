@@ -5,7 +5,7 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.eventdisplay.util import getGTI, get_run_quality
+from pyV2DL3.eventdisplay.util import getGTI, getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
 import uproot
 
@@ -157,10 +157,10 @@ def __fillEVENTS__(edFileIO, select={}):
         #Read evndispLog which is stroed as TMacro in anasum root file (ED >v486)
         try:
             evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
-            evt_dict["QUALITY"] = get_run_quality(evndisplog_data)
+            evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
         except (KeyError):
             print("\033[1;31m  Eventdispaly logfile not found in anasum root file")
-            print(" Please make sure to use ED >v486 \033[0;0m")
+            print(" Please make sure to use ED >= 486 \033[0;0m")
 
         avPedvar = runSummary["pedvarsOn"][0]
 

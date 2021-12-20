@@ -116,7 +116,7 @@ def fillEVENTS(datasource, save_multiplicity=False):
         hdu1.header.set('QUALITY', evt_dict['QUALITY'], 'Run quality flag based on VPM data used or not')
     except (KeyError):
         print("\033[1;31m The Keyword QUALITY not set in the EVENTS header")
-        print(" Please make sure to use ED >v486 \033[0;0m")
+        print(" Please make sure to use ED >= 486 \033[0;0m")
 
     # Calculate average noise
     return hdu1
