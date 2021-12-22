@@ -154,7 +154,7 @@ def __fillEVENTS__(edFileIO, select={}):
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
 
-        #Read evndispLog which is stroed as TMacro in anasum root file (ED >v486)
+        #Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
         try:
             evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
