@@ -606,3 +606,49 @@ def getGTI(BitArray, run_start_from_reference):
         gti_end_from_reference[i] = gti_end[i] + run_start_from_reference
 
     return gti_start_from_reference, gti_end_from_reference
+
+def getRunQuality(logdata):
+    """
+    Function to evaluate the run quality based on VPM data used or not in the evndisp.
+    L to R: bit0 not used, bit[1-4] set when VPM data not used for corresponding telescope,
+            bit[5-7] reserved for QUALITY flag defined in GADF and not used currently.
+
+    eg: flag: 64  (01000000) means for T1 VPM data are not used
+        flag: 120 (01111000) means for T1, T2, T3, T4 VPM data are not used
+        flag: 0   (00000000) means for all four telescopes VPM data are used
+
+    Parameters
+    ----------
+    TMacro read from the anasum ROOT file
+
+    Returns
+    -------
+    A 8-bit coded integer.
+
+    """
+
+    vpm1 = "(VPM) data from database for telescope 1"
+    vpm2 = "(VPM) data from database for telescope 2"
+    vpm3 = "(VPM) data from database for telescope 3"
+    vpm4 = "(VPM) data from database for telescope 4"
+
+    res1, res2, res3, res4 = "1", "1", "1", "1"
+
+    for line in range(np.size(logdata)):
+
+        if vpm1 in logdata[line]:
+            res1 = "0"
+        elif vpm2 in logdata[line]:
+            res2 = "0"
+        elif vpm3 in logdata[line]:
+            res3 = "0"
+        elif vpm4 in logdata[line]:
+            res4 = "0"
+        else:
+            status = "No VPM data used for any of the telescopes!"
+
+    vpm_used = "0" + res1 + res2 + res3 + res4 + "000"
+    flag = int(vpm_used, 2)
+    print("Run qulaity flag: {} (8 Bit code: {})".format(flag, vpm_used))
+
+    return flag

@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 def __fillRESPONSE__(
     edFileIO, effectiveArea, azimuth, zenith, pedvar, offset, irf_to_store={}
-
 ):
     response_dict = {}
 
@@ -28,8 +27,9 @@ def __fillRESPONSE__(
         np.round(fast_eff_area["pedvar"].array(library="np"), decimals=2)
     )
     # check that coordinates are in range of provided IRF
-    print("\tzenith range of a given IRF:", np.min(zeniths_irf),"-", np.max(zeniths_irf))
-    print("\tpedvar range of a given IRF:", np.min(pedvar_irf),"-", np.max(pedvar_irf))
+
+    print("\tzenith range of a given IRF:", np.min(zeniths_irf), "-", np.max(zeniths_irf))
+    print("\tpedvar range of a given IRF:", np.min(pedvar_irf), "-", np.max(pedvar_irf))
 
     if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
         raise ValueError("Coordinate not inside IRF zenith range")
