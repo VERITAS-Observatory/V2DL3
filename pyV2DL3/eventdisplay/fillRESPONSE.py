@@ -258,7 +258,7 @@ def __fillRESPONSE__(
 
         for offset in camera_offsets:
 
-            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset]
+            direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
                                                                 
             energy_edges = bin_centers_to_edges(axis[0])
             rad_edges = bin_centers_to_edges(axis[1])
