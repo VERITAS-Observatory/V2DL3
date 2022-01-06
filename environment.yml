@@ -6,13 +6,12 @@ dependencies:
   - astropy>=4.0
   - click
   - cython>=0.27
-  - gammapy
-  - ipywidgets
   - numpy>=1.13
   - pandas
   - pkgconfig
   - python>=3.8
   - pyyaml
-  - root
+  - root_numpy
+  - scipy
   - tqdm
   - uproot
