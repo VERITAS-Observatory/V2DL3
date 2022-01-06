@@ -40,7 +40,7 @@ conda env create -f environment.yml
 and the environment ```v2dl3``` will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
 
 ```
-pip install .
+pip install . --use-feature=in-tree-build
 ```
 ### Usage of commandline tool v2dl3
 
