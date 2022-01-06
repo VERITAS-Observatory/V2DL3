@@ -19,6 +19,7 @@ setup(
         [console_scripts]
         v2dl3=pyV2DL3.script.v2dl3:cli
         v2dl3_qsub=pyV2DL3.script.v2dl3_qsub:cli
+        v2dl3ED=pyV2DL3.script.v2dl3Eventdisplay:cli
         generate_index_file=pyV2DL3.script.generate_index_file:cli
     '''
 )
