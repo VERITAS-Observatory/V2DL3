@@ -5,7 +5,7 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.eventdisplay.util import getGTI
+from pyV2DL3.eventdisplay.util import getGTI, getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
 import uproot
 
@@ -154,7 +154,15 @@ def __fillEVENTS__(edFileIO, select={}):
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
 
-        avNoise = runSummary["pedvarsOn"][0]
+        #Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
+        try:
+            evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
+            evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
+        except (KeyError):
+            print("\033[1;31m  Eventdispaly logfile not found in anasum root file")
+            print(" Please make sure to use ED >= 486 \033[0;0m")
+
+        avPedvar = runSummary["pedvarsOn"][0]
 
         try:
             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
@@ -178,6 +186,6 @@ def __fillEVENTS__(edFileIO, select={}):
             "TSTART": tstart_from_reference,
             "TSTOP": tstop_from_reference,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
+        {"azimuth": avAz, "zenith": (90.0 - avAlt), "pedvar": avPedvar},
         evt_dict,
     )
