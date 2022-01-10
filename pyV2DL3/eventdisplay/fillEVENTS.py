@@ -134,10 +134,6 @@ def __fillEVENTS__(edFileIO, select={}):
         evt_dict["TSTART"] = tstart_from_reference
         evt_dict["TSTOP"] = tstop_from_reference
         evt_dict["MJDREFI"] = int(VTS_REFERENCE_MJD)
-        #evt_dict["ONTIME"] = tstop_from_reference - tstart_from_reference
-        #evt_dict["LIVETIME"] = (tstop_from_reference - tstart_from_reference) * (
-        #    1 - deadtime
-        #)
         evt_dict["DEADC"] = 1 - deadtime
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
         evt_dict["RA_PNT"] = avRA
