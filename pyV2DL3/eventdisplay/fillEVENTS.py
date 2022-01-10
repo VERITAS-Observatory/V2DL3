@@ -177,9 +177,7 @@ def __fillEVENTS__(edFileIO, select={}):
             ontime_s = tstop_from_reference - tstart_from_reference
 
         evt_dict["ONTIME"] = ontime_s
-        evt_dict["LIVETIME"] = ontime_s * (
-                1 - deadtime
-        )
+        evt_dict["LIVETIME"] = ontime_s * (1 - deadtime)
 
     return (
         {
