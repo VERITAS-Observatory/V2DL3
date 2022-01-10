@@ -44,7 +44,19 @@ def fillEVENTS(datasource, save_multiplicity=False):
     hdu1.header.set('CREATOR', 'pyV2DL3 v{}::{}'.format(VERSION, datasource.get_source_name()))
     hdu1.header.set('ORIGIN', 'VERITAS Collaboration', 'Data from VERITAS')
     hdu1.header.set('TELESCOP', 'VERITAS')
-    hdu1.header.set('INSTRUME', 'VERITAS')
+
+    V4_start, V4_end = 0, 46641
+    V5_start, V5_end = 46642, 63372
+    V6_start, V6_end = 63373, 999999
+
+    if ((evt_dict['OBS_ID'] >= V4_start) and (evt_dict['OBS_ID'] <= V4_end)):
+        hdu1.header.set('INSTRUME', 'V4')
+
+    if ((evt_dict['OBS_ID'] >= V5_start) and (evt_dict['OBS_ID'] <= V5_end)):
+        hdu1.header.set('INSTRUME', 'V5')
+
+    if ((evt_dict['OBS_ID'] >= V6_start) and (evt_dict['OBS_ID'] <= V6_end)):
+        hdu1.header.set('INSTRUME', 'V6')
 
     hdu1.header.set('OBS_ID  ', evt_dict['OBS_ID'], 'Run Number')
 
