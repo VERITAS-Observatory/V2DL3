@@ -565,6 +565,7 @@ def getGTI(BitArray, run_start_from_reference):
      ------
      gti_start_from_reference : numpy array of start time of GTIs in second from reference time
      gti_end_from_reference: numpy array of stop time of GTIs in second from reference time
+     ontime: Total of good times
 
     """
 
@@ -574,7 +575,7 @@ def getGTI(BitArray, run_start_from_reference):
         TimeArray_s.append(np.binary_repr(BitArray[i]).count('1'))
 
     duration_s = (n - 1) * 8 + TimeArray_s[-1]
-    ontime_s = np.sum(TimeArray_s[0:n - 1])
+    ontime_s = np.sum(TimeArray_s[0:n])
     print('Duration:', duration_s, '(sec.)', duration_s / 60., '(min.)')
     print('Ontime', ontime_s, '(sec.)', ontime_s / 60., '(min.)')
 
@@ -605,7 +606,7 @@ def getGTI(BitArray, run_start_from_reference):
         gti_start_from_reference[i] = gti_start[i] + run_start_from_reference
         gti_end_from_reference[i] = gti_end[i] + run_start_from_reference
 
-    return gti_start_from_reference, gti_end_from_reference
+    return gti_start_from_reference, gti_end_from_reference, ontime_s
 
 def getRunQuality(logdata):
     """

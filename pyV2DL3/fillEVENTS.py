@@ -78,11 +78,11 @@ def fillEVENTS(datasource, save_multiplicity=False):
     
     hdu1.header.set('ONTIME  ', 
                     evt_dict['ONTIME'],
-                    'time on target (including deadtime)')
+                    'sum of good time intervals [s], does not include instrument deadtime correction')
 
     # Correct live time for time cuts
     hdu1.header.set('LIVETIME', evt_dict['LIVETIME'],
-                    '(dead=ONTIME-LIVETIME) [s] ')
+                    '(ontime * deadtime time correction) [s] ')
 
     hdu1.header.set('DEADC   ', evt_dict['DEADC'],
                     'Average dead time correction (LIVETIME/ONTIME)')
