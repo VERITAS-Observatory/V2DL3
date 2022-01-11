@@ -41,9 +41,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--evt_filter', type=click.Path(exists=True),
               help='Load condition to filter events form json or yaml file.')
 @click.argument('output', metavar='<output>')
+@click.option('--instrument_epoch', '-i', is_flag=True,
+              help='Instrument epoch to be stored in EVENTS header')
+
 def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         ed, filename_to_obsid, full_enclosure, point_like,
-        debug, verbose, output, evt_filter):
+        debug, verbose, output, evt_filter, instrument_epoch):
     """Tool for converting VEGAS stage5 or Eventdisplay anasum files to DL3
 
     \b
