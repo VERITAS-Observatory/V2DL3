@@ -650,6 +650,6 @@ def getRunQuality(logdata):
 
     vpm_used = "0" + res1 + res2 + res3 + res4 + "000"
     flag = int(vpm_used, 2)
-    print("Run qulaity flag: {} (8 Bit code: {})".format(flag, vpm_used))
+    print("Run quality flag: {} (8 Bit code: {})".format(flag, vpm_used))
 
     return flag
