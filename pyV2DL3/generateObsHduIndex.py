@@ -97,6 +97,11 @@ def gen_obs_index(filelist, index_file_dir='./'):
     tstop = []
     N_TELS = []
     TELLIST = []
+    OBJECT = []
+    RA_OBJ = []
+    DEC_OBJ = []
+    DATE_OBS = []
+    DATE_END = []
 
     # loop through the files
     for _file in filelist:
@@ -121,16 +126,23 @@ def gen_obs_index(filelist, index_file_dir='./'):
         deadc.append(dl3_hdu[1].header['DEADC'])
         tstart.append(dl3_hdu[1].header['TSTART'])
         tstop.append(dl3_hdu[1].header['TSTOP'])
-        N_TELS.append(4)
+        N_TELS.append(dl3_hdu[1].header['N_TELS'])
         TELLIST.append(dl3_hdu[1].header['TELLIST'])
+        OBJECT.append(dl3_hdu[1].header['OBJECT'])
+        RA_OBJ.append(dl3_hdu[1].header['RA_OBJ'])
+        DEC_OBJ.append(dl3_hdu[1].header['DEC_OBJ'])
+        DATE_OBS.append(dl3_hdu[1].header['DATE-OBS'])
+        DATE_END.append(dl3_hdu[1].header['DATE-END'])
 
     obs_table = Table(
-        [obs_id, ra_pnt, dec_pnt, zen_pnt, alt_pnt, az_pnt, ontime, livetime, deadc, tstart, tstop, N_TELS, TELLIST],
+        [obs_id, ra_pnt, dec_pnt, zen_pnt, alt_pnt, az_pnt, ontime, livetime, deadc, tstart, tstop, N_TELS, TELLIST, OBJECT,
+         RA_OBJ, DEC_OBJ, DATE_OBS, DATE_END],
         names=(
             'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
             'TSTOP',
-            'N_TELS', 'TELLIST'),
-        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20')
+            'N_TELS', 'TELLIST', 'OBJECT', 'RA_OBJ', 'DEC_OBJ', 'DATE-OBS', 'DATE-END'),
+        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20', 'S20',
+               '>f4', '>f4', 'S20', 'S20')
     )
 
     # Set units
@@ -145,6 +157,8 @@ def gen_obs_index(filelist, index_file_dir='./'):
 
     obs_table['TSTART'].unit = 's'
     obs_table['TSTOP'].unit = 's'
+    obs_table['RA_OBJ'].unit = 'deg'
+    obs_table['DEC_OBJ'].unit = 'deg'
     if(len(obs_table) == 0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
