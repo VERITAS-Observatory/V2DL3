@@ -101,6 +101,34 @@ def hist2array(h, return_edges=False):
     else:
         return array.T
 
+def load_parameter(
+    parameter_name,
+    par_fixed,
+    fast_eff_area ):
+    """load effective area parameter
+
+       apply necessary rounding
+    """
+
+    all_par = fast_eff_area[parameter_name].array(library="np")
+    par = []
+    if not par_fixed:
+        # round all parameters for correct extraction
+        all_par = np.round(all_par, decimals=2)
+        par = np.unique(all_par)
+        if parameter_name is 'pedvar':
+            par = remove_duplicities(par, 0.21)
+            # replace all_pedvars values with nearest from pedvars list
+            # by calculating the difference between each element and taking the min
+            all_par = par[
+            abs(all_par[None, :] - par[:, None]).argmin(axis=0)
+        ]
+        else:
+            par = remove_duplicities(par, 2.0)
+    else:
+        par=par_fixed
+
+    return all_par, par
 
 def extract_irf(
     filename,
@@ -126,76 +154,60 @@ def extract_irf(
     eff_area_tree = eff_area_file.Get("fEffArea")
     fast_eff_area = uproot.open(filename)["fEffArea"]
 
-    # Load parameters from each TTree on arrays with uproot (super fast)
-    all_zds = fast_eff_area["ze"].array(library="np")
-    all_azs = fast_eff_area["az"].array(library="np")
-    all_azMins = fast_eff_area["azMin"].array(library="np")
-    all_azMaxs = fast_eff_area["azMax"].array(library="np")
-    all_Woffs = fast_eff_area["Woff"].array(library="np")
-    all_pedvars = fast_eff_area["pedvar"].array(library="np")
-    all_indexs = fast_eff_area["index"].array(library="np")
-    all_nbins = fast_eff_area["nbins"].array(library="np")
-
-    # If no coord_tuple is provided, extract the IRF over all dimensions
-    azs = indexs = pedvars = zds = woffs = []
     if not coord_tuple:
-        # round all parameters for correct extraction
-        all_zds = np.round(all_zds, decimals=2)
-        zds, zes_counts = np.unique(all_zds, return_counts=True)
-
-        # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
-        # We remove the duplicities from the zenith and pedestal unique values arrays:
-        zds = remove_duplicities(zds, 2.0)
-
-        all_azs = np.round(all_azs, decimals=2)
-        azs = np.unique(all_azs)
-
-        all_azMins = np.round(all_azMins, decimals=2)
-        azMins, azMins_counts = np.unique(all_azMins, return_counts=True)
-
-        all_azMaxs = np.round(all_azMaxs, decimals=2)
-        azMaxs, azMaxs_counts = np.unique(all_azMaxs, return_counts=True)
-
-        all_Woffs = np.round(all_Woffs, decimals=2)
-        woffs, Woffs_counts = np.unique(all_Woffs, return_counts=True)
-
-        all_pedvars = np.round(all_pedvars, decimals=2)
-        pedvars, pedvars_counts = np.unique(all_pedvars, return_counts=True)
-        # replace all_pedvars with values from pedvars unique list of values if they are close
-
-        # IMPORTANT: Remove duplicities (shouldn't be the case, but the values are not stored properly...)
-        # We remove the duplicities from the zenith and pedestal unique values arrays:
-        pedvars = remove_duplicities(pedvars, 0.21)
-        # replace all_pedvars values with nearest from pedvars list by calculating the difference between each element and taking the min
-        all_pedvars = pedvars[
-            abs(all_pedvars[None, :] - pedvars[:, None]).argmin(axis=0)
-        ]
-
-        all_indexs = np.round(all_indexs, decimals=2)
-        indexs, indexs_counts = np.unique(all_indexs, return_counts=True)
-
+        all_zds, zds = load_parameter( "ze",
+                                       None,
+                                       fast_eff_area)
+        all_azs, azs = load_parameter( "az",
+                                       None,
+                                       fast_eff_area)
+        all_azMins, azMins = load_parameter( "azMin",
+                                       None,
+                                       fast_eff_area)
+        all_azMaxs, azMaxs = load_parameter( "azMax",
+                                       None,
+                                       fast_eff_area)
+        all_azWoffs, woffs = load_parameter( "Woff",
+                                       None,
+                                       fast_eff_area)
+        all_pedvars, pedvars = load_parameter( "pedvar",
+                                       None,
+                                       fast_eff_area)
+        all_indexs , indexs = load_parameter( "index",
+                                       None,
+                                       fast_eff_area)
+        all_nbins , nbins = load_parameter( "nbins",
+                                       None,
+                                       fast_eff_area)
         if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(
             indexs
         ):
+            print("YYY", len(all_zds), len(zds), len(zds) * len(azs) * len(woffs) * len(pedvars) * len(indexs) )
             raise ValueError(
                 "Wrong dimensions extracted from IRF cube."
-                + "Probably due to the rounding applied to the IRF coordinates."
-            )
-
-    # If a specific coord_tuple is provided, only extract the IRFs within that range of dimensions
+                + "Probably due to the rounding applied to the IRF coordinates.")
     else:
         if len(coord_tuple) != 5:
             raise ValueError(
                 "coord_tuple needs to contain 5 dimensions, in this order: az, index, pedvar, zd and woff"
             )
-        else:
-            # Get the coordinates to sample:
-            azs = coord_tuple[0]
-            indexs = coord_tuple[1]
-            pedvars = coord_tuple[2]
-            zds = coord_tuple[3]
-            woffs = coord_tuple[4]
-            print("Coordinates to sample:", azs, indexs, pedvars, zds, woffs)
+        all_zds, zds, = load_parameter( "ze",
+                                       coord_tuple[3],
+                                       fast_eff_area)
+        all_azs, azs, = load_parameter( "az",
+                                       coord_tuple[0],
+                                       fast_eff_area)
+        all_indexs, indexs, = load_parameter( "index",
+                                       coord_tuple[1],
+                                       fast_eff_area)
+        all_pedvars, pedvars, = load_parameter( "pedvar",
+                                       coord_tuple[2],
+                                       fast_eff_area)
+        all_woffs, woffs, = load_parameter( "woff",
+                                       coord_tuple[5],
+                                       fast_eff_area)
+
+        print("Coordinates to sample:", azs, indexs, pedvars, zds, woffs)
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
