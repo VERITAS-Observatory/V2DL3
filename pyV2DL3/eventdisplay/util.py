@@ -102,9 +102,8 @@ def hist2array(h, return_edges=False):
         return array.T
 
 def load_parameter(
-    parameter_name,
-    par_fixed,
-    fast_eff_area ):
+        parameter_name,
+        fast_eff_area ):
     """load effective area parameter
 
        apply necessary rounding
@@ -112,23 +111,34 @@ def load_parameter(
 
     all_par = fast_eff_area[parameter_name].array(library="np")
     par = []
-    if not par_fixed:
-        # round all parameters for correct extraction
-        all_par = np.round(all_par, decimals=2)
-        par = np.unique(all_par)
-        if parameter_name is 'pedvar':
-            par = remove_duplicities(par, 0.21)
-            # replace all_pedvars values with nearest from pedvars list
-            # by calculating the difference between each element and taking the min
-            all_par = par[
-            abs(all_par[None, :] - par[:, None]).argmin(axis=0)
-        ]
-        else:
-            par = remove_duplicities(par, 2.0)
-    else:
-        par=par_fixed
+    # round all parameters for correct extraction
+    all_par = np.round(all_par, decimals=2)
+    par = np.unique(all_par)
+    if parameter_name is 'pedvar':
+        par = remove_duplicities(par, 0.21)
+        # replace all_pedvars values with nearest from pedvars list
+        # by calculating the difference between each element and taking the min
+        all_par = par[
+        abs(all_par[None, :] - par[:, None]).argmin(axis=0)
+    ]
+    elif parameter_name is 'ze':
+        par = remove_duplicities(par, 2.0)
 
     return all_par, par
+
+def read_1d_samplearrays(
+    irf_name,
+    fast_eff_area,
+    all_nbins ):
+
+    entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
+    sample_energies = fast_eff_area['e0'].array(library="np",
+                                    entry_start=entry_with_max_bins,
+                                    entry_stop=entry_with_max_bins+1)[0]
+    sample_irf = fast_eff_area[irf_name].array(library="np",
+                                    entry_start=entry_with_max_bins,
+                                    entry_stop=entry_with_max_bins+1)[0]
+    return sample_energies, sample_irf, entry_with_max_bins
 
 def extract_irf(
     filename,
@@ -140,7 +150,6 @@ def extract_irf(
 ):
     print("Azimuth", azimuth)
     print("Single index", single_index)
-    print("Coordinate tuple", coord_tuple)
     print("Extracting IRFs of type: {}".format(irf_name))
     # List of implemented IRFs
     implemented_irf_names_1d = ["eff", "effNoTh2", "Rec_eff"]
@@ -154,60 +163,21 @@ def extract_irf(
     eff_area_tree = eff_area_file.Get("fEffArea")
     fast_eff_area = uproot.open(filename)["fEffArea"]
 
-    if not coord_tuple:
-        all_zds, zds = load_parameter( "ze",
-                                       None,
-                                       fast_eff_area)
-        all_azs, azs = load_parameter( "az",
-                                       None,
-                                       fast_eff_area)
-        all_azMins, azMins = load_parameter( "azMin",
-                                       None,
-                                       fast_eff_area)
-        all_azMaxs, azMaxs = load_parameter( "azMax",
-                                       None,
-                                       fast_eff_area)
-        all_azWoffs, woffs = load_parameter( "Woff",
-                                       None,
-                                       fast_eff_area)
-        all_pedvars, pedvars = load_parameter( "pedvar",
-                                       None,
-                                       fast_eff_area)
-        all_indexs , indexs = load_parameter( "index",
-                                       None,
-                                       fast_eff_area)
-        all_nbins , nbins = load_parameter( "nbins",
-                                       None,
-                                       fast_eff_area)
-        if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(
-            indexs
-        ):
-            print("YYY", len(all_zds), len(zds), len(zds) * len(azs) * len(woffs) * len(pedvars) * len(indexs) )
-            raise ValueError(
-                "Wrong dimensions extracted from IRF cube."
-                + "Probably due to the rounding applied to the IRF coordinates.")
-    else:
-        if len(coord_tuple) != 5:
-            raise ValueError(
-                "coord_tuple needs to contain 5 dimensions, in this order: az, index, pedvar, zd and woff"
-            )
-        all_zds, zds, = load_parameter( "ze",
-                                       coord_tuple[3],
-                                       fast_eff_area)
-        all_azs, azs, = load_parameter( "az",
-                                       coord_tuple[0],
-                                       fast_eff_area)
-        all_indexs, indexs, = load_parameter( "index",
-                                       coord_tuple[1],
-                                       fast_eff_area)
-        all_pedvars, pedvars, = load_parameter( "pedvar",
-                                       coord_tuple[2],
-                                       fast_eff_area)
-        all_woffs, woffs, = load_parameter( "woff",
-                                       coord_tuple[5],
-                                       fast_eff_area)
+    all_zds, zds = load_parameter( "ze", fast_eff_area)
+    all_azs, azs = load_parameter( "az", fast_eff_area)
+    all_azMins, azMins = load_parameter( "azMin", fast_eff_area)
+    all_azMaxs, azMaxs = load_parameter( "azMax", fast_eff_area)
+    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area)
+    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area)
+    all_indexs, indexs = load_parameter( "index", fast_eff_area)
+    all_nbins, nbins = load_parameter( "nbins", fast_eff_area)
 
-        print("Coordinates to sample:", azs, indexs, pedvars, zds, woffs)
+    if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(
+        indexs
+    ):
+        raise ValueError(
+            "Wrong dimensions extracted from IRF cube."
+            + "Probably due to the rounding applied to the IRF coordinates.")
 
     # For performance, deactivate all branches except the ones needed:
     # Also get the entry with max bins to define the binning in energy
@@ -215,11 +185,9 @@ def extract_irf(
     if irf_name == "eff":
         eff_area_tree.SetBranchStatus("e0", 1)
         eff_area_tree.SetBranchStatus("eff", 1)
-        entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     elif irf_name == "effNoTh2":
         eff_area_tree.SetBranchStatus("e0", 1)
         eff_area_tree.SetBranchStatus("effNoTh2", 1)
-        entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     elif irf_name == "hEsysMCRelative2D":
         eff_area_tree.SetBranchStatus("hEsysMCRelative2D", 1)
         entry_with_max_bins = 0
@@ -232,18 +200,18 @@ def extract_irf(
     else:
         raise Exception("WrongIrfName")
 
+    if irf_name in implemented_irf_names_1d:
+        sample_energies, sample_irf, entry_with_max_bins = read_1d_samplearrays(
+                                              irf_name,
+                                              fast_eff_area,
+                                              all_nbins ) 
+
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
     # Generate sample IRF
     for i, entry in enumerate(eff_area_tree):
         if i == entry_with_max_bins:
-            if irf_name == "eff":
-                sample_irf = [j for j in entry.eff]
-                sample_energies = [j for j in entry.e0]
-            elif irf_name == "effNoTh2":
-                sample_irf = [j for j in entry.effNoTh2]
-                sample_energies = [j for j in entry.e0]
-            elif irf_name == "hEsysMCRelative2D":
+            if irf_name == "hEsysMCRelative2D":
                 # Migration vs energy bias and true energy
                 sample_irf, axes = hist2array(
                     entry.hEsysMCRelative2D, return_edges=True
@@ -270,8 +238,6 @@ def extract_irf(
                 # energy bias (Erec/Etrue)
                 irf_dimension_1 = bin_edges_to_centers(axes[0])
                 irf_dimension_2 = bin_edges_to_centers(axes[1])
-            else:
-                raise Exception("WrongIrfName")
         if i > entry_with_max_bins:
             # Only extract the above defined IRF-name-specific "entry with max bins"
             break
@@ -324,15 +290,6 @@ def extract_irf(
     # the coord_tuple, then store.
     # tqdm for progress bars.
     for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
-
-        # Parameters within the effective area files show some fluctuation, therefore
-        # we need to use the "isclose". -- might not be necessary anymore
-        # if (np.isclose(azs, all_azs[i], atol=0.01).any()): #and
-        # np.isclose(indexs, all_indexs[i], atol=0.01).any() and
-        # np.isclose(pedvars, all_pedvars[i], atol=0.21).any() and
-        # np.isclose(zds, all_zds[i], atol=2.1).any() #and
-        # np.isclose(woffs, all_Woffs[i], atol=0.05).any()):
-
         # If an azimuth value is given, only store closest azimuth bin
         if azimuth:
             if all_azs[i] != az_bin_to_store:
