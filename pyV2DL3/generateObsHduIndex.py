@@ -82,26 +82,26 @@ def gen_hdu_index(filelist, index_file_dir='./'):
     return hdu_table
 
 
+def get_unit_string_from_comment(comment_string):
+    """return unit string from FITS comment"""
+    bstart = comment_string.find('[')
+    bstopp = comment_string.find(']')
+    if bstart != -1 and bstopp != -1:
+        return comment_string[bstart+1:bstopp]
+    return None
+
+
 def gen_obs_index(filelist, index_file_dir='./'):
-    # empty lists with the quantities we want
-    obs_id = []
-    ra_pnt = []
-    dec_pnt = []
-    zen_pnt = []
-    alt_pnt = []
-    az_pnt = []
-    ontime = []
-    livetime = []
-    deadc = []
-    tstart = []
-    tstop = []
-    N_TELS = []
-    TELLIST = []
-    OBJECT = []
-    RA_OBJ = []
-    DEC_OBJ = []
-    DATE_OBS = []
-    DATE_END = []
+    names = (
+        'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
+        'TSTOP', 'N_TELS', 'TELLIST', 'OBJECT', 'RA_OBJ', 'DEC_OBJ', 'DATE-OBS', 'DATE-END')
+    dtype = (
+        '>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20', 'S20',
+        '>f4', '>f4', 'S20', 'S20')
+    _tabledata = {}
+    _tableunits = {}
+    for n in names:
+        _tabledata[n] = []
 
     # loop through the files
     for _file in filelist:
@@ -114,51 +114,24 @@ def gen_obs_index(filelist, index_file_dir='./'):
             logger.warning('{} does not exist. Skipped!'.format(_file))
             continue
         dl3_hdu = fits.open(_file)
-        # let's fill all of them
-        obs_id.append(dl3_hdu[1].header['OBS_ID'])
-        ra_pnt.append(dl3_hdu[1].header['RA_PNT'])
-        dec_pnt.append(dl3_hdu[1].header['DEC_PNT'])
-        zen_pnt.append(90 - float(dl3_hdu[1].header['ALT_PNT']))
-        alt_pnt.append(dl3_hdu[1].header['ALT_PNT'])
-        az_pnt.append(dl3_hdu[1].header['AZ_PNT'])
-        ontime.append(dl3_hdu[1].header['ONTIME'])
-        livetime.append(dl3_hdu[1].header['LIVETIME'])
-        deadc.append(dl3_hdu[1].header['DEADC'])
-        tstart.append(dl3_hdu[1].header['TSTART'])
-        tstop.append(dl3_hdu[1].header['TSTOP'])
-        N_TELS.append(dl3_hdu[1].header['N_TELS'])
-        TELLIST.append(dl3_hdu[1].header['TELLIST'])
-        OBJECT.append(dl3_hdu[1].header['OBJECT'])
-        RA_OBJ.append(dl3_hdu[1].header['RA_OBJ'])
-        DEC_OBJ.append(dl3_hdu[1].header['DEC_OBJ'])
-        DATE_OBS.append(dl3_hdu[1].header['DATE-OBS'])
-        DATE_END.append(dl3_hdu[1].header['DATE-END'])
+        # get values and units from fits header entries
+        for key, value in _tabledata.items():
+            if key is 'ZEN_PNT':
+                value.append(90.-float(dl3_hdu[1].header['ALT_PNT']))
+                _tableunits[key] = get_unit_string_from_comment(dl3_hdu[1].header.comments['ALT_PNT'])
+            else:
+                value.append(dl3_hdu[1].header[key])
+                _tableunits[key] = get_unit_string_from_comment(dl3_hdu[1].header.comments[key])
 
     obs_table = Table(
-        [obs_id, ra_pnt, dec_pnt, zen_pnt, alt_pnt, az_pnt, ontime, livetime, deadc, tstart, tstop, N_TELS, TELLIST, OBJECT,
-         RA_OBJ, DEC_OBJ, DATE_OBS, DATE_END],
-        names=(
-            'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
-            'TSTOP',
-            'N_TELS', 'TELLIST', 'OBJECT', 'RA_OBJ', 'DEC_OBJ', 'DATE-OBS', 'DATE-END'),
-        dtype=('>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20', 'S20',
-               '>f4', '>f4', 'S20', 'S20')
-    )
+       _tabledata,
+       names=names,
+       dtype=dtype)
 
-    # Set units
-    obs_table['RA_PNT'].unit = 'deg'
-    obs_table['DEC_PNT'].unit = 'deg'
+    for key, value in _tableunits.items():
+        if value:
+            obs_table[key].unit = value
 
-    obs_table['ZEN_PNT'].unit = 'deg'
-    obs_table['ALT_PNT'].unit = 'deg'
-    obs_table['AZ_PNT'].unit = 'deg'
-    obs_table['ONTIME'].unit = 's'
-    obs_table['LIVETIME'].unit = 's'
-
-    obs_table['TSTART'].unit = 's'
-    obs_table['TSTOP'].unit = 's'
-    obs_table['RA_OBJ'].unit = 'deg'
-    obs_table['DEC_OBJ'].unit = 'deg'
     if(len(obs_table) == 0):
         raise NoFitsFileError('No fits file found in the list.')
     obs_table = vstack(obs_table)
