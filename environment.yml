@@ -14,5 +14,7 @@ dependencies:
   - python>=3.8
   - pyyaml
   - root
+  - root_numpy
+  - scipy
   - tqdm
   - uproot
