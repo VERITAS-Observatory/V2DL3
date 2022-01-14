@@ -14,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Output path to write the index file.')
 @click.option('--hdu_index_file', '-hdu', nargs=1, 
               default='hdu-index.fits.gz',
-              help='HUD index file (default:hdu-index.fits.gz)')
+              help='HDU index file (default:hdu-index.fits.gz)')
 @click.option('--obs_index_file', '-obs', nargs=1, 
               default='obs-index.fits.gz',
               help='Observation index file (default:obs-index.fits.gz)')
