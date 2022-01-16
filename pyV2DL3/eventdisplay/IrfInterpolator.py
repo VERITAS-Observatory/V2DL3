@@ -43,8 +43,6 @@ class IrfInterpolator:
             self.filename,
             self.irf_name,
             azimuth=self.azimuth,
-            single_index=True,
-            return_irf_axes=True,
         )
         # This is an important technical step: the regular grid interpolator does not accept
         # interpolating on a dimension with size = 1.
