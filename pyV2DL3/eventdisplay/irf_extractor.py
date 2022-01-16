@@ -82,7 +82,8 @@ def load_parameter(
 def read_1d_samplearrays(
     irf_name,
     fast_eff_area,
-    all_nbins ):
+    all_nbins):
+    """read energy and irf axes with maximum number of bins"""
 
     entry_with_max_bins = find_nearest(all_nbins, all_nbins.max())
     sample_energies = fast_eff_area['e0'].array(library="np",
@@ -92,6 +93,43 @@ def read_1d_samplearrays(
                                     entry_start=entry_with_max_bins,
                                     entry_stop=entry_with_max_bins+1)[0]
     return sample_energies, sample_irf, entry_with_max_bins
+
+def read_2d_histograms(
+    irf_name,
+    eff_area_tree,
+    entry_with_max_bins):
+    """read irfaxis and sample irfs for given entry"""
+    irf_dimension_1 = irf_dimension_2 = None
+    axes = None
+
+    for i, entry in enumerate(eff_area_tree):
+        if i == entry_with_max_bins:
+            if irf_name == "hEsysMCRelative2D":
+                # Migration vs energy bias and true energy
+                sample_irf, axes = hist2array(
+                    entry.hEsysMCRelative2D, return_edges=True
+                )
+            elif irf_name == "hEsysMCRelative2DNoDirectionCut":
+                # Migration vs energy bias and true energy, without direction cut
+                sample_irf, axes = hist2array(
+                    entry.hEsysMCRelative2DNoDirectionCut, return_edges=True
+                )
+            elif irf_name == "hAngularLogDiffEmc_2D":
+                # PSF vs true energy:
+                sample_irf, axes = hist2array(
+                    entry.hAngularLogDiffEmc_2D, return_edges=True
+                )
+        if i > entry_with_max_bins:
+            # Only extract the above defined IRF-name-specific "entry with max bins"
+            break
+
+    # Bin edges (one more entry than migra!) for the true energy and
+    # energy bias (Erec/Etrue)
+    if axes:
+        irf_dimension_1 = bin_edges_to_centers(axes[0])
+        irf_dimension_2 = bin_edges_to_centers(axes[1])
+
+    return irf_dimension_1, irf_dimension_2, sample_irf
 
 
 def find_closest_index( indexs,
@@ -199,38 +237,11 @@ def extract_irf(
     # Now we know which entry we need to get in order to have a sample IRF
     #     sample_irf = sample_energies = []
     # Generate sample IRF
-    for i, entry in enumerate(eff_area_tree):
-        if i == entry_with_max_bins:
-            if irf_name == "hEsysMCRelative2D":
-                # Migration vs energy bias and true energy
-                sample_irf, axes = hist2array(
-                    entry.hEsysMCRelative2D, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-            elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-                # Migration vs energy bias and true energy, without direction cut
-                sample_irf, axes = hist2array(
-                    entry.hEsysMCRelative2DNoDirectionCut, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-            elif irf_name == "hAngularLogDiffEmc_2D":
-                # PSF vs true energy:
-                sample_irf, axes = hist2array(
-                    entry.hAngularLogDiffEmc_2D, return_edges=True
-                )
-                # Bin edges (one more entry than migra!) for the true energy and
-                # energy bias (Erec/Etrue)
-                irf_dimension_1 = bin_edges_to_centers(axes[0])
-                irf_dimension_2 = bin_edges_to_centers(axes[1])
-        if i > entry_with_max_bins:
-            # Only extract the above defined IRF-name-specific "entry with max bins"
-            break
+    if irf_name in implemented_irf_names_2d:
+        irf_dimension_1, irf_dimension_2, sample_irf = read_2d_histograms(
+                                              irf_name,
+                                              eff_area_tree,
+                                              entry_with_max_bins)
     # Now we should know all the dimensions that need to be stored in the output irf_data
     # * For a given azimuth sore the IRF for the closest value (remove that dimension)
     az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
