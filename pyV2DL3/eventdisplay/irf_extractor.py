@@ -23,8 +23,7 @@ def bin_edges_to_centers(axis):
 
 def find_nearest(array, value):
     array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
+    return (np.abs(array - value)).argmin()
 
 
 def hist2array(h, return_edges=False):
