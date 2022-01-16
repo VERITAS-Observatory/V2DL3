@@ -1,6 +1,6 @@
 import numpy as np
 from pyV2DL3.eventdisplay.util import duplicate_dimensions
-from pyV2DL3.eventdisplay.util import extract_irf
+from pyV2DL3.eventdisplay.irf_extractor import extract_irf
 from pyV2DL3.eventdisplay.util import WrongIrf
 from scipy.interpolate import RegularGridInterpolator
 
