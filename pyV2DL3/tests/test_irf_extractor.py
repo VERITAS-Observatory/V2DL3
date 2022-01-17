@@ -1,7 +1,7 @@
 import numpy as np
 from pytest import approx
-from pyV2DL3.eventdisplay.util import find_closest_az
-from pyV2DL3.eventdisplay.util import find_nearest
+from pyV2DL3.eventdisplay.irf_extractor import find_closest_az
+from pyV2DL3.eventdisplay.irf_extractor import find_nearest
 
 def test_find_nearest():
    az_centers = np.array([
