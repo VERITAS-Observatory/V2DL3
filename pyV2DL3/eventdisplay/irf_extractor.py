@@ -56,13 +56,18 @@ def hist2array(h, return_edges=False):
 
 def load_parameter(
         parameter_name,
-        fast_eff_area ):
+        fast_eff_area,
+        az_mask=None):
+
     """load effective area parameter
 
        apply necessary rounding
     """
 
-    all_par = fast_eff_area[parameter_name].array(library="np")
+    if az_mask is None:
+        all_par = fast_eff_area[parameter_name].array(library="np")
+    else:
+        all_par = fast_eff_area[parameter_name].array(library="np")[az_mask]
     par = []
     # round all parameters for correct extraction
     all_par = np.round(all_par, decimals=2)
@@ -79,6 +84,7 @@ def load_parameter(
 
     return all_par, par
 
+
 def read_1d_samplearrays(
     irf_name,
     fast_eff_area,
@@ -93,6 +99,7 @@ def read_1d_samplearrays(
                                     entry_start=entry_with_max_bins,
                                     entry_stop=entry_with_max_bins+1)[0]
     return sample_energies, sample_irf, entry_with_max_bins
+
 
 def read_2d_histograms(
     irf_name,
@@ -163,6 +170,140 @@ def find_closest_az( azimuth,
         raise ValueError("IRF azimuth bins not in the range 0-360")
     return find_nearest(az_centers, azimuth)
 
+def extract_irf_1d(
+    filename,
+    irf_name,
+    azimuth=None):
+    """
+    extract 1D IRF from effective area file and return a
+    multidimensional array 
+    """
+
+    fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
+
+    # select az bin and define az mask
+    _, azMaxs = load_parameter( "azMax", fast_eff_area)
+    _, azMins = load_parameter( "azMin", fast_eff_area)
+    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
+    az_mask = fast_eff_area['az'].array(library="np") == az_bin_to_store
+
+    energies = fast_eff_area["e0"].array(library="np")[az_mask]
+    irf = fast_eff_area[irf_name].array(library="np")[az_mask]
+
+    all_zds, zds = load_parameter( "ze", fast_eff_area, az_mask)
+    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area, az_mask)
+    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area, az_mask)
+
+    data_shape = []
+    data_shape.append(len(irf[0]))
+    data_shape.append(len(pedvars))
+    data_shape.append(len(zds))
+    data_shape.append(len(woffs))
+    data = np.zeros(data_shape)
+
+    for i in range(len(irf)):
+        try:
+           data[
+               :,
+               find_nearest(pedvars, all_pedvars[i]),
+               find_nearest(zds, all_zds[i]),
+               find_nearest(woffs, all_Woffs[i]),
+            ] = irf[i]
+        except Exception:
+            print("Unexpected error:", sys.exc_info()[0])
+            print("Entry number ", i)
+            raise
+
+    return data, [
+        energies[0],
+        pedvars,
+        zds,
+        woffs]
+
+def read_irf_axis(
+        coordinate,
+        fast_eff_area,
+        irf_name,
+        az_mask ):
+    """return irf axis"""
+
+    nbins = fast_eff_area[irf_name+"_bins"+coordinate].array(library="np")[az_mask]
+    c_min = fast_eff_area[irf_name+"_min"+coordinate].array(library="np")[az_mask]
+    c_max = fast_eff_area[irf_name+"_max"+coordinate].array(library="np")[az_mask]
+
+    return np.linspace(c_min[0], c_max[0], nbins[0])
+
+
+
+def extract_irf_2d(
+    filename,
+    irf_name,
+    azimuth=None):
+    """
+    extract 2D IRF from effective area file and return a
+    multidimensional array 
+    """
+
+    fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
+
+    # select az bin and define az mask
+    _, azMaxs = load_parameter( "azMax", fast_eff_area)
+    _, azMins = load_parameter( "azMin", fast_eff_area)
+    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
+    az_mask = fast_eff_area['az'].array(library="np") == az_bin_to_store
+
+    # prepare 2D IRF
+    irf_dimension_1 = read_irf_axis( "x", fast_eff_area, irf_name, az_mask )
+    irf_dimension_2 = read_irf_axis( "y", fast_eff_area, irf_name, az_mask )
+
+    print(irf_dimension_1)
+    print(irf_dimension_2)
+    irf1D = fast_eff_area[irf_name+"_value"].array(library="np")[az_mask]
+
+    # parameter space
+    all_zds, zds = load_parameter( "ze", fast_eff_area)
+    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area)
+    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area)
+
+    return 
+
+    data_shape = []
+#    data_shape.append(len(irf_dimension_1)
+#    data_shape.append(len(irf_dimension_2)
+    data_shape.append(len(pedvars))
+    data_shape.append(len(zds))
+    data_shape.append(len(woffs))
+    data = np.zeros(data_shape)
+
+    for i in range(len(irf1D)):
+        irf = np.reshape(irf1D[i], (-1, len(irf_dimension_2)))
+        print("DATAAAA", irf.shape)
+        try:
+            data[
+                :,
+                :,
+                find_nearest(pedvars, all_pedvars[i]),
+                find_nearest(zds, all_zds[i]),
+                find_nearest(woffs, all_Woffs[i]),
+            ] = irf
+        except Exception:
+            print("Unexpected error:", sys.exc_info()[0])
+            print("Entry number ", i)
+            raise
+
+    print("IRF1", irf_dimension_1[0])
+    print("IRF2", irf_dimension_2[0])
+    print("pedvars", len(pedvars))
+    print("zds", len(zds))
+    print("woffs", len(woffs))
+
+    return data, [
+        np.array(irf_dimension_1[0]),
+        np.array(irf_dimension_2[0]),
+        pedvars,
+        zds,
+        woffs]
+
 
 def extract_irf(
     filename,
@@ -186,6 +327,17 @@ def extract_irf(
         "hEsysMCRelative2DNoDirectionCut",
         "hAngularLogDiffEmc_2D",
     ]
+
+    if irf_name in implemented_irf_names_1d:
+        return extract_irf_1d( filename,
+                               irf_name,
+                               azimuth )
+
+#    return extract_irf_2d( filename,
+#   extract_irf_2d( filename,
+#                           irf_name,
+#                           azimuth )
+
     # Get both the ROOT effective area TTree and the uproot one (much faster)
     eff_area_file = TFile.Open(filename)
     eff_area_tree = eff_area_file.Get("fEffArea")
@@ -193,8 +345,8 @@ def extract_irf(
 
     all_zds, zds = load_parameter( "ze", fast_eff_area)
     all_azs, azs = load_parameter( "az", fast_eff_area)
-    all_azMins, azMins = load_parameter( "azMin", fast_eff_area)
-    all_azMaxs, azMaxs = load_parameter( "azMax", fast_eff_area)
+    _, azMins = load_parameter( "azMin", fast_eff_area)
+    _, azMaxs = load_parameter( "azMax", fast_eff_area)
     all_Woffs, woffs = load_parameter( "Woff", fast_eff_area)
     all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area)
     all_indexs, indexs = load_parameter( "index", fast_eff_area)
@@ -232,20 +384,10 @@ def extract_irf(
     # * For a given azimuth sore the IRF for the closest value (remove that dimension)
     az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
     index_to_store = find_closest_index(indexs, irf_name)
-# (GM) why is this not always the lowest value (1.6)?
-# (GM) for effNoTh2, a value of 3.4 is used
     print('index to store:', index_to_store, indexs.min())
 
     data_shape = []
 
-    # 1D histograms
-    if irf_name in implemented_irf_names_1d:
-        sample_energies, sample_irf, entry_with_max_bins = read_1d_samplearrays(
-                                              irf_name,
-                                              fast_eff_area,
-                                              all_nbins ) 
-
-        data_shape.append(len(sample_irf))
     # 2D histograms
     if irf_name in implemented_irf_names_2d:
         irf_dimension_1, irf_dimension_2, sample_irf = read_2d_histograms(
@@ -266,71 +408,25 @@ def extract_irf(
     print('AZS', all_azs, az_bin_to_store)
     print('INDEX', all_indexs, index_to_store)
     # 2D IRFs:
-    if irf_name in implemented_irf_names_2d:
-        for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
-            if all_azs[i] != az_bin_to_store:
-                continue
-            if not all_indexs[i] == index_to_store:
-                continue
-
-            if irf_name == "hEsysMCRelative2D":
-                irf = hist2array(entry.hEsysMCRelative2D)
-            elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-                irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-            elif irf_name == "hAngularLogDiffEmc_2D":
-                irf = hist2array(entry.hAngularLogDiffEmc_2D)
-
-            if np.shape(irf) != np.shape(sample_irf):
-                print("2D IRFs of variable size...")
-                raise Exception()
-            try:
-                data[
-                    :,
-                    :,
-                    find_nearest(pedvars, all_pedvars[i]),
-                    find_nearest(zds, all_zds[i]),
-                    find_nearest(woffs, all_Woffs[i]),
-                ] = irf
-            except Exception:
-                print("Unexpected error:", sys.exc_info()[0])
-                print("Entry number ", i)
-                raise
-
-        return data, [
-            np.array(irf_dimension_1),
-            np.array(irf_dimension_2),
-            pedvars,
-            zds,
-            woffs,
-        ]
-
-    # 1D arrays
-    az_mask = fast_eff_area['az'].array(library="np") == az_bin_to_store
-    index_mask = fast_eff_area['index'].array(library="np") == index_to_store
-    tot_mask = np.logical_and(az_mask, index_mask)
-
-    energies = fast_eff_area['e0'].array(library="np")[tot_mask]
-    irf = fast_eff_area[irf_name].array(library="np")[tot_mask]
-
-    exit()
-
-    for i in range(len(all_azs)):
+    for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
         if all_azs[i] != az_bin_to_store:
             continue
         if not all_indexs[i] == index_to_store:
             continue
-  
-        energies = fast_eff_area['e0'].array(library="np")[i]
-        irf = fast_eff_area[irf_name].array(library="np")[i]
 
-        # In case the extracted IRF has less bins than the "sample" one, pad it with zeros:
-        if len(irf) < len(sample_irf):
-            new_irf = np.zeros(len(sample_energies))
-            for j, ener in enumerate(energies):
-                new_irf[find_nearest(sample_energies, ener)] = irf[j]
-            irf = new_irf
+        if irf_name == "hEsysMCRelative2D":
+            irf = hist2array(entry.hEsysMCRelative2D)
+        elif irf_name == "hEsysMCRelative2DNoDirectionCut":
+            irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
+        elif irf_name == "hAngularLogDiffEmc_2D":
+            irf = hist2array(entry.hAngularLogDiffEmc_2D)
+
+        if np.shape(irf) != np.shape(sample_irf):
+            print("2D IRFs of variable size...")
+            raise Exception()
         try:
             data[
+                :,
                 :,
                 find_nearest(pedvars, all_pedvars[i]),
                 find_nearest(zds, all_zds[i]),
@@ -339,11 +435,14 @@ def extract_irf(
         except Exception:
             print("Unexpected error:", sys.exc_info()[0])
             print("Entry number ", i)
-            print(energies, irf)
             raise
 
+    print("IRF1", len(np.array(irf_dimension_1)))
+    print("IRF2", len(np.array(irf_dimension_2)))
     return data, [
-        np.array(sample_energies),
+        np.array(irf_dimension_1),
+        np.array(irf_dimension_2),
         pedvars,
         zds,
-        woffs]
+        woffs,
+    ]
