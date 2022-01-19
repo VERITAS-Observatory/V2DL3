@@ -1,7 +1,6 @@
+import logging
 import numpy as np
-from ROOT import TFile
 import sys
-from tqdm.auto import tqdm
 import uproot
 
 
@@ -170,6 +169,17 @@ def find_closest_az( azimuth,
         raise ValueError("IRF azimuth bins not in the range 0-360")
     return find_nearest(az_centers, azimuth)
 
+
+def get_irf_empty_ndarray( data_dimension ):
+    """return a zero filled ndarray with the 
+       given dimensions
+    """
+    data_shape = []
+    for d in data_dimension:
+        data_shape.append(d)
+    return np.zeros(data_shape)
+                        
+
 def extract_irf_1d(
     filename,
     irf_name,
@@ -194,12 +204,8 @@ def extract_irf_1d(
     all_Woffs, woffs = load_parameter( "Woff", fast_eff_area, az_mask)
     all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area, az_mask)
 
-    data_shape = []
-    data_shape.append(len(irf[0]))
-    data_shape.append(len(pedvars))
-    data_shape.append(len(zds))
-    data_shape.append(len(woffs))
-    data = np.zeros(data_shape)
+    data = get_irf_empty_ndarray([len(irf[0]), len(pedvars),
+                                  len(zds), len(woffs)])
 
     for i in range(len(irf)):
         try:
@@ -225,14 +231,23 @@ def read_irf_axis(
         fast_eff_area,
         irf_name,
         az_mask ):
-    """return irf axis"""
+    """return irf axis
+
+    return bin centres
+
+    """
 
     nbins = fast_eff_area[irf_name+"_bins"+coordinate].array(library="np")[az_mask]
     c_min = fast_eff_area[irf_name+"_min"+coordinate].array(library="np")[az_mask]
     c_max = fast_eff_area[irf_name+"_max"+coordinate].array(library="np")[az_mask]
 
-    return np.linspace(c_min[0], c_max[0], nbins[0])
+    if nbins[0] > 0:
+        binwidth = (c_max[0]-c_min[0])/nbins[0]/2.
+        return np.linspace(c_min[0]+binwidth, 
+                           c_max[0]-binwidth, 
+                           nbins[0])
 
+    return None
 
 
 def extract_irf_2d(
@@ -244,7 +259,11 @@ def extract_irf_2d(
     multidimensional array 
     """
 
-    fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
+    try:
+        fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
+    except Exception:
+        logging.exception('error opening effective area files')
+        raise
 
     # select az bin and define az mask
     _, azMaxs = load_parameter( "azMax", fast_eff_area)
@@ -253,31 +272,21 @@ def extract_irf_2d(
     az_mask = fast_eff_area['az'].array(library="np") == az_bin_to_store
 
     # prepare 2D IRF
-    irf_dimension_1 = read_irf_axis( "x", fast_eff_area, irf_name, az_mask )
-    irf_dimension_2 = read_irf_axis( "y", fast_eff_area, irf_name, az_mask )
+    irf_dimension_1 = read_irf_axis( "x", fast_eff_area, irf_name, az_mask)
+    irf_dimension_2 = read_irf_axis( "y", fast_eff_area, irf_name, az_mask)
 
-    print(irf_dimension_1)
-    print(irf_dimension_2)
-    irf1D = fast_eff_area[irf_name+"_value"].array(library="np")[az_mask]
+    irf2D = fast_eff_area[irf_name+"_value"].array(library="np")[az_mask]
 
     # parameter space
-    all_zds, zds = load_parameter( "ze", fast_eff_area)
-    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area)
-    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area)
+    all_zds, zds = load_parameter( "ze", fast_eff_area, az_mask)
+    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area, az_mask)
+    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area, az_mask)
 
-    return 
+    data = get_irf_empty_ndarray([len(irf_dimension_1), len(irf_dimension_2),
+                                  len(pedvars), len(zds), len(woffs)])
 
-    data_shape = []
-#    data_shape.append(len(irf_dimension_1)
-#    data_shape.append(len(irf_dimension_2)
-    data_shape.append(len(pedvars))
-    data_shape.append(len(zds))
-    data_shape.append(len(woffs))
-    data = np.zeros(data_shape)
-
-    for i in range(len(irf1D)):
-        irf = np.reshape(irf1D[i], (-1, len(irf_dimension_2)))
-        print("DATAAAA", irf.shape)
+    for i in range(len(irf2D)):
+        irf = np.reshape(irf2D[i], (-1, len(irf_dimension_2)), order='F')
         try:
             data[
                 :,
@@ -291,15 +300,9 @@ def extract_irf_2d(
             print("Entry number ", i)
             raise
 
-    print("IRF1", irf_dimension_1[0])
-    print("IRF2", irf_dimension_2[0])
-    print("pedvars", len(pedvars))
-    print("zds", len(zds))
-    print("woffs", len(woffs))
-
     return data, [
-        np.array(irf_dimension_1[0]),
-        np.array(irf_dimension_2[0]),
+        np.array(irf_dimension_1),
+        np.array(irf_dimension_2),
         pedvars,
         zds,
         woffs]
@@ -316,12 +319,15 @@ def extract_irf(
     """
 
     print("Extracting IRFs of type: {}".format(irf_name))
-    print("    Azimuth", azimuth)
+    print("    Azimuth: ", np.array2string(azimuth, precision=2))
     if not azimuth:
         raise ValueError("Azimuth for IRF extraction not given")
 
     # List of implemented IRFs
-    implemented_irf_names_1d = ["eff", "effNoTh2", "Rec_eff"]
+    implemented_irf_names_1d = [
+        "eff",
+        "effNoTh2",
+        "Rec_eff"]
     implemented_irf_names_2d = [
         "hEsysMCRelative2D",
         "hEsysMCRelative2DNoDirectionCut",
@@ -332,117 +338,13 @@ def extract_irf(
         return extract_irf_1d( filename,
                                irf_name,
                                azimuth )
+    elif irf_name in implemented_irf_names_2d:
+        return extract_irf_2d( filename,
+                               irf_name,
+                               azimuth )
 
-#    return extract_irf_2d( filename,
-#   extract_irf_2d( filename,
-#                           irf_name,
-#                           azimuth )
+    print("IRF name not known", irf_name)
+    raise 
 
-    # Get both the ROOT effective area TTree and the uproot one (much faster)
-    eff_area_file = TFile.Open(filename)
-    eff_area_tree = eff_area_file.Get("fEffArea")
-    fast_eff_area = uproot.open(filename)["fEffArea"]
+    return None
 
-    all_zds, zds = load_parameter( "ze", fast_eff_area)
-    all_azs, azs = load_parameter( "az", fast_eff_area)
-    _, azMins = load_parameter( "azMin", fast_eff_area)
-    _, azMaxs = load_parameter( "azMax", fast_eff_area)
-    all_Woffs, woffs = load_parameter( "Woff", fast_eff_area)
-    all_pedvars, pedvars = load_parameter( "pedvar", fast_eff_area)
-    all_indexs, indexs = load_parameter( "index", fast_eff_area)
-    all_nbins, nbins = load_parameter( "nbins", fast_eff_area)
-
-    if len(all_zds) != len(zds) * len(azs) * len(woffs) * len(pedvars) * len(
-        indexs
-    ):
-        raise ValueError(
-            "Wrong dimensions extracted from IRF cube."
-            + "Probably due to the rounding applied to the IRF coordinates.")
-
-    # For performance, deactivate all branches except the ones needed:
-    # Also get the entry with max bins to define the binning in energy
-    eff_area_tree.SetBranchStatus("*", 0)
-    if irf_name == "eff":
-        eff_area_tree.SetBranchStatus("e0", 1)
-        eff_area_tree.SetBranchStatus("eff", 1)
-    elif irf_name == "effNoTh2":
-        eff_area_tree.SetBranchStatus("e0", 1)
-        eff_area_tree.SetBranchStatus("effNoTh2", 1)
-    elif irf_name == "hEsysMCRelative2D":
-        eff_area_tree.SetBranchStatus("hEsysMCRelative2D", 1)
-        entry_with_max_bins = 0
-    elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-        eff_area_tree.SetBranchStatus("hEsysMCRelative2DNoDirectionCut", 1)
-        entry_with_max_bins = 0
-    elif irf_name == "hAngularLogDiffEmc_2D":
-        eff_area_tree.SetBranchStatus("hAngularLogDiffEmc_2D", 1)
-        entry_with_max_bins = 0
-    else:
-        raise Exception("WrongIrfName")
-
-    # Now we should know all the dimensions that need to be stored in the output irf_data
-    # * For a given azimuth sore the IRF for the closest value (remove that dimension)
-    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
-    index_to_store = find_closest_index(indexs, irf_name)
-    print('index to store:', index_to_store, indexs.min())
-
-    data_shape = []
-
-    # 2D histograms
-    if irf_name in implemented_irf_names_2d:
-        irf_dimension_1, irf_dimension_2, sample_irf = read_2d_histograms(
-                                              irf_name,
-                                              eff_area_tree,
-                                              entry_with_max_bins)
-        data_shape.append(len(irf_dimension_1))
-        data_shape.append(len(irf_dimension_2))
-
-    # These dimensions will be always included:
-    data_shape.append(len(pedvars))
-    data_shape.append(len(zds))
-    data_shape.append(len(woffs))
-    data = np.zeros(data_shape)
-    # Iterate over all IRFs within the file. If the entry i is close to the coordinates within
-    # the coord_tuple, then store.
-    # tqdm for progress bars.
-    print('AZS', all_azs, az_bin_to_store)
-    print('INDEX', all_indexs, index_to_store)
-    # 2D IRFs:
-    for i, entry in enumerate(tqdm(eff_area_tree, total=len(all_zds))):
-        if all_azs[i] != az_bin_to_store:
-            continue
-        if not all_indexs[i] == index_to_store:
-            continue
-
-        if irf_name == "hEsysMCRelative2D":
-            irf = hist2array(entry.hEsysMCRelative2D)
-        elif irf_name == "hEsysMCRelative2DNoDirectionCut":
-            irf = hist2array(entry.hEsysMCRelative2DNoDirectionCut)
-        elif irf_name == "hAngularLogDiffEmc_2D":
-            irf = hist2array(entry.hAngularLogDiffEmc_2D)
-
-        if np.shape(irf) != np.shape(sample_irf):
-            print("2D IRFs of variable size...")
-            raise Exception()
-        try:
-            data[
-                :,
-                :,
-                find_nearest(pedvars, all_pedvars[i]),
-                find_nearest(zds, all_zds[i]),
-                find_nearest(woffs, all_Woffs[i]),
-            ] = irf
-        except Exception:
-            print("Unexpected error:", sys.exc_info()[0])
-            print("Entry number ", i)
-            raise
-
-    print("IRF1", len(np.array(irf_dimension_1)))
-    print("IRF2", len(np.array(irf_dimension_2)))
-    return data, [
-        np.array(irf_dimension_1),
-        np.array(irf_dimension_2),
-        pedvars,
-        zds,
-        woffs,
-    ]
