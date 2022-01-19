@@ -28,8 +28,10 @@ def __fillRESPONSE__(
     )
     # check that coordinates are in range of provided IRF
 
-    print("\tzenith range of a given IRF:", np.min(zeniths_irf), "-", np.max(zeniths_irf))
-    print("\tpedvar range of a given IRF:", np.min(pedvar_irf), "-", np.max(pedvar_irf))
+    logging.info("\tzenith range of a given IRF: {0:.1f} - {1:.1f}"
+                 .format(np.min(zeniths_irf), np.max(zeniths_irf)))
+    logging.info("\tpedvar range of a given IRF: {0:.1f} - {1:.1f}"
+                 .format(np.min(pedvar_irf), np.max(pedvar_irf)))
 
     if np.all(zeniths_irf < zenith) or np.all(zeniths_irf > zenith):
         raise ValueError("Coordinate not inside IRF zenith range")
@@ -62,13 +64,11 @@ def __fillRESPONSE__(
         theta_high = camera_offsets
 
     if irf_to_store["point-like"]:
-        print("Point-like IRF: ")
-        print("\tcamera offset: ", camera_offsets)
+        logging.info("Point-like IRF: ")
+        print("\tcamera offset: ",  camera_offsets)
         print("\tpedvar: %.1f" % pedvar, end=" ")
         print(", zenith: %.1f deg" % zenith)
-        #
         # Interpolate effective area  (point-like)
-        #
         irf_interpolator.set_irf("eff")
 
         ea_final = []
@@ -150,10 +150,10 @@ def __fillRESPONSE__(
         )
         response_dict["MIGRATION"] = x
         response_dict["RAD_MAX"] = np.sqrt(theta2cut)
-        print("IRF interpolation done")
+        logging.info("IRF interpolation done")
 
     if irf_to_store["full-enclosure"]:
-        print("Full-enclosure: ")
+        logging.info("Full-enclosure: ")
         print("\tcamera offset: ", camera_offsets)
         print("\tpedvar: %.1f" % pedvar, end=" ")
         print(", zenith: %.1f deg" % zenith)
@@ -259,7 +259,7 @@ def __fillRESPONSE__(
         for offset in camera_offsets:
 
             direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
-                                                                
+
             energy_edges = bin_centers_to_edges(axis[0])
             rad_edges = bin_centers_to_edges(axis[1])
 
