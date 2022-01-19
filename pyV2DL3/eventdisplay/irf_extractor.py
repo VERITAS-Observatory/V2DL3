@@ -191,39 +191,22 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
         woffs]
 
 
-def extract_irf(filename, irf_name, azimuth=None):
+def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
     """extract IRF from effective area file
 
     return a multidimensional array
     """
 
-    logging.info("Extracting IRFs of type: {}".format(irf_name))
-    logging.info("    Azimuth: {}".format(np.array2string(azimuth,
-                                                          precision=2)))
     if not azimuth:
         raise ValueError("Azimuth for IRF extraction not given")
 
-    # implemented IRFs
-    implemented_irf_names_1d = [
-        "eff",
-        "effNoTh2",
-        "Rec_eff"]
-    implemented_irf_names_2d = [
-        "hEsysMCRelative2D",
-        "hEsysMCRelative2DNoDirectionCut",
-        "hAngularLogDiffEmc_2D",
-    ]
-
-    if irf_name in implemented_irf_names_1d:
+    if irf1d:
         return extract_irf_1d(filename,
                               irf_name,
                               azimuth)
-    elif irf_name in implemented_irf_names_2d:
+    else:
         return extract_irf_2d(filename,
                               irf_name,
                               azimuth)
-    else:
-        logging.error("IRF name not known", irf_name)
-        raise
 
     return None
