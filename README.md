@@ -1,5 +1,9 @@
-# V2DL3
-VERITAS (VEGAS and Eventdisplay) to DL3 Converter
+# V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter.
+
+Provide a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for analysis. 
+
+The converter can be used to convert point-like and full-enclosure IRFs. 
+The FITS output follows format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
 Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
@@ -9,16 +13,12 @@ Contact:
     Sonal Patel (sonal.patel@desy.de)
     Gernot Maier (gernot.maier@desy.de)
         
-## Aim
 
-Provide a converter to convert VERITAS data products to DL3. The converter can be used to convert point-like IRFs (as included in the joint-Crab paper), as well as full-enclosure IRFs. 
-
-The FITS output follows the most recent DL3 format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
 ---
 # The DL3 converter v2dl3
 
-The python package for converting stage5 or anasum files to the DL3 FITS format.
+v2dl3 is the main tool to be used for converting IRFs.
 
 ### Requirements
 
@@ -32,15 +32,19 @@ The requirements are listed in the ```environment.yml``` file.
 
 * The converter does not depend on EventDisplay. Output from Eventdisplay version >= v485 is required to include the DL3EventTree in the anasum file.
 
-### Install pyV2DL3
+### Installation
 
-To install the needed python dependencies, use of conda is recommended. The necessary python environment can be created from ```environment.yml```.
-
-For installation, run
+Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
 conda env create -f environment.yml
 ```
-and the environment ```v2dl3``` will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
+The environment ```v2dl3``` will be created and can be activated with:
+
+```
+conda activate v2dl3
+```
+
+Install now pyV2DL3:
 
 ```
 pip install . --use-feature=in-tree-build
