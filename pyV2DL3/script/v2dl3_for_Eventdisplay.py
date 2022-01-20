@@ -9,27 +9,26 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--file_pair', '-f', nargs=2, type=click.Path(exists=True),
-              help='A anasum file (<file 1>) and \
+              help='anasum file (<file 1>) and \
               the corresponding effective area (<file 2>).')
-@click.option('--gen_index_file', '-g', is_flag=True,
-              help='Generate hdu and observation index list files. \
-              Only have effect in file list mode.')
-@click.option('--save_multiplicity', '-m', is_flag=True,
-              help='Save telescope multiplicity into event list')
-@click.option('--filename_to_obsid', '-I', is_flag=True,
-              help='Override OBS_ID with output filename')
 @click.option('--full-enclosure', is_flag=True,
               help='Store full-enclosure IRFs (no direction cut applied)')
 @click.option('--point-like', is_flag=True,
               help='Store point-like IRFs (direction cut applied)')
-@click.option('--debug', '-d', is_flag=True)
-@click.option('--verbose', '-v', is_flag=True, help='Print root output')
+@click.argument('output', metavar='<output>')
+@click.option('--debug', '-d', is_flag=True,
+              help='Set log level to debug')
+@click.option('--logfile', '-l', nargs=1,
+              default=None, help='Store log information to file')
+@click.option('--save_multiplicity', '-m', is_flag=True,
+              help='Save telescope multiplicity into event list')
+@click.option('--filename_to_obsid', '-I', is_flag=True,
+              help='Override OBS_ID with output filename')
 @click.option('--evt_filter', type=click.Path(exists=True),
               help='Load condition to filter events form json or yaml file.')
-@click.argument('output', metavar='<output>')
-def cli(file_pair, gen_index_file, save_multiplicity,
-        filename_to_obsid, full_enclosure, point_like,
-        debug, verbose, output, evt_filter):
+def cli(file_pair, full_enclosure, point_like,
+        output, debug, logfile,
+        save_multiplicity, filename_to_obsid, evt_filter):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3
 
     """
@@ -38,11 +37,15 @@ def cli(file_pair, gen_index_file, save_multiplicity,
         raise click.Abort()
 
     if debug:
-        logging.basicConfig(level=logging.DEBUG)
-        print("Logging level DEBUG")
+        logging.basicConfig(format='%(levelname)s:v2dl3: %(message)s',
+                            level=logging.DEBUG,
+                            filename=logfile)
     else:
-        logging.basicConfig(level=logging.INFO)
-        print("Logging level INFO")
+        logging.basicConfig(format='%(levelname)s:v2dl3: %(message)s',
+                            level=logging.INFO,
+                            filename=logfile)
+    logging.debug('logging level {0}'
+                  .format(logging.getLevelName(logging.getLogger().level)))
 
     # By default we will only store point-like IRFs.
     if not full_enclosure and not point_like:
