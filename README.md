@@ -6,19 +6,22 @@ Contact:
 	Tarek Hassan (tarek.hassan@desy.de)
 	Tony Lin (xyxlin@gmail.com)
 	Tobias Kleiner (tobias.kleiner@desy.de)
+    Sonal Patel (sonal.patel@desy.de)
+    Gernot Maier (gernot.maier@desy.de)
         
 ## Aim
 
-This repository is for the code that will be used to convert VERITAS data into DL3 format. It can be used to convert point-like IRFs (as included in the joint-Crab paper), as well as full-enclosure IRFs.
+Provide a converter to convert VERITAS data products to DL3. The converter can be used to convert point-like IRFs (as included in the joint-Crab paper), as well as full-enclosure IRFs. 
 
-The project follows the most recent DL3 format definition from the [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
+The FITS output follows the most recent DL3 format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
 ---
-# pyV2DL3 
+# The DL3 converter v2dl3
 
-The python package for converting stage5/anasum files to the DL3 FITS format. Other than useful functions that can be called, a commandline tool `v2dl3` comes with the package.
+The python package for converting stage5 or anasum files to the DL3 FITS format.
 
 ### Requirements
+
 The requirements are listed in the ```environment.yml``` file.
 
 #### VEGAS
@@ -27,13 +30,13 @@ The requirements are listed in the ```environment.yml``` file.
 
 #### EventDisplay
 
-* The converter does not depend on EventDisplay. However, make sure that the EventDisplay anasum stage runs with version >= v485 to include the DL3EventTree in the ansum file.
+* The converter does not depend on EventDisplay. Output from Eventdisplay version >= v485 is required to include the DL3EventTree in the anasum file.
 
 ### Install pyV2DL3
 
 To install the needed python dependencies, use of conda is recommended. The necessary python environment can be created from ```environment.yml```.
 
-Just run:
+For installation, run
 ```
 conda env create -f environment.yml
 ```
@@ -42,35 +45,44 @@ and the environment ```v2dl3``` will be created. After activating the environmen
 ```
 pip install . --use-feature=in-tree-build
 ```
+
 ### Usage of commandline tool v2dl3
 
 ```
+# v2dl3 --help
 Usage: v2dl3 [OPTIONS] <output>
 
-  Command line tool for converting stage5/anasum file to DL3
+  Tool for converting VEGAS stage5 or Eventdisplay anasum files to DL3
 
   There are two modes:
       1) Single file mode
-          When --file_pair is invoked, the path to the stage5/anasum file and the
-          corresponding effective area should be provided. The <output> argument
-          is then the resulting fits file name.
+          When --file_pair is invoked, the path to the stage5/anasum file
+          and the corresponding effective area should be provided.
+          The <output> argument is then the resulting fits file name.
       2) File list mode
-          When using the option --runlist, the path to a stage6/anasum runlist should be used.
-          The <output> is then the directory to which the fits files will be saved to.
+          When using the option --runlist, the path to a stage6 runlist
+          should be used.  The <output> is then the directory to which
+          the fits files will be saved to.
 
   Note: One one mode can be used at a time.
 
 Options:
-  -f, --file_pair PATH...  A stage5/anasum file (<file 1>) and the corresponding
-                           effective area (<file 2>).
-  -l, --runlist PATH       Stage6/anasum runlist
-  -g, --gen_index_file     Generate hdu and observation index list files. Only
-                           have effect in file list mode.
+  -f, --file_pair PATH...  A stage5 or anasum file (<file 1>) and
+                           the corresponding effective area (<file 2>).
+  -l, --runlist PATH       Stage6 runlist
+  -g, --gen_index_file     Generate hdu and observation index list files.
+                           Only have effect in file list mode.
   -m, --save_multiplicity  Save telescope multiplicity into event list
   -e, --ed                 Eventdisplay mode
+  -I, --filename_to_obsid  Override OBS_ID with output filename
+  --full-enclosure         Store full-enclosure IRFs (no direction cut
+                           applied)
+  --point-like             Store point-like IRFs (direction cut applied)
   -d, --debug
   -v, --verbose            Print root output
-  --help                   Show this message and exit.
+  --evt_filter PATH        Load condition to filter events form json or yaml
+                           file.
+  -h, --help               Show this message and exit.
 ```
 
 ---
@@ -100,24 +112,22 @@ v2dl3 -l ./runlist.txt  ./test
 
 ### EventDisplay
 
-ROOT is installed directly into the environment from conda-forge following the above steps using the ```environment.yml```.
-Now, lets create the DL3 fits files from the anasum files in the ```./eventDisplay/``` folder. 
+Convert an anasum output file to DL3.
+The following input is required:
+- anasum file for a given run
+- effective area file for the corresponding cut applied during the preparation of the anasum file
 
-##### One file at a time
-
-To convert an anasum file to DL3 you need to provide the path to the anasum file as well as the corresponding effective area file using the flag ```-f```. The only difference with VEGAS is that you need to add the '--ed' flag. The last argument is the name of the ouput DL3 file.
-
-
+Example for point-like analysis:
 ```
-v2dl3 --ed -f ./eventDisplay/54809.anasum.root [Effective Area File] ./eventDisplay/54809.anasum.fits
+v2dl3 -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
+```
+Example for full-enclosure analysis:
+```
+v2dl3 --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
 ```
 
-##### Full-enclosure
-
-For full-enclosure IRFs you need to pass the additional flag --full-enclosure and be sure to provide the proper effective area files:
-```
-v2dl3 -ed --full-enclosure -f 64080.anasum.root $VERITAS_EVNDISP_AUX_DIR/EffectiveAreas/effArea-v485-auxv01-CARE_June2020-Cut-NTel2-PointSource-Hard-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234.root ./FITS/64080.anasum.fits
-```
+---
+**TEXT BELOW REQUIRES REVIEW**
 
 ##### Multi file processing
 
