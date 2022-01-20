@@ -23,8 +23,10 @@ def test_find_closest_az():
                 172.5, 1000. ])
    az_bin_to_store_1 = find_closest_az(146.20, azMins, azMaxs)
    az_bin_to_store_2 = find_closest_az(-180., azMins, azMaxs)
+   az_bin_to_store_3 = find_closest_az(320., azMins, azMaxs)
    assert az_bin_to_store_1 == 14 and \
-          az_bin_to_store_2 == 8
+          az_bin_to_store_2 == 8 and \
+          az_bin_to_store_3 == 6
 
 if __name__ == '__main__':
    test_find_nearest()
