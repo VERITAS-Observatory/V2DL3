@@ -1,13 +1,19 @@
+import logging
 import numpy as np
+import os.path
+from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
 from pyV2DL3.eventdisplay.util import duplicate_dimensions
-from pyV2DL3.eventdisplay.util import extract_irf
 from pyV2DL3.eventdisplay.util import WrongIrf
 from scipy.interpolate import RegularGridInterpolator
 
 
 class IrfInterpolator:
     def __init__(self, filename, azimuth):
-        self.implemented_irf_names_1d = ["eff", "Rec_eff", "effNoTh2", "Rec_effNoTh2"]
+        self.implemented_irf_names_1d = [
+             "eff",
+             "Rec_eff",
+             "effNoTh2",
+             "Rec_effNoTh2"]
         self.implemented_irf_names_2d = [
             "hEsysMCRelative2D",
             "hEsysMCRelative2DNoDirectionCut",
@@ -16,7 +22,6 @@ class IrfInterpolator:
         ]
         self.irf_name = ""
         self.azimuth = azimuth
-        import os.path
 
         if os.path.isfile(filename):
             self.filename = filename
@@ -24,6 +29,9 @@ class IrfInterpolator:
             raise FileNotFoundError
 
     def set_irf(self, irf_name):
+        """Check consistency of IRF name
+
+        """
         if (
             irf_name in self.implemented_irf_names_1d
             or irf_name in self.implemented_irf_names_2d
@@ -31,24 +39,32 @@ class IrfInterpolator:
             self.irf_name = irf_name
             self.__load_irf()
         else:
-            print(
-                "The irf you entered: {} is either wrong or not implemented.".format(
-                    irf_name
-                )
+            logging.exception(
+                "The irf you entered: {} is either wrong or not implemented."
+                .format(irf_name)
             )
             raise WrongIrf
 
     def __load_irf(self):
+        """Load IRFs from effective area file
+
+        """
+
+        logging.info("Extracting IRFs of type: {0} for azimuth {1} deg"
+                     .format(self.irf_name,
+                             np.array2string(self.azimuth,
+                                             precision=2)))
         irf_data, irf_axes = extract_irf(
             self.filename,
             self.irf_name,
+            irf1d=(self.irf_name in self.implemented_irf_names_1d),
             azimuth=self.azimuth,
-            single_index=True,
-            return_irf_axes=True,
         )
-        # This is an important technical step: the regular grid interpolator does not accept
+        # This is an important technical step:
+        # the regular grid interpolator does not accept
         # interpolating on a dimension with size = 1.
-        # Make sure that there are no size 1 dimensions. Do the same with the axes:
+        # Make sure that there are no size 1 dimensions.
+        # Do the same with the axes:
         irf_data = duplicate_dimensions(irf_data)
         # Also the coordinates of the axes need to be in increasing order.
         for i, axis in enumerate(irf_axes):
@@ -58,11 +74,14 @@ class IrfInterpolator:
                 )
         self.irf_data = irf_data
         self.irf_axes = irf_axes
-        self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
+        self.interpolator = RegularGridInterpolator(self.irf_axes,
+                                                    self.irf_data)
 
     def interpolate(self, coordinate):
-        print("Interpolating coordinates: ", coordinate)
-        # The interpolation is slightly different for 1D or 2D IRFs. We do both cases separated:
+        for c in coordinate:
+            logging.debug("Interpolating coordinates: {0:.2f}"
+                          .format(c))
+        # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:
                 raise ValueError(
@@ -78,11 +97,12 @@ class IrfInterpolator:
             interpolated_irf = self.interpolator((xx, yy, *coordinate))
             return interpolated_irf, [self.irf_axes[0], self.irf_axes[1]]
         elif self.irf_name in self.implemented_irf_names_1d:
-            # In this case, the interpolator needs to interpolate only over 1 dimension (true energy):
+            # In this case, the interpolator needs to interpolate only
+            # over 1 dimension (true energy):
             interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
             return interpolated_irf, [self.irf_axes[0]]
         else:
-            print(
+            logging.exception(
                 "The interpolation of the irf you entered: {}"
                 "  is either wrong or not implemented.".format(self.irf_name)
             )
