@@ -3,8 +3,6 @@ import logging
 from pyV2DL3.fill_response import fill_response
 from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fillEVENTS import fillEVENTS
-from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
-from pyV2DL3.vegas.VegasDataSource import VegasDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +26,10 @@ def genPrimaryHDU():
 
 def loadROOTFiles(data_file, effective_area_file, file_type='VEGAS'):
     if file_type == 'VEGAS':
+        from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, effective_area_file)
     if file_type == 'ED':
+        from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
         return EventDisplayDataSource(data_file, effective_area_file)
     else:
         raise Exception('File type not supported: {}'.format(file_type))
