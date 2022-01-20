@@ -68,10 +68,12 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         raise click.Abort()
 
     if debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(format='%(levelname)s:v2dl3: %(message)s',
+                            level=logging.DEBUG)
         print("Logging level DEBUG")
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(format='%(levelname)s:v2dl3: %(message)s',
+                            level=logging.INFO)
         print("Logging level INFO")
 
     logging.debug("Start importing ROOT")
