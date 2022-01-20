@@ -1,0 +1,7 @@
+[RUNLIST ID: 0]
+./VEGAS/54809.soft.ED.050.St5_Stereo.root
+./VEGAS/57993.soft.ED.050.St5_Stereo.root
+[/RUNLIST ID: 0]
+[EA ID: 0]
+./VEGAS/EA_na21stan_softPoint_050_ED_GRISU.root
+[/EA ID: 0]
