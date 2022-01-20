@@ -11,6 +11,7 @@ dependencies:
   - numpy>=1.13
   - pandas
   - pkgconfig
+  - pytest
   - python>=3.8
   - pyyaml
   - root
