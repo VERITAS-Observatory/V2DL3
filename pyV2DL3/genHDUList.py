@@ -1,6 +1,6 @@
 from astropy.io import fits
 import logging
-from pyV2DL3.fill_response import fill_response
+from pyV2DL3.fillRESPONSE import fillRESPONSE
 from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fillEVENTS import fillEVENTS
 
@@ -16,7 +16,7 @@ def genPrimaryHDU():
                     'Telescope')
     hdu0.header.set('LICENSE ',
                     '',
-                    'Copyright (c) 2018,The VERITAS Collaboration')
+                    '')
     hdu0.header['COMMENT'] = "FITS (Flexible Image Transport System) \
                               format is defined in 'Astronomy"
     hdu0.header['COMMENT'] = "and Astrophysics', volume 376, page 359; \
@@ -40,6 +40,6 @@ def genHDUlist(datasource, save_multiplicity=False):
     hdus.append(genPrimaryHDU())
     hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity))
     hdus.append(fillGTI(datasource))
-    hdus.extend(fill_response(datasource))
+    hdus.extend(fillRESPONSE(datasource))
     hdulist = fits.HDUList(hdus)
     return hdulist
