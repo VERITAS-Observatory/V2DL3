@@ -41,6 +41,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--evt_filter', type=click.Path(exists=True),
               help='Load condition to filter events form json or yaml file.')
 @click.argument('output', metavar='<output>')
+
 def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         ed, filename_to_obsid, full_enclosure, point_like,
         debug, verbose, output, evt_filter):
