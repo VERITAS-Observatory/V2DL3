@@ -22,13 +22,20 @@ def produce_tel_list(tel_config):
     return tel_list[:-1]
 
 
-def bin_centers_to_edges(axis):
+def bin_centers_to_edges(axis, logaxis=True):
     """Calculate bin centers of two axes
 
     """
     bin_size = axis[1] - axis[0]
     extended_axis = np.insert(axis, 0, axis[0] - bin_size)
-    return extended_axis + bin_size / 2.0
+    bin_edges = extended_axis + bin_size / 2.0
+    if logaxis:
+        bin_low = np.power(10, [bin_edges[:-1]])[0]
+        bin_high = np.power(10, [bin_edges[1:]])[0]
+    else:
+        bin_low = np.array([bin_edges[:-1]])[0]
+        bin_high = np.array([bin_edges[1:]])[0]
+    return bin_edges, bin_low, bin_high
 
 
 def duplicate_dimension(data, axis):
