@@ -67,11 +67,11 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 v2dl3 -l ./runlist.txt  ./test
 ```
 
+---
+
 ## EventDisplay
 
 - use Eventdisplay version >= 486
-- input run-wise anasum and corresponding effective areas files
-- use the DL3 versions of the effective areas files
 
 ### Installation
 
@@ -94,7 +94,7 @@ Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
 Convert an anasum output file to DL3.
 The following input is required:
 - anasum file for a given run
-- effective area file for the corresponding cut applied during the preparation of the anasum file
+- effective area file for the corresponding cut applied during the preparation of the anasum file (DL3 version)
 
 Example for point-like analysis:
 ```
