@@ -72,6 +72,7 @@ v2dl3 -l ./runlist.txt  ./test
 # V2DL3 for EventDisplay
 
 - use Eventdisplay version >= 486
+- recipes for Docker containers are available from the [V2DL3-Docker-recipes](https://github.com/Eventdisplay/V2DL3-Docker-recipes) repository.
 
 ## Installation
 
