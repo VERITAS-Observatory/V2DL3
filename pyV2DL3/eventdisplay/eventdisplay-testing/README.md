@@ -1,4 +1,4 @@
-# eventDisplay
+# Testing utitilities for eventdisplay
 
 ## Notebooks
 
@@ -8,10 +8,12 @@ For now I just uploaded the notebooks I have been playing around with for creati
 
 The only notebook is close to being "clean" is the 'Testing_IRF_interpolation.ipynb'. Please play around with that one if you want to see how the IRF interpolation currently works in the package. 
 
+## Fits file comparison
 
-## Contacts 
+Compare two fits files and printout differences.
 
-* Tarek Hassan (tarek.hassan@desy.de)
+Run the following command to see all options:
 
-
-
+``
+python compareFitsFiles.py --help
+```

@@ -1,10 +1,6 @@
 from astropy.io import fits
-import numpy as np
-import logging
-from pyV2DL3.constant import VTS_REFERENCE_MJD
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
-
-logger = logging.getLogger(__name__)
+from pyV2DL3.constant import VTS_REFERENCE_MJD
 
 
 def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
@@ -20,19 +16,21 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
         ])
     hdu2.name = "GTI"
     # Fill Standard HDUCLASS keywords
-    hdu2 = addHDUClassKeyword(hdu2,class1='GTI')
+    hdu2 = addHDUClassKeyword(hdu2, class1='GTI')
     hdu2.header.set('TSTART', startTime_s, 'start time [s]')
     hdu2.header.set('TSTOP', endTime_s, 'stop time same [s]')
 
-    hdu2.header.set('MJDREFI ', VTS_REFERENCE_MJD, 'int part of reference MJD [days]')
+    hdu2.header.set('MJDREFI ', VTS_REFERENCE_MJD,
+                    'int part of reference MJD [days]')
     hdu2.header.set('MJDREFF ', 0., 'fractional part of reference MJD [days]')
 
     hdu2.header.set('TIMEUNIT', 's', 'time unit is seconds since MET start')
     hdu2.header.set('TIMESYS ', 'utc', 'time scale is UTC')
     hdu2.header.set('TIMEREF ', 'local', 'local time reference')
 
-    hdu2.header.set('TIMEZERO', 0, 'zero time [s]') #Times stored in GTI table are relative to reference time 
+    hdu2.header.set('TIMEZERO', 0, 'zero time [s]') # Times stored in GTI table are relative to reference time 
     hdu2.header.set('TTYPE1', 'START   ', ' start of good time interval')
     hdu2.header.set('TTYPE2', 'STOP    ', ' start of good time interval')
     hdu2.header.set('EXTNAME', 'GTI     ', ' name: Good Time Intervals')
+
     return hdu2

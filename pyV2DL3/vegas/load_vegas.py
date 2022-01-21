@@ -1,4 +1,4 @@
-from pyV2DL3.root_lib_util import SingletonDecorator
+from pyV2DL3.vegas.root_lib_util import SingletonDecorator
 from ROOT import gSystem
 import logging
 logger = logging.getLogger(__name__)

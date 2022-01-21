@@ -1,0 +1,13 @@
+name: v2dl3ED
+channels:
+  - astropy
+  - conda-forge
+dependencies:
+  - astropy>=4.0
+  - click
+  - numpy>=1.13
+  - pytest
+  - python>=3.8
+  - pyyaml
+  - scipy
+  - uproot
