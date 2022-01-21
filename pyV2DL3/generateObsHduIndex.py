@@ -1,10 +1,10 @@
+from astropy.io import fits
+from astropy.io.fits import table_to_hdu
+from astropy.table import Table
+from astropy.table import vstack
 import logging
 import os
-from astropy.io import fits
-from astropy.table import Table, vstack
-from astropy.io.fits import table_to_hdu
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
-logger = logging.getLogger(__name__)
 
 
 class NoFitsFileError(Exception):
@@ -44,7 +44,7 @@ def gen_hdu_index(filelist, index_file_dir='./'):
         _path = os.path.dirname(_rel_path)
 
         if(not os.path.exists(_file)):
-            logger.warning('{} does not exist. Skipped!'.format(_file))
+            logging.warning('{} does not exist. Skipped!'.format(_file))
             continue
         # open the fits file
         dl3_hdu = fits.open(_file)
@@ -93,10 +93,14 @@ def get_unit_string_from_comment(comment_string):
 
 def gen_obs_index(filelist, index_file_dir='./'):
     names = (
-        'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT', 'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
-        'TSTOP', 'N_TELS', 'TELLIST', 'OBJECT', 'RA_OBJ', 'DEC_OBJ', 'DATE-OBS', 'DATE-END')
+        'OBS_ID', 'RA_PNT', 'DEC_PNT', 'ZEN_PNT', 'ALT_PNT', 'AZ_PNT',
+        'ONTIME', 'LIVETIME', 'DEADC', 'TSTART',
+        'TSTOP', 'N_TELS', 'TELLIST', 'OBJECT', 'RA_OBJ', 'DEC_OBJ',
+        'DATE-OBS', 'DATE-END')
     dtype = (
-        '>i8', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i8', 'S20', 'S20',
+        '>i8', '>f4', '>f4', '>f4',
+        '>f4', '>f4', '>f4', '>f4',
+        '>f4', '>f4', '>f4', '>i8', 'S20', 'S20',
         '>f4', '>f4', 'S20', 'S20')
     _tabledata = {}
     _tableunits = {}
@@ -105,18 +109,14 @@ def gen_obs_index(filelist, index_file_dir='./'):
 
     # loop through the files
     for _file in filelist:
-        # Get relative path from the index file output dir to
         # fits files.
-        _rel_path = os.path.relpath(_file, start=index_file_dir)
-        _filename = os.path.basename(_rel_path)
-        _path = os.path.dirname(_rel_path)
         if(not os.path.exists(_file)):
-            logger.warning('{} does not exist. Skipped!'.format(_file))
+            logging.warning('{} does not exist. Skipped!'.format(_file))
             continue
         dl3_hdu = fits.open(_file)
         # get values and units from fits header entries
         for key, value in _tabledata.items():
-            if key is 'ZEN_PNT':
+            if key == 'ZEN_PNT':
                 value.append(90.-float(dl3_hdu[1].header['ALT_PNT']))
                 _tableunits[key] = get_unit_string_from_comment(dl3_hdu[1].header.comments['ALT_PNT'])
             else:
@@ -159,13 +159,17 @@ def create_obs_hdu_index_file(filelist, index_file_dir='./',
     """Create Observation Index File and HDU index file
 
     For each directory tree, two files should be present:
-    **obs-index.fits.gz**
-    (defined in http://gamma-astro-data-formats.readthedocs.io/en/latest/data_storage/obs_index/index.html)
-    **hdu-index.fits.gz**
-    (defined in http://gamma-astro-data-formats.readthedocs.io/en/latest/data_storage/hdu_index/index.html)
 
-    This function will create the necessary data format, starting from the path that contains the DL3
-    converted fits file.
+    **obs-index.fits.gz**
+    defined
+    in http://gamma-astro-data-formats.readthedocs.io/en/latest/data_storage/obs_index/index.html
+
+    **hdu-index.fits.gz**
+    defined in
+    http://gamma-astro-data-formats.readthedocs.io/en/latest/data_storage/hdu_index/index.html
+
+    This function will create the necessary data format, starting from the
+    path that contains the DL3 converted fits file.
 
     Parameters
     ----------
@@ -184,9 +188,11 @@ def create_obs_hdu_index_file(filelist, index_file_dir='./',
     """
 
     hdu_table = gen_hdu_index(filelist, index_file_dir)
-    logger.debug('Writing {} ...'.format(hdu_index_file))
-    hdu_table.writeto('{}/{}'.format(index_file_dir, hdu_index_file), overwrite=True)
+    logging.debug('Writing {} ...'.format(hdu_index_file))
+    hdu_table.writeto('{}/{}'.format(index_file_dir, hdu_index_file),
+                      overwrite=True)
 
     obs_table = gen_obs_index(filelist, index_file_dir)
-    logger.debug('Writing {} ...'.format(obs_index_file))
-    obs_table.writeto('{}/{}'.format(index_file_dir, obs_index_file), overwrite=True)
+    logging.debug('Writing {} ...'.format(obs_index_file))
+    obs_table.writeto('{}/{}'.format(index_file_dir, obs_index_file),
+                      overwrite=True)

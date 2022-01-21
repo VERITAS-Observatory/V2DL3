@@ -12,21 +12,21 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Path containing DL3 files.')
 @click.option('--index_file_dir', '-i', nargs=1, type=click.Path(exists=True),
               help='Output path to write the index file.')
-@click.option('--hdu_index_file', '-hdu', nargs=1, 
+@click.option('--hdu_index_file', '-hdu', nargs=1,
               default='hdu-index.fits.gz',
               help='HDU index file (default:hdu-index.fits.gz)')
-@click.option('--obs_index_file', '-obs', nargs=1, 
+@click.option('--obs_index_file', '-obs', nargs=1,
               default='obs-index.fits.gz',
               help='Observation index file (default:obs-index.fits.gz)')
 @click.option('--recreate', '-r', is_flag=True)
 @click.option('--debug', '-d', is_flag=True)
-def cli(folder_location, index_file_dir, 
+def cli(folder_location, index_file_dir,
         hdu_index_file, obs_index_file,
         recreate, debug):
     """Command line tool for generating index file from a set of DL3 files
 
     \b
-    Index files are created from all DL3 given in folder.
+    Index files are created from all DL3 fits files found in the given folder.
 
     """
     if folder_location is None:
@@ -48,12 +48,14 @@ def cli(folder_location, index_file_dir,
 
     if not recreate:
         if os.path.exists('{}/obs-index.fits.gz'.format(index_file_dir)):
-            logging.info('Existing {}/obs-index.fits.gz'.format(index_file_dir))
-            logging.info('Please remove before continuing or use recreate option -r')
+            logging.info('Existing {}/obs-index.fits.gz'
+                         .format(index_file_dir))
+            logging.info('Remove before continuing or use recreate option -r')
             return
         if os.path.exists('{}/hdu-index.fits.gz'.format(index_file_dir)):
-            logging.info('Existing {}/hdu-index.fits.gz'.format(index_file_dir))
-            logging.info('Please remove before continuing or use recreate option -r')
+            logging.info('Existing {}/hdu-index.fits.gz'
+                         .format(index_file_dir))
+            logging.info('Remove before continuing or use recreate option -r')
             return
 
     logging.debug(
@@ -63,7 +65,7 @@ def cli(folder_location, index_file_dir,
     fits_files = []
     for f in __fits_files:
         if f.find(obs_index_file) == -1 and \
-            f.find(hdu_index_file) == -1:
+           f.find(hdu_index_file) == -1:
             fits_files.append(f)
 
     if len(fits_files) == 0:
@@ -74,8 +76,8 @@ def cli(folder_location, index_file_dir,
     for f in fits_files:
         logging.info(' -> {0}'.format(f))
 
-    logging.info('Generating index files {}/obs-index.fits.gz and {}/hdu-index.fits.gz'.format(index_file_dir,
-                                                                                               index_file_dir))
+    logging.info('Generating index files {}/obs-index.fits.gz and {}/hdu-index.fits.gz'
+                 .format(index_file_dir, index_file_dir))
     create_obs_hdu_index_file(fits_files,
                               index_file_dir,
                               hdu_index_file,
