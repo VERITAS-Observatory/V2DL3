@@ -28,7 +28,7 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     hdu2.header.set('TIMESYS ', 'utc', 'time scale is UTC')
     hdu2.header.set('TIMEREF ', 'local', 'local time reference')
 
-    hdu2.header.set('TIMEZERO', startTime_s, 'zero time [s]')  # is this correct ?
+    hdu2.header.set('TIMEZERO', 0, 'zero time [s]') # Times stored in GTI table are relative to reference time 
     hdu2.header.set('TTYPE1', 'START   ', ' start of good time interval')
     hdu2.header.set('TTYPE2', 'STOP    ', ' start of good time interval')
     hdu2.header.set('EXTNAME', 'GTI     ', ' name: Good Time Intervals')
