@@ -5,6 +5,8 @@ Provide a tool to convert VERITAS data products to DL3 FITS format, allowing to 
 The converter can be used to convert point-like and full-enclosure IRFs. 
 The FITS output follows format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
 
+The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
+
 Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
 	Tarek Hassan (tarek.hassan@desy.de)
@@ -20,17 +22,10 @@ Contact:
 
 v2dl3 is the main tool to be used for converting IRFs.
 
-### Requirements
-
-The requirements are listed in the ```environment.yml``` file.
-
-#### VEGAS
+## Using V2DL3 with VEGAS
 
 * vegas version >= 2.5.7
-
-#### EventDisplay
-
-* The converter does not depend on EventDisplay. Output from Eventdisplay version >= v485 is required to include the DL3EventTree in the anasum file.
+* requirements are listed in the ```environment.yml``` file.
 
 ### Installation
 
@@ -45,54 +40,13 @@ conda activate v2dl3
 ```
 
 Install now pyV2DL3:
-
 ```
 pip install . --use-feature=in-tree-build
 ```
 
-### Usage of commandline tool v2dl3
+### Usage of commandline tool v2dl3 with VEGAS
 
-```
-# v2dl3 --help
-Usage: v2dl3 [OPTIONS] <output>
-
-  Tool for converting VEGAS stage5 or Eventdisplay anasum files to DL3
-
-  There are two modes:
-      1) Single file mode
-          When --file_pair is invoked, the path to the stage5/anasum file
-          and the corresponding effective area should be provided.
-          The <output> argument is then the resulting fits file name.
-      2) File list mode
-          When using the option --runlist, the path to a stage6 runlist
-          should be used.  The <output> is then the directory to which
-          the fits files will be saved to.
-
-  Note: One one mode can be used at a time.
-
-Options:
-  -f, --file_pair PATH...  A stage5 or anasum file (<file 1>) and
-                           the corresponding effective area (<file 2>).
-  -l, --runlist PATH       Stage6 runlist
-  -g, --gen_index_file     Generate hdu and observation index list files.
-                           Only have effect in file list mode.
-  -m, --save_multiplicity  Save telescope multiplicity into event list
-  -e, --ed                 Eventdisplay mode
-  -I, --filename_to_obsid  Override OBS_ID with output filename
-  --full-enclosure         Store full-enclosure IRFs (no direction cut
-                           applied)
-  --point-like             Store point-like IRFs (direction cut applied)
-  -d, --debug
-  -v, --verbose            Print root output
-  --evt_filter PATH        Load condition to filter events form json or yaml
-                           file.
-  -h, --help               Show this message and exit.
-```
-
----
-### Examples
-
-### VEGAS
+Run `v2dl3 --help` to see all options.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
@@ -100,7 +54,6 @@ Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/```
 ##### One file at a time
 
 To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the ouput DL3 file.
-
 
 ```
 v2dl3 -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
@@ -114,7 +67,29 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 v2dl3 -l ./runlist.txt  ./test
 ```
 
-### EventDisplay
+## EventDisplay
+
+- use Eventdisplay version >= 486
+- input run-wise anasum and corresponding effective areas files
+- use the DL3 versions of the effective areas files
+
+### Installation
+
+Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
+```
+conda env create -f environment-eventdisplay.yml
+```
+The environment ```v2dl3ED``` will be created and can be activated with:
+
+```
+conda activate v2dl3ED
+```
+
+Note that no pip is required for using the v2dl3 tool with Eventdisplay.
+
+### Usage of commandline tool v2dl3
+
+Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
 
 Convert an anasum output file to DL3.
 The following input is required:
@@ -123,11 +98,11 @@ The following input is required:
 
 Example for point-like analysis:
 ```
-v2dl3 -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
 ```
 Example for full-enclosure analysis:
 ```
-v2dl3 --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
 ```
 
 ---
