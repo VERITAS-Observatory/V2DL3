@@ -20,6 +20,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Set log level to debug')
 @click.option('--logfile', '-l', nargs=1,
               default=None, help='Store log information to file')
+@click.option('--instrument_epoch', '-i', nargs=1, default=None,
+              help='Instrument epoch to be stored in EVENTS header')
 @click.option('--save_multiplicity', '-m', is_flag=True,
               help='Save telescope multiplicity into event list')
 @click.option('--filename_to_obsid', '-I', is_flag=True,
@@ -27,7 +29,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--evt_filter', type=click.Path(exists=True),
               help='Load condition to filter events form json or yaml file.')
 def cli(file_pair, full_enclosure, point_like,
-        output, debug, logfile,
+        output, debug, logfile, instrument_epoch,
         save_multiplicity, filename_to_obsid, evt_filter):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3
 
@@ -58,7 +60,9 @@ def cli(file_pair, full_enclosure, point_like,
     datasource = loadROOTFiles(anasum_str, ea_str, 'ED')
     datasource.set_irfs_to_store(irfs_to_store)
     datasource.fill_data(evt_filter=evt_filter)
-    hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
+    hdulist = genHDUlist(datasource,
+                         save_multiplicity=save_multiplicity,
+                         instrument_epoch=instrument_epoch)
     fname_base = os.path.splitext(os.path.basename(output))[0]
     if filename_to_obsid:
         logging.info('Overwriting OBS_ID={0} with OBS_ID={1}'.format(
