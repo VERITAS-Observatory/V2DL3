@@ -40,7 +40,9 @@ def genHDUlist(datasource,
                instrument_epoch=None):
     hdus = list()
     hdus.append(genPrimaryHDU())
-    hdus.append(fillEVENTS(datasource, save_multiplicity=save_multiplicity))
+    hdus.append(fillEVENTS(datasource, 
+                           save_multiplicity=save_multiplicity,
+                           instrument_epoch=instrument_epoch))
     hdus.append(fillGTI(datasource))
     hdus.extend(fillRESPONSE(datasource, instrument_epoch))
     hdulist = fits.HDUList(hdus)
