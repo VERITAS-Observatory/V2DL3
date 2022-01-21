@@ -79,10 +79,12 @@ Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/us
 ```
 conda env create -f environment-eventdisplay.yml
 ```
-The environment ```v2dl3ED``` will be created and can be activated with:
+
+Activate the environment ```v2dl3ED``` and set `PYTHONPATH`:
 
 ```
 conda activate v2dl3ED
+export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
 Note that no pip is required for using the v2dl3 tool with Eventdisplay.
