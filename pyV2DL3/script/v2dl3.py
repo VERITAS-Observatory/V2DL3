@@ -80,7 +80,7 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
     logging.debug("Start importing ROOT")
     from pyV2DL3.genHDUList import genHDUlist
     from pyV2DL3.genHDUList import loadROOTFiles
-    from pyV2DL3.root_lib_util import cpp_print_context
+    from pyV2DL3.vegas.root_lib_util import cpp_print_context
 
     # Store in a dict the IRFs to be stored within a file.
     # By default we will only store point-like IRFs.
@@ -108,10 +108,10 @@ def cli(file_pair, runlist, gen_index_file, save_multiplicity,
         hdulist.writeto(output, overwrite=True)
     else:
         from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
-        from pyV2DL3.parseSt6RunList import parseRunlistStrs
-        from pyV2DL3.parseSt6RunList import RunlistParsingError
-        from pyV2DL3.parseSt6RunList import RunlistValidationError
-        from pyV2DL3.parseSt6RunList import validateRunlist
+        from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
+        from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
+        from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
+        from pyV2DL3.vegas.parseSt6RunList import validateRunlist
 
         with open(runlist) as f:
             lines = f.readlines()

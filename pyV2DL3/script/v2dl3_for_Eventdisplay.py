@@ -49,7 +49,7 @@ def cli(file_pair, full_enclosure, point_like,
     logging.debug('logging level {0}'
                   .format(logging.getLevelName(logging.getLogger().level)))
 
-    # By default we will only store point-like IRFs.
+    # default: point like IRFs
     if not full_enclosure and not point_like:
         point_like = True
         full_enclosure = False
