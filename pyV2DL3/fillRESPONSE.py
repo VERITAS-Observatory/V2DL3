@@ -86,7 +86,7 @@ def fillRESPONSE(datasource, instrument_epoch=None):
                          )
         response_hdus.append(fill_bintablehdu(
                   'MIGRATION', 'ENERGY DISPERSION', 'EDISP',
-                  'POINT-LIKE', 'EDISP_2D', 'MIGRATION',
+                  'POINT-LIKE', 'EDISP_2D',
                   response_dict, evt_dict, epoch_str)
                          )
 
