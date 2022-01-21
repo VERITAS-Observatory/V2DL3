@@ -7,6 +7,10 @@ The FITS output follows format as defined in [open gamma-ray astro data formats 
 
 The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
 
+The two main tools required to convert VERITAS data products to DL3 FITS format and use them with gammapy are:
+- converter to DL3 (v2dl3 for VEGAS, v2dl3_for_Eventdisplay.py for Eventdisplay)
+- tool to generate observation index tables
+
 Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
 	Tarek Hassan (tarek.hassan@desy.de)
@@ -18,16 +22,12 @@ Contact:
 
 
 ---
-# The DL3 converter v2dl3
-
-v2dl3 is the main tool to be used for converting IRFs.
-
-## Using V2DL3 with VEGAS
+# V2DL3 for VEGAS
 
 * vegas version >= 2.5.7
 * requirements are listed in the ```environment.yml``` file.
 
-### Installation
+## Installation
 
 Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
@@ -44,14 +44,14 @@ Install now pyV2DL3:
 pip install . --use-feature=in-tree-build
 ```
 
-### Usage of commandline tool v2dl3 with VEGAS
+## The commandline tool v2dl3 with VEGAS
 
 Run `v2dl3 --help` to see all options.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
 
-##### One file at a time
+### One file at a time
 
 To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the ouput DL3 file.
 
@@ -59,7 +59,7 @@ To convert a single stage 5 file to DL3 fits you need to provide the path to the
 v2dl3 -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
 ```
 
-##### Generate from a VEGAS stage6 runlist
+### Generate from a VEGAS stage6 runlist
 
 You can also provide a stage6 runlist to the command line tool. In this case the last argument is the folder where all the output DL3 files will be saved. Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
@@ -69,11 +69,11 @@ v2dl3 -l ./runlist.txt  ./test
 
 ---
 
-## EventDisplay
+# V2DL3 for EventDisplay
 
 - use Eventdisplay version >= 486
 
-### Installation
+## Installation
 
 Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
@@ -87,7 +87,7 @@ conda activate v2dl3ED
 
 Note that no pip is required for using the v2dl3 tool with Eventdisplay.
 
-### Usage of commandline tool v2dl3
+## Usage of commandline tool v2dl3
 
 Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
 
@@ -104,6 +104,20 @@ Example for full-enclosure analysis:
 ```
 python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
 ```
+
+---
+# Data storage and generating index files
+
+Two index files are required for DL3-type analysis and can be generated with the tool `generate_index_file.py`.
+
+The tables are descriped on the [GADF webside](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+- [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
+- [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
+
+To use `generate_index_file.py`, run:
+- `generate_index_file --help` when using VEGAS
+- `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` when using Eventdisplay 
+
 
 ---
 **TEXT BELOW REQUIRES REVIEW**
