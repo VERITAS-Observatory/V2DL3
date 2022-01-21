@@ -8,7 +8,7 @@ The FITS output follows format as defined in [open gamma-ray astro data formats 
 The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
 
 The two main tools required to convert VERITAS data products to DL3 FITS format and use them with gammapy are:
-- converter to DL3 (v2dl3 for VEGAS, v2dl3_for_Eventdisplay.py for Eventdisplay)
+- converter to DL3 (`v2dl3` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
 - tool to generate observation index tables
 
 Contact:
