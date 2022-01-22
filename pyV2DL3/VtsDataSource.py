@@ -7,8 +7,6 @@ def empty_function(*args, **kwargs):
 
 class VtsDataSourceMeta(type):
     
-    pkg_locations = {"VEGAS": "pyV2DL3.vegas", "ED": "pyV2DL3.eventdisplay"}
-    
     @staticmethod
     def build_series_function(*in_sub_fns):
         def new_fn(self, *args, **kwargs):
