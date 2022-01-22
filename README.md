@@ -11,6 +11,8 @@ The two main tools required to convert VERITAS data products to DL3 FITS format 
 - converter to DL3 (`v2dl3` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
 - tool to generate observation index tables
 
+For contributors: please note the section for developers below.
+
 Contact:
 	Ralph Bird (ralph.bird.1@gmail.com)
 	Tarek Hassan (tarek.hassan@desy.de)
@@ -120,6 +122,14 @@ The tables are descriped on the [GADF webside](https://gamma-astro-data-formats.
 To use `generate_index_file.py`, run:
 - `generate_index_file --help` when using VEGAS
 - `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` when using Eventdisplay 
+
+---
+
+# Contributing
+
+A few remarks when contributing code:
+- goal is to keep as much common code for converting from VEGAS or Eventdisplay data products
+- put package specific code into the [pyV2DL3/vegas](pyV2DL3/vegas) and [pyV2DL3/eventdisplay](pyV2DL3/eventdisplay) directories. As different environments are used for both packages, do not put any imports to vegas/eventdisplay in modules in pyV2DL3
 
 
 ---
