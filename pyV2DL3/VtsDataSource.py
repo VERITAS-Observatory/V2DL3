@@ -1,7 +1,4 @@
-from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
-from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
-from pyV2DL3.vegas.fillEVENTS_not_safe import __fillEVENTS_not_safe__
-from pyV2DL3.vegas.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
+import importlib
 
 
 def empty_function(*args, **kwargs):
@@ -9,6 +6,8 @@ def empty_function(*args, **kwargs):
 
 
 class VtsDataSourceMeta(type):
+    
+    pkg_locations = {"VEGAS": "pyV2DL3.vegas", "ED": "pyV2DL3.eventdisplay"}
     
     @staticmethod
     def build_series_function(*in_sub_fns):
@@ -23,21 +22,25 @@ class VtsDataSourceMeta(type):
         vegas_attrs = ("__ea_file__", "__azimuth__", "__zenith__", "__noise__", "__irf_to_store__")
         ed_attrs = ("__evt_file__", "__ea_file__", "__azimuth__", "__zenith__", "__pedvar__", "__offset__", "__irf_to_store__")
         
-        in_fill_fn = __fillRESPONSE_not_safe__ if in_ft == "VEGAS" else __fillRESPONSE__
+        in_fill_mod = "pyV2DL3.vegas.fillRESPONSE_not_safe" if in_ft == "VEGAS" else "pyV2DL3.eventdisplay.fillRESPONSE"
+        in_fill_fn = "__fillRESPONSE_not_safe__" if in_ft == "VEGAS" else "__fillRESPONSE__"
         in_obj_attrs = vegas_attrs if in_ft == "VEGAS" else ed_attrs
         
         def fill_response(self, *_):
+            fill_fn = getattr(importlib.import_module(in_fill_mod), in_fill_fn)
             attr_in = tuple(getattr(self, aa) for aa in in_obj_attrs)
-            self.__response__ = in_fill_fn(*attr_in)
+            self.__response__ = fill_fn(*attr_in)
         
         return fill_response
     
     @staticmethod
     def build_fill_evt_fn(in_ft):
-        in_fill_evt = __fillEVENTS_not_safe__ if in_ft == "VEGAS" else __fillEVENTS__
+        in_fill_mod = "pyV2DL3.vegas.fillEVENTS_not_safe" if in_ft == "VEGAS" else "pyV2DL3.eventdisplay.fillEVENTS"
+        in_fill_fn = "__fillEVENTS_not_safe__" if in_ft == "VEGAS" else "__fillEVENTS__"
         
         def fill_evt(self, *args, **kwargs):
-            self.gti, self.ea_config, self.evts = in_fill_evt(self.__evt_file__, *args, **kwargs)
+            fill_fn = getattr(importlib.import_module(in_fill_mod), in_fill_fn)
+            self.gti, self.ea_config, self.evts = fill_fn(self.__evt_file__, *args, **kwargs)
         
         return fill_evt
     

@@ -105,7 +105,3 @@ venv.bak/
 
 # Pycharm project files
 .idea/
-
-# Pipenv Enviroment Handling
-Pipfile
-Pipfile.lock
