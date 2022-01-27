@@ -120,7 +120,7 @@ def getGTI(BitArray, run_start_from_reference):
     return gti_start_from_reference, gti_end_from_reference, ontime_s
 
 
-def getRunQuality(logdata):
+def getRunQuality(logdata, ntel=4):
     """Evaluate the run quality based on VPM data used or not in the evndisp.
 
     L to R: bit0 not used, bit[1-4] set when VPM data not used for
@@ -141,29 +141,17 @@ def getRunQuality(logdata):
 
     """
 
-    vpm1 = "(VPM) data from database for telescope 1"
-    vpm2 = "(VPM) data from database for telescope 2"
-    vpm3 = "(VPM) data from database for telescope 3"
-    vpm4 = "(VPM) data from database for telescope 4"
-
-    res1, res2, res3, res4 = "1", "1", "1", "1"
+    vpm = 2**(ntel + 3) - 2**3
+    if np.size(logdata) <= 1:
+        return vpm
 
     for line in range(np.size(logdata)):
+        for tel in range(ntel):
+            vpm_str = "(VPM) data from database for telescope " + str(tel+1)
+            if vpm_str in logdata[line]:
+                vpm = vpm & ~ (1 << (tel+3))
 
-        if vpm1 in logdata[line]:
-            res1 = "0"
-        elif vpm2 in logdata[line]:
-            res2 = "0"
-        elif vpm3 in logdata[line]:
-            res3 = "0"
-        elif vpm4 in logdata[line]:
-            res4 = "0"
-        else:
-            logging.debug("No VPM data used for any of the telescopes!")
+    logging.info("Run quality flag: {0} (8 Bit code: {1:b})"
+                 .format(vpm, vpm))
 
-    vpm_used = "0" + res1 + res2 + res3 + res4 + "000"
-    flag = int(vpm_used, 2)
-    logging.info("Run quality flag: {} (8 Bit code: {})"
-                 .format(flag, vpm_used))
-
-    return flag
+    return vpm
