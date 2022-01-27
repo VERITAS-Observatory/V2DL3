@@ -1,3 +1,7 @@
+# installation:
+# create: conda env create -f environment-eventdisplay.yml
+# activate: conda activate v2dl3ED
+#
 name: v2dl3ED
 channels:
   - astropy
