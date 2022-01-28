@@ -1,11 +1,13 @@
-import ROOT
-from root_numpy import hist2array
-from ctypes import c_float
-from pyV2DL3.vegas.load_vegas import VEGASStatus
-from scipy.interpolate import RegularGridInterpolator
-import numpy as np
-from bisect import bisect_left
 import logging
+from bisect import bisect_left
+from ctypes import c_float
+
+import ROOT
+import numpy as np
+from root_numpy import hist2array
+from scipy.interpolate import RegularGridInterpolator
+
+from pyV2DL3.vegas.load_vegas import VEGASStatus
 
 logger = logging.getLogger(__name__)
 

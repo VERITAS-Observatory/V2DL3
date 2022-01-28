@@ -9,11 +9,11 @@ class RunlistParsingError(Exception):
     pass
 
 
-def parseSectionTag(l):
+def parseSectionTag(in_tag):
     isEnd = False
-    if l[-1] != ']':
+    if in_tag[-1] != ']':
         raise RunlistParsingError('Tag not ended with ]')
-    l_content = l.strip('[').strip(']')
+    l_content = in_tag.strip('][')
     if l_content[0] == '/':
         isEnd = True
         l_content.strip('/')
@@ -44,12 +44,12 @@ def validateRunlist(r_dict):
     for gid, item in r_dict['EA'].items():
         if not os.path.exists(item[0]):
             raise RunlistValidationError('{} does not exist.'.format(item[0]))
-
+    
     for gid, item in r_dict['RUNLIST'].items():
         for f in item:
             if not os.path.exists(f):
                 raise RunlistValidationError('{} does not exist.'.format(f))
-
+    
     # Check if all groups have corresponding EA
     rl_minus_ea = list(set(r_dict['RUNLIST'].keys()) - set(r_dict['EA'].keys()))
     if rl_minus_ea:
@@ -58,22 +58,21 @@ def validateRunlist(r_dict):
 
 def parseRunlistStrs(lines):
     not_used_str = []
-    tag_region_content = []
     lines_sans_whitespace = map(lambda x: x.strip(), lines)
     in_tag_region = False
-
+    
     current_key_id = None
-
+    
     encounter_first_tag = False
     parse_dict = {}
-    for l in lines_sans_whitespace:
-        if (len(l) == 0) or l[0] == '#':
+    for line in lines_sans_whitespace:
+        if (len(line) == 0) or line[0] == '#':
             # Skip empty lines
             continue
-        elif l[0] == '[':
+        elif line[0] == '[':
             encounter_first_tag = True
             isEnd, key, gid = parseSectionTag(l)
-            if (not in_tag_region) and (isEnd):
+            if (not in_tag_region) and isEnd:
                 raise RunlistParsingError('No start tag found for [{} ID: {:d}]'.format(key, gid))
             elif in_tag_region and (not isEnd):
                 raise RunlistParsingError('No ending tag found for previous block before starting [{} ID: {:d}].'.format(key, gid))
@@ -83,7 +82,7 @@ def parseRunlistStrs(lines):
                     parse_dict[key][gid] = []
                 except KeyError:
                     parse_dict[key] = {gid: []}
-
+                
                 in_tag_region = True
             else:
                 in_tag_region = False
