@@ -13,11 +13,11 @@ def parseSectionTag(in_tag):
     isEnd = False
     if in_tag[-1] != ']':
         raise RunlistParsingError('Tag not ended with ]')
-    l_content = in_tag.strip('][')
-    if l_content[0] == '/':
+    tag_content = in_tag.strip('][')
+    if tag_content[0] == '/':
         isEnd = True
-        l_content.strip('/')
-    contents = l_content.split()
+        tag_content.strip('/')
+    contents = tag_content.split()
     if (len(contents) < 3) or (contents[1] != 'ID:'):
         raise RunlistParsingError('Wrong tag format.')
     key, id_str, gid = contents
@@ -71,7 +71,7 @@ def parseRunlistStrs(lines):
             continue
         elif line[0] == '[':
             encounter_first_tag = True
-            isEnd, key, gid = parseSectionTag(l)
+            isEnd, key, gid = parseSectionTag(line)
             if (not in_tag_region) and isEnd:
                 raise RunlistParsingError('No start tag found for [{} ID: {:d}]'.format(key, gid))
             elif in_tag_region and (not isEnd):
@@ -90,10 +90,10 @@ def parseRunlistStrs(lines):
         else:
             # Fill group 0 files
             if not (in_tag_region or encounter_first_tag):
-                not_used_str.append(l)
+                not_used_str.append(line)
             if in_tag_region:
                 key, gid = current_key_id
-                parse_dict[key][gid].append(l)
+                parse_dict[key][gid].append(line)
     if in_tag_region:
         raise RunlistParsingError('Missing closing tags.')
     if not_used_str:
