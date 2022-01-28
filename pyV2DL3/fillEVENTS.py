@@ -1,7 +1,9 @@
-from astropy.io import fits
 import logging
-from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
+
+from astropy.io import fits
+
 import pyV2DL3.constant
+from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
 
 def fillEVENTS(datasource,
@@ -31,8 +33,6 @@ def fillEVENTS(datasource,
         logging.debug('Found BDT variables in event list')
     except KeyError:
         logging.debug('No BDT variables in event list')
-        pass
-
     # Number of triggered telescope if necessary
     if save_multiplicity:
         columns.append(fits.Column(name="EVENT_TYPE", format="1J",
@@ -129,7 +129,7 @@ def fillEVENTS(datasource,
     try:
         hdu1.header.set('QUALITY', evt_dict['QUALITY'],
                         'Run quality flag based on VPM data used or not')
-    except (KeyError):
+    except KeyError:
         logging.debug("Keyword QUALITY not set in the EVENTS header")
         logging.debug("For EventdisplayAnalysis: use version >=v486")
 

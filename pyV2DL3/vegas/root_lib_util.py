@@ -1,4 +1,5 @@
 import contextlib
+
 from ROOT import gROOT
 
 
@@ -6,10 +7,8 @@ from ROOT import gROOT
 def cpp_print_context(verbose=True):
     if not verbose:
         gROOT.ProcessLine("std::cout.setstate(std::ios_base::failbit)")
-    else:
-        pass
     yield
-    if(not verbose):
+    if not verbose:
         gROOT.ProcessLine("std::cout.clear()")
 
 

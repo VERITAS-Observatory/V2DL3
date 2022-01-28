@@ -1,6 +1,9 @@
-from astropy.time import Time
 import logging
+
 import numpy as np
+import uproot
+from astropy.time import Time
+
 from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
@@ -8,12 +11,14 @@ from pyV2DL3.constant import VTS_REFERENCE_MJD
 from pyV2DL3.eventdisplay.util import getGTI
 from pyV2DL3.eventdisplay.util import getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
-import uproot
 
 logger = logging.getLogger(__name__)
 
 
-def __fillEVENTS__(edFileIO, select={}):
+def __fillEVENTS__(edFileIO, select=None):
+    if select is None:
+        select = {}
+    
     evt_dict = {}
 
     # reading variables with uproot
@@ -155,7 +160,7 @@ def __fillEVENTS__(edFileIO, select={}):
         try:
             evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
-        except (KeyError):
+        except KeyError:
             logging.exception("Eventdisplay logfile not found in anasum root file")
             logging.exception("Please make sure to use ED >= 486")
 
@@ -168,7 +173,7 @@ def __fillEVENTS__(edFileIO, select={}):
             gti_tstart_from_reference, gti_tstop_from_reference, ontime_s = getGTI(
                 BitArray, tstart_from_reference
             )
-        except (KeyError):
+        except KeyError:
             for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
                 logging.info("maskBits not found, Available keys: {0}".format(k))
             gti_tstart_from_reference = [tstart_from_reference]
