@@ -1,5 +1,7 @@
-from astropy.io import fits
 import logging
+
+from astropy.io import fits
+
 from pyV2DL3.fillEVENTS import fillEVENTS
 from pyV2DL3.fillGTI import fillGTI
 from pyV2DL3.fillRESPONSE import fillRESPONSE

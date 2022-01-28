@@ -1,9 +1,11 @@
+import logging
+import os
+
 from astropy.io import fits
 from astropy.io.fits import table_to_hdu
 from astropy.table import Table
 from astropy.table import vstack
-import logging
-import os
+
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
 hdu_class_type = {
