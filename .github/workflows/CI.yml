@@ -1,7 +1,7 @@
 ---
 name: CI
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   tests:
@@ -77,7 +77,7 @@ jobs:
                   ./effArea-v486-auxv01-CARE_June2020-Cut-NTel2-PointSource-Moderate-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234-testCI.root \
                   test-full-enclosure-CI.fits.gz
           python notebooks/eventdisplay-testing/compareFitsFiles.py \
-                -f ED-0.2.0-full-enclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
+                -f ED-0.2.0-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
       
