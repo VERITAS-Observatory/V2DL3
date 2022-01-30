@@ -88,11 +88,10 @@ class IrfInterpolator:
                     "IRF interpolation: for azimuth 0, require 4 coordinates "
                     "(azimuth,  pedvar, zenith, offset)"
                 )
-        else:
-            if len(coordinate) != 3:
-                raise ValueError(
-                    "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
-                )
+        elif len(coordinate) != 3:
+            raise ValueError(
+                "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
+            )
 
         if self.irf_name in self.implemented_irf_names_2d:
             # In this case, the interpolator needs to interpolate over 2 dimensions:

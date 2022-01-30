@@ -1,16 +1,18 @@
-from ctypes import c_float
-import numpy as np
 import logging
-from root_numpy import hist2array
-from pyV2DL3.vegas.util import decodeConfigMask,getThetaSquareCut
-from pyV2DL3.vegas.irfloader import  IRFLoader
-import ROOT
- 
+
+import numpy as np
+
+from pyV2DL3.vegas.irfloader import IRFLoader
+from pyV2DL3.vegas.util import getThetaSquareCut
+
 logger = logging.getLogger(__name__)
 
 
-def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, irf_to_store={}):
+def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, irf_to_store=None):
 
+    if irf_to_store is None:
+        irf_to_store = {}
+    
     response_dict = {}
     effectiveAreaIO.loadTheRootFile()
     irfloader = IRFLoader(effectiveAreaIO, pointlike=irf_to_store['point-like'])
@@ -29,7 +31,7 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, irf_to_st
         cuts = effectiveAreaIO.loadTheCutsInfo()
         for k in cuts:
             theta2cut = getThetaSquareCut(k.fCutsFileText)
-        logger.debug('Theta2 cut is {:.2f}'.format(theta2cut))
+        logger.debug(f'Theta2 cut is {theta2cut:.2f}')
         response_dict['RAD_MAX'] = np.sqrt(theta2cut)
 
     # Full-enclosure
