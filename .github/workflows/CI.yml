@@ -23,7 +23,6 @@ jobs:
       - name: Install conda dependencies
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
-          PYTHONPATH: .
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
@@ -46,9 +45,12 @@ jobs:
 
       - name: pytest
         shell: bash -leo pipefail {0}
+        env:
+          PYTHONPATH: .
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate v2dl3ED
           conda info
+          echo $PYTHONPATH
           pytest .
 
