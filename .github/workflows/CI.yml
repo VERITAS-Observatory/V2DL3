@@ -38,9 +38,8 @@ jobs:
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
           conda install -c conda-forge mamba
-          mamba env create -n ci -f environment-eventdisplay.yml
+          mamba env create -n v2dl3ED -f environment-eventdisplay.yml
           conda activate v2dl3ED
-          condat install pytest
 
       - name: pytest
         shell: bash -leo pipefail {0}
