@@ -62,6 +62,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate v2dl3ED
+          # point-like tests
           python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
                -f ./64080.anasum.root \
                   ./effArea-v486-auxv01-CARE_June2020-Cut-NTel2-PointSource-Moderate-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234-testCI.root \
@@ -70,4 +71,13 @@ jobs:
                 -f ED-0.2.0-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
           cat test-pointlike.log
+          # full-enclosure tests
+          python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
+               -f ./64080.anasum.root \
+                  ./effArea-v486-auxv01-CARE_June2020-Cut-NTel2-PointSource-Moderate-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234-testCI.root \
+                  test-full-enclosure-CI.fits.gz
+          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+                -f ED-0.2.0-full-enclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
+                -d test-full-enclosure.log
+          cat test-full-enclosure.log
       
