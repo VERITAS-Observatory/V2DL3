@@ -1,5 +1,7 @@
-from astropy.io import fits
 import logging
+
+from astropy.io import fits
+
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
 
@@ -76,7 +78,7 @@ def fillRESPONSE(datasource, instrument_epoch=None):
     logging.debug('FITS header instrument epoch set to: {0}'
                   .format(epoch_str))
 
-    response_hdus = list()
+    response_hdus = []
     if datasource.__irf_to_store__['point-like']:
 
         response_hdus.append(fill_bintablehdu(

@@ -1,8 +1,10 @@
 import logging
+
 import numpy as np
+import uproot
+
 from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
 from pyV2DL3.eventdisplay.util import bin_centers_to_edges
-import uproot
 
 logger = logging.getLogger(__name__)
 
@@ -131,20 +133,17 @@ def fill_energy_migration(
         ac = []
 
         for aa in bias.transpose():
-            if np.sum(aa) > 0:
-                ab = aa / np.sum(aa * (bHigh - bLow))
-            else:
-                ab = aa
+            ab = aa / np.sum(aa * (bHigh - bLow)) if np.sum(aa) > 0 else aa
             try:
                 ac = np.vstack((ac, ab))
-            except Exception:
+            except ValueError:
                 ac = ab
 
         ac = ac.transpose()
         ac_final.append(ac)
 
-    return np.array(
-        [(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
+    return np.array([
+        (eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
         dtype=[
             ("ENERG_LO", ">f4", (len(eLow),)),
             ("ENERG_HI", ">f4", (len(eHigh),)),
@@ -207,8 +206,11 @@ def fill_direction_migration(
 def __fillRESPONSE__(
     edFileIO, effectiveArea,
     azimuth, zenith, pedvar, offset,
-    irf_to_store={}
+    irf_to_store=None
 ):
+    if irf_to_store is None:
+        irf_to_store = {}
+    
     response_dict = {}
 
     # IRF interpolator

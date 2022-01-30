@@ -5,8 +5,8 @@ class VtsDataSource(object):
         self.__evt_file__ = evt_file
         self.__ea_file__ = ea_file
 
-        self.__evt__ = dict()
-        self.__git__ = dict()
+        self.__evt__ = {}
+        self.__git__ = {}
         self.__response__ = dict()
         # 'point-like' or 'full-enclosure'
         # Default is point like

@@ -5,10 +5,11 @@ The required script is created using the script ANALYSIS.anasum_parallel_from_ru
 
 import os
 import subprocess
+from datetime import date
+
 import click
 
 import pyV2DL3
-from datetime import date
 
 # get the directory of the run_loop.py file
 dirname = os.path.dirname(pyV2DL3.__file__)
@@ -19,34 +20,41 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--v2dl3_script',
-              type=click.Path(exists=True),
-              help='Script that contains individual commands per line that can also be used'
-                   ' in stand alone mode with the v2dl3 converter'
-              )
-@click.option('--conda_env',
-              default="v2dl3",
-              help='Name of the conda environment. (Default: "v2dl3")'
-              )
-@click.option('--conda_exe',
-              default="$CONDA_EXE",
-              help='Path to the conda executable. Change if required.'
-              )
-@click.option('--rootsys',
-              default="$ROOTSYS",
-              help='Path of the ROOTSYS. Change if required.'
-              )
-@click.option('--add_option',
-              default="",
-              help='Option to add when running v2dl3.'
-              )
+@click.option(
+    '--v2dl3_script',
+    type=click.Path(exists=True),
+    help='Script that contains individual commands per line that can also be used'
+         ' in stand alone mode with the v2dl3 converter'
+)
+@click.option(
+    '--conda_env',
+    default="v2dl3",
+    help='Name of the conda environment. (Default: "v2dl3")'
+)
+@click.option(
+    '--conda_exe',
+    default="$CONDA_EXE",
+    help='Path to the conda executable. Change if required.'
+)
+@click.option(
+    '--rootsys',
+    default="$ROOTSYS",
+    help='Path of the ROOTSYS. Change if required.'
+)
+@click.option(
+    '--add_option',
+    default="",
+    help='Option to add when running v2dl3.'
+)
 def cli(v2dl3_script, conda_env, conda_exe, rootsys, add_option):
     with open(v2dl3_script, "r") as script:
-        commands = []
-        for line in script.read().splitlines():
-            if line.startswith("v2dl3"):
-                commands.append(line)
-    if len(commands) == 0:
+        commands = [
+            line
+            for line in script.read().splitlines()
+            if line.startswith("v2dl3")
+        ]
+
+    if not commands:
         raise ValueError("No commands found.")
 
     conda_exe = os.path.expandvars(conda_exe)
@@ -67,6 +75,7 @@ def cli(v2dl3_script, conda_env, conda_exe, rootsys, add_option):
                   f"'{command}' '{conda_exe}' '{conda_env}' '{rootsys}'"
 
         subprocess.call(sub_cmd, shell=True)
+
 
 if __name__ == '__main__':
     cli()

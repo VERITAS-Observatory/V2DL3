@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 
@@ -16,9 +17,7 @@ def produce_tel_list(tel_config):
     """Convert the list of telescopes into a string for FITS header
 
     """
-    tel_list = ""
-    for tel in tel_config["TelType"]:
-        tel_list += "T" + str(tel) + ","
+    tel_list = "".join("T" + str(tel) + "," for tel in tel_config["TelType"])
     return tel_list[:-1]
 
 
@@ -46,8 +45,7 @@ def duplicate_dimension(data, axis):
     corrected_shape = [2 if i == axis else k for i, k in enumerate(current_shape)]
     logging.info(current_shape, corrected_shape)
     tiles = [2 if k == 1 else 1 for k in current_shape]
-    new_data = np.tile(data, tiles)
-    return new_data
+    return np.tile(data, tiles)
 
 
 def duplicate_dimensions(data):
@@ -82,10 +80,7 @@ def getGTI(BitArray, run_start_from_reference):
     """
 
     n = BitArray.size
-    TimeArray_s = []
-    for i in range(n):
-        TimeArray_s.append(np.binary_repr(BitArray[i]).count('1'))
-
+    TimeArray_s = [np.binary_repr(BitArray[i]).count('1') for i in range(n)]
     duration_s = (n - 1) * 8 + TimeArray_s[-1]
     ontime_s = np.sum(TimeArray_s[0:n])
     logging.info('Duration: {0:.0f} (sec.) {1:.2f} (min)'
@@ -96,19 +91,19 @@ def getGTI(BitArray, run_start_from_reference):
     gti_start = []
     gti_end = []
 
-    if (TimeArray_s[0] != 0):
+    if TimeArray_s[0] != 0:
         gti_start.append(0)
 
-    for i in range(1, n - 1, 1):
-        if ((TimeArray_s[i] == 0) & (TimeArray_s[i - 1] != 0)):
+    for i in range(1, n - 1):
+        if (TimeArray_s[i] == 0) & (TimeArray_s[i - 1] != 0):
             end = (i * 8 - (8 - TimeArray_s[i - 1]))
             gti_end.append(end)
 
-        if ((TimeArray_s[i] == 0) & (TimeArray_s[i + 1] != 0)):
+        if (TimeArray_s[i] == 0) & (TimeArray_s[i + 1] != 0):
             start = ((i + 1) * 8 + (8 - TimeArray_s[i + 1]))
             gti_start.append(start)
 
-    if (TimeArray_s[-1] != 0):
+    if TimeArray_s[-1] != 0:
         gti_end.append(duration_s)
 
     logging.info('GTIs start and stop in second since run start: {0} {1}'
@@ -149,9 +144,8 @@ def getRunQuality(logdata, ntel=4):
         for tel in range(ntel):
             vpm_str = "(VPM) data from database for telescope " + str(tel+1)
             if vpm_str in logdata[line]:
-                vpm = vpm & ~ (1 << (tel+3))
+                vpm &= ~ (1 << (tel + 3))
 
-    logging.info("Run quality flag: {0} (8 Bit code: {1:b})"
-                 .format(vpm, vpm))
+    logging.info(f"Run quality flag: {vpm} (8 Bit code: {vpm:b})")
 
     return vpm
