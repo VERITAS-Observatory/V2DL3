@@ -93,7 +93,6 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     # Get Time Cuts and build GTI start and stop time array
     # and calculate live time
     for k in cuts:
-        tmp = k.fCutsFileText
         tc = getTimeCut(k.fCutsFileText)
 
     goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))

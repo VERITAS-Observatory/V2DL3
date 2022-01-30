@@ -21,7 +21,6 @@ def graph_to_array_x(graph):
 
 
 def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
-    offset_np_arr = np.array(offset_arr)
     loaded_offset = []
     ea_data_dict = {}
     ea = []
@@ -198,7 +197,6 @@ class IRFLoader:
                 index_dict["AbsoluteOffset"].append(0.5)
 
         # Validate Completeness
-        num_IRF = len(index_dict["Index"])
         axis_dict = {}
         check_num = 1
 
@@ -207,9 +205,6 @@ class IRFLoader:
             axis_dict[k] = np.sort(np.unique(index_dict[k]))
             if len(axis_dict[k]) < 2 and k != "AbsoluteOffset":
                 raise Exception("{} Axis need to have more than two values".format(k))
-        # if (num_IRF != check_num):
-        #    print(num_IRF,check_num)
-        #    raise Exception("EA File not full")
         self.__axis_dict__ = axis_dict
         self.__index_dict__ = index_dict
 
@@ -234,7 +229,6 @@ class IRFLoader:
         # Az
         az_index = self.__axis_dict__["Azimuth"]
 
-        az_val_inter = az - 360 if (az > 360) else az
         for low, high in zip(az_index[:-1], az_index[1:]):
             if (az >= low) and (az < high):
                 az_low = low
@@ -293,7 +287,6 @@ class IRFLoader:
         ehigh = []
         offset_dim = 0
         offset_low = []
-        offset_high = []
         for irf in irf_data:
             ea_data_peek = irf["EA_Dict"]["Data"]
             ebias_data_peek = irf["EBias_Dict"]["Data"]
@@ -304,7 +297,6 @@ class IRFLoader:
             if offset_dim < ea_data_peek.shape[0]:
                 offset_dim = ea_data_peek.shape[0]
                 offset_low = irf["EA_Dict"]["ThetaLow"]
-                offset_high = irf["EA_Dict"]["ThetaHigh"]
 
         ea_array = np.zeros([2, 2, 2, offset_dim, ea_edim])
         ebias_array = np.zeros(
