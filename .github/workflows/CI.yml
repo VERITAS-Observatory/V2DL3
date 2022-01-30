@@ -26,7 +26,7 @@ jobs:
           pip install flake8
           flake8 . --count --exit-zero --max-line-length=90 --ignore=E203,W503 --select=W504 --show-source --statistics
 
-     - name: Install conda dependencies
+      - name: Install conda dependencies
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
