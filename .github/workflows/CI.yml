@@ -38,7 +38,6 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda activate v2dl3ED
           conda install flake8
-          conda info
           #flake8 . --count --exit-zero --max-line-length=90 --ignore=E203,W503 --select=W504 --show-source --statistics
           flake8 . --count --select=E9,F63,F7,F82 --ignore=E203,W503 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --ignore=E203,W503 --max-line-length=127 --statistics
@@ -50,7 +49,25 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate v2dl3ED
-          conda info
-          echo $PYTHONPATH
           pytest .
 
+      - name: download test data
+        run: |
+          ./download_data_for_tests.sh
+
+      - name: V2Dl3-Eventdisplay
+        shell: bash -leo pipefail {0}
+        env:
+          PYTHONPATH: .
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+               -f ./64080.anasum.root \
+                  ./effArea-v486-auxv01-CARE_June2020-Cut-NTel2-PointSource-Moderate-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234-testCI.root \
+                  test-pointlike-CI.fits.gz
+          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+                -f ED-0.2.0-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
+                -d test-pointlike.log
+          cat test-pointlike.log
+      
