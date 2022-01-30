@@ -20,15 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: flake8
-        shell: bash -leo pipefail {0}
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8
-          #flake8 . --count --exit-zero --max-line-length=90 --ignore=E203,W503 --select=W504 --show-source --statistics
-          flake8 . --count --select=E9,F63,F7,F82 --ignore=E203,W503 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --ignore=E203,W503 --max-line-length=127 --statistics
-
       - name: Install conda dependencies
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
@@ -40,6 +31,18 @@ jobs:
           conda install -c conda-forge mamba
           mamba env create -n v2dl3ED -f environment-eventdisplay.yml
           conda activate v2dl3ED
+          conda info
+
+      - name: flake8
+        shell: bash -leo pipefail {0}
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          conda install flake8
+          conda info
+          #flake8 . --count --exit-zero --max-line-length=90 --ignore=E203,W503 --select=W504 --show-source --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --ignore=E203,W503 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --ignore=E203,W503 --max-line-length=127 --statistics
 
       - name: pytest
         shell: bash -leo pipefail {0}
