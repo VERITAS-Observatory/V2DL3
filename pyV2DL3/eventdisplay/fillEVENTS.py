@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def __fillEVENTS__(edFileIO, select=None):
     if select is None:
         select = {}
-    
+
     evt_dict = {}
 
     # reading variables with uproot
@@ -158,7 +158,9 @@ def __fillEVENTS__(edFileIO, select=None):
 
         # Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
         try:
-            evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
+            evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member(
+                "fLines"
+            )
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
         except KeyError:
             logging.exception("Eventdisplay logfile not found in anasum root file")

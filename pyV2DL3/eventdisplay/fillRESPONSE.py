@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def find_energy_range(log_energy_tev):
-    """Find min and max of energy axis
-
-    """
+    """Find min and max of energy axis"""
     energy_low = np.power(
         10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.0
     )
@@ -23,9 +21,7 @@ def find_energy_range(log_energy_tev):
 
 
 def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
-    """Print information of parameter space to access
-
-    """
+    """Print information of parameter space to access"""
 
     str_info = "Extracting "
     if irf_to_store["point-like"]:
@@ -41,29 +37,28 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
 
 
 def check_parameter_range(par, par_irf, par_name):
-    """Check that coordinates are in range of provided IRF
+    """Check that coordinates are in range of provided IRF"""
 
-    """
-
-    logging.info("\t{0} range of a given IRF: {1:.1f} - {2:.1f}"
-                 .format(par_name, np.min(par_irf), np.max(par_irf)))
+    logging.info(
+        "\t{0} range of a given IRF: {1:.1f} - {2:.1f}".format(
+            par_name, np.min(par_irf), np.max(par_irf)
+        )
+    )
     if np.all(par_irf < par) or np.all(par_irf > par):
-        raise ValueError("Coordinate not inside IRF {0} range"
-                         .format(par_name))
+        raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
 
 
 def find_camera_offsets(camera_offsets):
-    """Find camera offsets, depending on  availability in the effective area file.
-
-    """
+    """Find camera offsets, depending on  availability in the effective area file."""
 
     if len(camera_offsets) == 1:
         # Many times, just IRFs for 0.5 deg are available.
         # Assume that offset for the whole camera.
         logger.debug(
-            "IMPORTANT: Only one camera offset bin " +
-            + "({} deg) simulated within the effective area file selected."
-            .format(camera_offsets[0])
+            "IMPORTANT: Only one camera offset bin "
+            + +"({} deg) simulated within the effective area file selected.".format(
+                camera_offsets[0]
+            )
         )
         logger.debug(
             "IMPORTANT: Setting the IRFs of that given camera \
@@ -78,13 +73,16 @@ def find_camera_offsets(camera_offsets):
 
 
 def fill_effective_area(
-                     irf_name,
-                     irf_interpolator,
-                     camera_offsets, pedvar, zenith, offset,
-                     theta_low, theta_high):
-    """Effective areas
-
-    """
+    irf_name,
+    irf_interpolator,
+    camera_offsets,
+    pedvar,
+    zenith,
+    offset,
+    theta_low,
+    theta_high,
+):
+    """Effective areas"""
 
     irf_interpolator.set_irf(irf_name)
 
@@ -113,13 +111,16 @@ def fill_effective_area(
 
 
 def fill_energy_migration(
-                     irf_name,
-                     irf_interpolator,
-                     camera_offsets, pedvar, zenith, offset,
-                     theta_low, theta_high):
-    """Energy migration matrix
-
-    """
+    irf_name,
+    irf_interpolator,
+    camera_offsets,
+    pedvar,
+    zenith,
+    offset,
+    theta_low,
+    theta_high,
+):
+    """Energy migration matrix"""
 
     irf_interpolator.set_irf(irf_name)
     ac_final = []
@@ -142,8 +143,8 @@ def fill_energy_migration(
         ac = ac.transpose()
         ac_final.append(ac)
 
-    return np.array([
-        (eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
+    return np.array(
+        [(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
         dtype=[
             ("ENERG_LO", ">f4", (len(eLow),)),
             ("ENERG_HI", ">f4", (len(eHigh),)),
@@ -157,12 +158,9 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-                     irf_interpolator,
-                     camera_offsets, pedvar, zenith, offset,
-                     theta_low, theta_high):
-    """Direction dispersion (for full-enclosure IRFs)
-
-    """
+    irf_interpolator, camera_offsets, pedvar, zenith, offset, theta_low, theta_high
+):
+    """Direction dispersion (for full-enclosure IRFs)"""
 
     irf_interpolator.set_irf("hAngularLogDiffEmc_2D")
 
@@ -170,17 +168,21 @@ def fill_direction_migration(
 
     for offset in camera_offsets:
 
-        direction_diff, axis = irf_interpolator.interpolate([pedvar,
-                                                             zenith,
-                                                             offset])
+        direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
         _, eLow, eHigh = bin_centers_to_edges(axis[0])
         rad_edges, rLow, rHigh = bin_centers_to_edges(axis[1])
 
         # Normalize rpsf by solid angle
         rad_width_deg = np.diff(np.power(10, rad_edges))
-        e_sum = np.sum(direction_diff * 2 * rad_width_deg[:, np.newaxis]
-                       * np.pi * np.power(10, axis[1])[:, np.newaxis], axis=0)
+        e_sum = np.sum(
+            direction_diff
+            * 2
+            * rad_width_deg[:, np.newaxis]
+            * np.pi
+            * np.power(10, axis[1])[:, np.newaxis],
+            axis=0,
+        )
         normsum = np.divide(((180 / np.pi) ** 2), e_sum, where=e_sum != 0)
 
         rpsf = direction_diff * normsum
@@ -204,13 +206,11 @@ def fill_direction_migration(
 
 
 def __fillRESPONSE__(
-    edFileIO, effectiveArea,
-    azimuth, zenith, pedvar, offset,
-    irf_to_store=None
+    edFileIO, effectiveArea, azimuth, zenith, pedvar, offset, irf_to_store=None
 ):
     if irf_to_store is None:
         irf_to_store = {}
-    
+
     response_dict = {}
 
     # IRF interpolator
@@ -230,22 +230,27 @@ def __fillRESPONSE__(
 
     print_logging_info(irf_to_store, camera_offsets, pedvar, zenith)
 
-    check_parameter_range(zenith, zeniths_irf, 'zenith')
-    check_parameter_range(pedvar, pedvar_irf, 'pedvar')
+    check_parameter_range(zenith, zeniths_irf, "zenith")
+    check_parameter_range(pedvar, pedvar_irf, "pedvar")
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
 
         # Effective area (full-enclosure)
-        response_dict["EA"], response_dict["LO_THRES"], response_dict["HI_THRES"] = fill_effective_area(
-                                             "eff",
-                                             irf_interpolator,
-                                             camera_offsets,
-                                             pedvar,
-                                             zenith,
-                                             offset,
-                                             theta_low, theta_high
-                                      )
+        (
+            response_dict["EA"],
+            response_dict["LO_THRES"],
+            response_dict["HI_THRES"],
+        ) = fill_effective_area(
+            "eff",
+            irf_interpolator,
+            camera_offsets,
+            pedvar,
+            zenith,
+            offset,
+            theta_low,
+            theta_high,
+        )
 
         # Get RAD_MAX; cuts don't depend on energy/wobble
         file = uproot.open(edFileIO)
@@ -255,14 +260,15 @@ def __fillRESPONSE__(
 
         # Energy dispersion (point-like)
         response_dict["MIGRATION"] = fill_energy_migration(
-                                             "hEsysMCRelative2D",
-                                             irf_interpolator,
-                                             camera_offsets,
-                                             pedvar,
-                                             zenith,
-                                             offset,
-                                             theta_low, theta_high
-                                      )
+            "hEsysMCRelative2D",
+            irf_interpolator,
+            camera_offsets,
+            pedvar,
+            zenith,
+            offset,
+            theta_low,
+            theta_high,
+        )
 
     elif irf_to_store["full-enclosure"]:
 
@@ -275,35 +281,42 @@ def __fillRESPONSE__(
             )
 
         # Effective area (full-enclosure)
-        response_dict["FULL_EA"], response_dict["LO_THRES"], response_dict["HI_THRES"] = fill_effective_area(
-                                             "effNoTh2",
-                                             irf_interpolator,
-                                             camera_offsets,
-                                             pedvar,
-                                             zenith,
-                                             offset,
-                                             theta_low, theta_high
-                                      )
+        (
+            response_dict["FULL_EA"],
+            response_dict["LO_THRES"],
+            response_dict["HI_THRES"],
+        ) = fill_effective_area(
+            "effNoTh2",
+            irf_interpolator,
+            camera_offsets,
+            pedvar,
+            zenith,
+            offset,
+            theta_low,
+            theta_high,
+        )
 
         # Energy dispersion (full-enclosure)
         response_dict["FULL_MIGRATION"] = fill_energy_migration(
-                                             "hEsysMCRelative2DNoDirectionCut",
-                                             irf_interpolator,
-                                             camera_offsets,
-                                             pedvar,
-                                             zenith,
-                                             offset,
-                                             theta_low, theta_high
-                                      )
+            "hEsysMCRelative2DNoDirectionCut",
+            irf_interpolator,
+            camera_offsets,
+            pedvar,
+            zenith,
+            offset,
+            theta_low,
+            theta_high,
+        )
 
         # Direction dispersion (for full-enclosure IRFs)
         response_dict["PSF"] = fill_direction_migration(
-                                        irf_interpolator,
-                                        camera_offsets,
-                                        pedvar,
-                                        zenith,
-                                        offset,
-                                        theta_low, theta_high
-                                     )
+            irf_interpolator,
+            camera_offsets,
+            pedvar,
+            zenith,
+            offset,
+            theta_low,
+            theta_high,
+        )
 
     return response_dict

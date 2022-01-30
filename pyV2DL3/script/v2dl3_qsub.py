@@ -16,42 +16,34 @@ dirname = os.path.dirname(pyV2DL3.__file__)
 # get today's data for the log dir
 today = date.today().strftime("%y%m%d")
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option(
-    '--v2dl3_script',
+    "--v2dl3_script",
     type=click.Path(exists=True),
-    help='Script that contains individual commands per line that can also be used'
-         ' in stand alone mode with the v2dl3 converter'
+    help="Script that contains individual commands per line that can also be used"
+    " in stand alone mode with the v2dl3 converter",
 )
 @click.option(
-    '--conda_env',
+    "--conda_env",
     default="v2dl3",
-    help='Name of the conda environment. (Default: "v2dl3")'
+    help='Name of the conda environment. (Default: "v2dl3")',
 )
 @click.option(
-    '--conda_exe',
+    "--conda_exe",
     default="$CONDA_EXE",
-    help='Path to the conda executable. Change if required.'
+    help="Path to the conda executable. Change if required.",
 )
 @click.option(
-    '--rootsys',
-    default="$ROOTSYS",
-    help='Path of the ROOTSYS. Change if required.'
+    "--rootsys", default="$ROOTSYS", help="Path of the ROOTSYS. Change if required."
 )
-@click.option(
-    '--add_option',
-    default="",
-    help='Option to add when running v2dl3.'
-)
+@click.option("--add_option", default="", help="Option to add when running v2dl3.")
 def cli(v2dl3_script, conda_env, conda_exe, rootsys, add_option):
     with open(v2dl3_script, "r") as script:
         commands = [
-            line
-            for line in script.read().splitlines()
-            if line.startswith("v2dl3")
+            line for line in script.read().splitlines() if line.startswith("v2dl3")
         ]
 
     if not commands:
@@ -71,11 +63,13 @@ def cli(v2dl3_script, conda_env, conda_exe, rootsys, add_option):
             command = " ".join(command_split)
 
         logs = f"-j y -o {logdir}/{runnumber}.log"
-        sub_cmd = f"{qsub_cmd} {logs} {dirname}/script/helper/qsub_convert.sh " \
-                  f"'{command}' '{conda_exe}' '{conda_env}' '{rootsys}'"
+        sub_cmd = (
+            f"{qsub_cmd} {logs} {dirname}/script/helper/qsub_convert.sh "
+            f"'{command}' '{conda_exe}' '{conda_env}' '{rootsys}'"
+        )
 
         subprocess.call(sub_cmd, shell=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

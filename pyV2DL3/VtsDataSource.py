@@ -10,7 +10,7 @@ class VtsDataSource(object):
         self.__response__ = dict()
         # 'point-like' or 'full-enclosure'
         # Default is point like
-        self.__irf_to_store__ = {'point-like': True, 'full-enclosure': False}
+        self.__irf_to_store__ = {"point-like": True, "full-enclosure": False}
 
     def fill_data(self, **kwargs):
         self.__fill_evt__(**kwargs)
