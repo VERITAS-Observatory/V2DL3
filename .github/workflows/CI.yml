@@ -23,4 +23,4 @@ jobs:
       - name: flake8
         run: |
           pip install flake8
-          flake8 . --count  --max-line-length 90 --ignore=E203,W503 --select=W504 --show-source --statistics
+          flake8 . --count --exit-zero --max-line-length=90 --ignore=E203,W503 --select=W504 --show-source --statistics
