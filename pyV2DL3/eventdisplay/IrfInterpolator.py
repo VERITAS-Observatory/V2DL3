@@ -9,11 +9,7 @@ from scipy.interpolate import RegularGridInterpolator
 
 class IrfInterpolator:
     def __init__(self, filename, azimuth):
-        self.implemented_irf_names_1d = [
-             "eff",
-             "Rec_eff",
-             "effNoTh2",
-             "Rec_effNoTh2"]
+        self.implemented_irf_names_1d = ["eff", "Rec_eff", "effNoTh2", "Rec_effNoTh2"]
         self.implemented_irf_names_2d = [
             "hEsysMCRelative2D",
             "hEsysMCRelative2DNoDirectionCut",
@@ -29,9 +25,7 @@ class IrfInterpolator:
             raise FileNotFoundError
 
     def set_irf(self, irf_name):
-        """Check consistency of IRF name
-
-        """
+        """Check consistency of IRF name"""
         if (
             irf_name in self.implemented_irf_names_1d
             or irf_name in self.implemented_irf_names_2d
@@ -40,20 +34,20 @@ class IrfInterpolator:
             self.__load_irf()
         else:
             logging.exception(
-                "The irf you entered: {} is either wrong or not implemented."
-                .format(irf_name)
+                "The irf you entered: {} is either wrong or not implemented.".format(
+                    irf_name
+                )
             )
             raise WrongIrf
 
     def __load_irf(self):
-        """Load IRFs from effective area file
+        """Load IRFs from effective area file"""
 
-        """
-
-        logging.info("Extracting IRFs of type: {0} for azimuth {1} deg"
-                     .format(self.irf_name,
-                             np.array2string(self.azimuth,
-                                             precision=2)))
+        logging.info(
+            "Extracting IRFs of type: {0} for azimuth {1} deg".format(
+                self.irf_name, np.array2string(self.azimuth, precision=2)
+            )
+        )
         irf_data, irf_axes = extract_irf(
             self.filename,
             self.irf_name,
@@ -74,13 +68,11 @@ class IrfInterpolator:
                 )
         self.irf_data = irf_data
         self.irf_axes = irf_axes
-        self.interpolator = RegularGridInterpolator(self.irf_axes,
-                                                    self.irf_data)
+        self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
         for c in coordinate:
-            logging.debug("Interpolating coordinates: {0:.2f}"
-                          .format(c))
+            logging.debug("Interpolating coordinates: {0:.2f}".format(c))
         # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:
@@ -105,7 +97,6 @@ class IrfInterpolator:
             return interpolated_irf, [self.irf_axes[0]]
         else:
             logging.exception(
-                "The irf you entered: {}"
-                " is not available.".format(self.irf_name)
+                "The irf you entered: {}" " is not available.".format(self.irf_name)
             )
             raise WrongIrf

@@ -7,9 +7,7 @@ from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
 
 class EventDisplayDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file):
-        super(EventDisplayDataSource, self).__init__("EventDisplay",
-                                                     etv_file,
-                                                     ea_file)
+        super(EventDisplayDataSource, self).__init__("EventDisplay", etv_file, ea_file)
         self.__evt_file__ = etv_file
         self.__ea_file__ = ea_file
 
@@ -47,10 +45,9 @@ class EventDisplayDataSource(VtsDataSource):
                 " ze={1:.2f} deg,"
                 " pedvar={2:.1f},"
                 " offset={3:.2f} deg"
-            ).format(self.__azimuth__,
-                     self.__zenith__,
-                     self.__pedvar__,
-                     self.__offset__)
+            ).format(
+                self.__azimuth__, self.__zenith__, self.__pedvar__, self.__offset__
+            )
         )
         self.__response__ = __fillRESPONSE__(
             self.__evt_file__,

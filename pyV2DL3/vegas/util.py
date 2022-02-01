@@ -20,8 +20,7 @@ def decodeConfigMask(mask=15):
 
 
 def produceTelList(mask):
-    """Convert the list of telescopes into a string for FITS header
-    """
+    """Convert the list of telescopes into a string for FITS header"""
     telList = "".join("T" + str(tel) + "," for tel in decodeConfigMask(mask))
     return telList[:-1]
 
@@ -31,9 +30,9 @@ def parseTimeCut(tCutStr):
     Parse time cuts from time cut text
     """
     cut_arr = []
-    for cc in tCutStr.split(','):
-        start = float(cc.split('/')[0])
-        end = float(cc.split('/')[1])
+    for cc in tCutStr.split(","):
+        start = float(cc.split("/")[0])
+        end = float(cc.split("/")[1])
         cut_arr.append((start, end))
     return cut_arr
 
@@ -45,13 +44,13 @@ def getTimeCut(config_str_ori):
     config_str = str(config_str_ori)
     for i in config_str.splitlines():
         # Skip comment lines
-        if (len(i) == 0) or (i.strip()[0] == '#'):
+        if (len(i) == 0) or (i.strip()[0] == "#"):
             continue
         # I
-        elif i.find('ES_CutTimes') >= 0:
-            key, cut_str = i.split(' ')
+        elif i.find("ES_CutTimes") >= 0:
+            key, cut_str = i.split(" ")
             if len(cut_str) == 0:
-                return parseTimeCut('0/0')
+                return parseTimeCut("0/0")
             return parseTimeCut(cut_str)
 
 
@@ -59,13 +58,13 @@ def getThetaSquareCut(config_str_ori):
     config_str = str(config_str_ori)
     for i in config_str.splitlines():
         # Skip comment lines
-        if (len(i) == 0) or (i.strip()[0] == '#'):
+        if (len(i) == 0) or (i.strip()[0] == "#"):
             continue
         # I
-        elif i.find('ThetaSquareUpper') >= 0:
-            key, cut_str = i.split(' ')
+        elif i.find("ThetaSquareUpper") >= 0:
+            key, cut_str = i.split(" ")
             if len(cut_str) == 0:
-                raise Exception('No theta2 cuts present in EA file')
+                raise Exception("No theta2 cuts present in EA file")
             return float(cut_str)
 
 
@@ -95,7 +94,7 @@ def mergeTwoTimeCut(cut1, cut2):
 
 def mergeTimeCut(cuts):
     """
-    Go through each cut and merge 
+    Go through each cut and merge
     """
     cut_sorted = sorted(cuts)
     merged_cut = []
