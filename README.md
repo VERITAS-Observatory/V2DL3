@@ -125,12 +125,19 @@ To use `generate_index_file.py`, run:
 
 ---
 
-# Contributing
+# Contributing and Developing Code
 
 A few remarks when contributing code:
 - goal is to keep as much common code for converting from VEGAS or Eventdisplay data products
 - put package specific code into the [pyV2DL3/vegas](pyV2DL3/vegas) and [pyV2DL3/eventdisplay](pyV2DL3/eventdisplay) directories. As different environments are used for both packages, do not put any imports to vegas/eventdisplay in modules in pyV2DL3
 
+To ensure readability, we try follow the Python [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide. 
+
+Functions and classes should contain a docstring with a short description.
+
+Unit tests are encouraged and are available for few cases at this point. Unit tests are in the tests directory and can be called using [pytest](http://docs.pytest.org/). 
+
+Use the [python logging system](https://docs.python.org/3/howto/logging.html) instead of the ‘print()’ function to output text. This allows to pipe all output into a log file and for different logging levels (INFO, DEBUG, …).
 
 ---
 **TEXT BELOW REQUIRES REVIEW**
