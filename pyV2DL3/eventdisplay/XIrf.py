@@ -64,9 +64,6 @@ class XIRFExtractor:
             },
         )
         
-        # Time to turn indexed coordinates into dimensions
-        # https://stackoverflow.com/a/70873363
-        
         return self._convert_index_to_dims(
             irf_ds, azimuth=az_centers, pedvar=pedvar,
             zenith=ze, woff=woff
