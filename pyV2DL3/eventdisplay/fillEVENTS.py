@@ -90,6 +90,10 @@ def __fillEVENTS__(edFileIO, select=None):
         altArr = DL3EventTree["El"][mask]
         energyArr = DL3EventTree["Energy"][mask]
         nTelArr = DL3EventTree["NImages"][mask]
+        xOffArr = DL3EventTree["Xoff"][mask]
+        yOffArr = DL3EventTree["Yoff"][mask]
+        mPedvarArr = DL3EventTree["MeanPedvar"][mask]
+        wOffArr = np.rad2deg(np.arctan2(yOffArr, xOffArr))
         try:
             # Test if anasum file was created using the all events option.
             # In this case write out the additional output.
@@ -120,6 +124,8 @@ def __fillEVENTS__(edFileIO, select=None):
         )
         avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
+        wOffArr[wOffArr < 0] += 360
+
         # Filling Event List
         evt_dict["EVENT_ID"] = evNumArr
         evt_dict["TIME"] = timeArr
@@ -128,6 +134,8 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["ALT"] = altArr
         evt_dict["AZ"] = azArr
         evt_dict["ENERGY"] = energyArr
+        evt_dict["WOFF"] = wOffArr
+        evt_dict["PEDVAR"] = mPedvarArr
         evt_dict["EVENT_TYPE"] = nTelArr
         if all_events:
             evt_dict["BDT_SCORE"] = bdtScore

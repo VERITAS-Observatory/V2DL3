@@ -68,8 +68,8 @@ class XIRFExtractor:
         # https://stackoverflow.com/a/70873363
         
         return self._convert_index_to_dims(
-            irf_ds, az=az_centers, pedvar=pedvar,
-            ze=ze, woff=woff
+            irf_ds, azimuth=az_centers, pedvar=pedvar,
+            zenith=ze, woff=woff
         )
     
     def _get_2d_irf(self, irf_name):
@@ -104,8 +104,8 @@ class XIRFExtractor:
         )
         
         return self._convert_index_to_dims(
-            irf_ds, az=az_centers, pedvar=pedvar,
-            ze=ze, woff=woff
+            irf_ds, azimuth=az_centers, pedvar=pedvar,
+            zenith=ze, woff=woff
         )
     
     def __init__(self, in_filename):
@@ -127,11 +127,137 @@ class XIRFExtractor:
         raise ValueError(f"Unknown IRF: {irf_name}!")
 
 
+class InterpolateInput:
+    """This class turns the event dictionary into
+    a wrapper object for the pandas Dataframe with
+    properties given as keys in `exposed`;
+    the values of `exposed` tells the class which
+    dictionary keys correspond to which property name.
+    For more flexibility, if the value is callable then
+    the entire dictionary is passed into it and can be manipulated.
+    Once built, some nice functions for helping create
+    input values for the locations where the data is in the
+    IRF hypercube are implemented.
+    """
+    
+    exposed = {
+        "azimuth": "AZ",
+        "zenith": lambda x: 90. - x["ALT"],
+        "pedvar": "PEDVAR",
+        "woff": "WOFF"
+    }
+    
+    def __getattr__(self, item):
+        return getattr(self.data, item)
+    
+    def __getitem__(self, item):
+        return self.data[item]
+    
+    def __init__(self, evt_dict):
+        dvars_d = {
+            k: v(evt_dict) if callable(v) else evt_dict[v]
+            for k, v in self.exposed.items()
+        }
+        self.data = pd.DataFrame(dvars_d.copy())
+    
+    def limits(self, in_attr):
+        c_attr = self[in_attr]
+        return c_attr.min(), c_attr.max()
+    
+    def range(self, in_attr):
+        a_min, a_max = self.limits(in_attr)
+        return a_max - a_min
+    
+    def bin(self,
+            in_attr,
+            n_bins=None,
+            bin_width=None,
+            equal_sized=False,
+            retbins=False
+            ):
+        
+        if not n_bins and not bin_width:
+            raise ValueError("Bin Specification Undefined!")
+        
+        if equal_sized:
+            if not n_bins:
+                t_width = self.range(in_attr)
+                c_bins = int((t_width // bin_width) + 1)
+            else:
+                c_bins = n_bins
+        else:
+            c_min, c_max = self.limits(in_attr)
+            
+            if not bin_width:
+                t_width = self.range(in_attr)
+                bin_width = t_width / n_bins
+            
+            c_bins = []
+            c_cur = c_min
+            while c_cur < c_max:
+                c_bins.append(c_cur)
+                c_cur += bin_width
+            c_bins.append(c_max)
+        
+        c_series = self[in_attr].copy(deep=True)
+        
+        c_df = pd.DataFrame({in_attr: c_series})
+        if isinstance(c_bins, int):
+            labels = list(range(c_bins))
+        else:
+            labels = list(range(len(c_bins) - 1))
+        cut_rv = pd.cut(
+            c_series,
+            c_bins,
+            labels=labels,
+            retbins=retbins
+        )
+        if retbins:
+            c_df["bin"] = cut_rv[0]
+            return c_df, cut_rv[1], labels
+        else:
+            c_df["bin"] = cut_rv
+            return c_df, labels
+    
+    @staticmethod
+    def sorted_unique(in_arr, d_places=2):
+        base = np.float_power(10, d_places)
+        return np.sort(np.floor(in_arr * base).unique() / base)
+    
+    def make_bins(self, in_attr, **kwargs):
+        a_data, a_bins = self.bin(in_attr, **kwargs)
+        return [
+            self.sorted_unique(a_data[a_data["bin"] == bn][in_attr]).mean()
+            for bn in a_bins
+        ]
+    
+    def __call__(self, ped_bin=None, az_bin=None, ze_bin=10.):
+        if ped_bin is None:
+            ped_rv = [self.sorted_unique(self.pedvar).mean()]
+        else:
+            ped_rv = self.make_bins("pedvar", bin_width=ped_bin)
+        
+        if az_bin is None:
+            az_rv = [self.sorted_unique(self.azimuth).mean()]
+        else:
+            az_rv = self.make_bins("azimuth", bin_width=az_bin)
+        
+        if ze_bin is None:
+            ze_rv = [self.sorted_unique(self.zenith).mean()]
+        else:
+            ze_rv = self.make_bins("zenith", bin_width=ze_bin)
+        
+        woff_rv = self.sorted_unique(self.woff)
+        
+        return ped_rv, az_rv, ze_rv, woff_rv
+
+
 class XIRFManager:
-    def __init__(self, in_filename):
-        self.cache = {}
+    def __init__(self, in_filename, evt_dict):
         self.irf_extractor = None
         self.filename = in_filename
+        self.ii = InterpolateInput(evt_dict)
+        self.irf_cache = {}
     
     @property
     def filename(self):
@@ -145,10 +271,7 @@ class XIRFManager:
         else:
             self._filename = None
             self.irf_extractor = None
-            self.cache = {}
-    
-    def clear_cache(self):
-        self.cache = {}
+            self.irf_cache = {}
     
     def interpolate(self, irf_name, **kwargs):
         """A wrapper function for xarray.interp
@@ -157,9 +280,31 @@ class XIRFManager:
         if self.irf_extractor is None:
             raise ValueError("Please specify a IRF root file first!")
         
-        if irf_name not in self.cache:
-            self.cache[irf_name] = self.irf_extractor(irf_name)
-        c_irf = self.cache[irf_name]
+        if irf_name in self.irf_cache:
+            c_irf = self.irf_cache[irf_name]
+        else:
+            c_irf = self.irf_extractor(irf_name)
+            self.irf_cache[irf_name] = c_irf
         
         return c_irf.interp(**kwargs)
+    
+    def fill_direction_migration(self):
+        ped, az, ze, woff = self.ii()
         
+        return self.interpolate(
+            "hAngularLogDiffEmc_2D",
+            pedvar=ped,
+            azimuth=az,
+            zenith=ze,
+            woff=woff
+        )
+
+
+def load_test():
+    from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
+    irf_filename = "effArea-v486-auxv01-CARE_June2020-Cut-NTel2-PointSource-Moderate-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234-testCI.root"
+    root_file = "64080.anasum.root"
+    rv = __fillEVENTS__(root_file)
+    event_dict = rv[2]
+    irf_ex = XIRFManager(irf_filename, event_dict)
+    return irf_ex.fill_direction_migration()
