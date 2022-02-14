@@ -13,16 +13,6 @@ The two main tools required to convert VERITAS data products to DL3 FITS format 
 
 For contributors: please note the section for developers below.
 
-Contact:
-	Ralph Bird (ralph.bird.1@gmail.com)
-	Tarek Hassan (tarek.hassan@desy.de)
-	Tony Lin (xyxlin@gmail.com)
-	Tobias Kleiner (tobias.kleiner@desy.de)
-    Sonal Patel (sonal.patel@desy.de)
-    Gernot Maier (gernot.maier@desy.de)
-        
-
-
 ---
 # V2DL3 for VEGAS
 
