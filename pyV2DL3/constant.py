@@ -1,6 +1,6 @@
 # Global setting for both VEGAS and ED
 
-VERSION = "0.1"
+VERSION = "0.2"
 
 # Feb 1 2005
 VTS_REFERENCE_MJD = 53402.0
