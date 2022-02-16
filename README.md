@@ -1,9 +1,9 @@
 # V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter.
 
-V2DL3 is a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for analysis. 
+V2DL3 is a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [Gammapy science tools](https://gammapy.org/) for analysis. 
 
 The converter can be used to convert point-like and full-enclosure IRFs. 
-The FITS output follows format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
+The FITS output follows the data formats for gamma-ray astronomy as defined in open [gamma-astro-data-formats](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats) (GADF) repository.
 
 The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
 
@@ -105,7 +105,7 @@ python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum
 
 Two index files are required for DL3-type analysis and can be generated with the tool `generate_index_file.py`.
 
-The tables are descriped on the [GADF webside](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+The tables are descriped on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
 - [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
 - [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
 
