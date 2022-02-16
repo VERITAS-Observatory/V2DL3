@@ -1,6 +1,6 @@
 # V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter.
 
-Provide a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for analysis. 
+V2DL3 is a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for analysis. 
 
 The converter can be used to convert point-like and full-enclosure IRFs. 
 The FITS output follows format as defined in [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
@@ -21,7 +21,7 @@ For contributors: please note the section for developers below.
 
 ## Installation
 
-Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
+Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
 conda env create -f environment.yml
 ```
@@ -63,12 +63,12 @@ v2dl3 -l ./runlist.txt  ./test
 
 # V2DL3 for EventDisplay
 
-- use Eventdisplay version >= 486
+- use Eventdisplay version >= 487
 - recipes for Docker containers are available from the [V2DL3-Docker-recipes](https://github.com/Eventdisplay/V2DL3-Docker-recipes) repository.
 
 ## Installation
 
-Use the [conda package manage](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
+Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
 conda env create -f environment-eventdisplay.yml
 ```
