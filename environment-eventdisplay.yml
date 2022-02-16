@@ -1,21 +1,17 @@
-name: v2dl3
+# installation:
+# create: conda env create -f environment-eventdisplay.yml
+# activate: conda activate v2dl3ED
+#
+name: v2dl3ED
 channels:
   - astropy
   - conda-forge
 dependencies:
   - astropy>=4.0
   - click
-  - cython>=0.27
-  - gammapy
-  - ipywidgets
   - numpy>=1.13
-  - pandas
-  - pkgconfig
   - pytest
   - python>=3.8
   - pyyaml
-  - root
-  - root_numpy
   - scipy
-  - tqdm
   - uproot

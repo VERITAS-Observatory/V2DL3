@@ -1,7 +1,8 @@
+import logging
+
+from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
-from pyV2DL3.VtsDataSource import VtsDataSource
-import warnings
 
 
 class EventDisplayDataSource(VtsDataSource):
@@ -37,15 +38,16 @@ class EventDisplayDataSource(VtsDataSource):
         pass
 
     def __fill_response__(self, **kwargs):
-        print(
+        logging.info(
             (
                 "Parameters used to query IRFs:"
-                " az=%.2f deg,"
-                " ze=%.2f deg,"
-                " pedvar=%.1f,"
-                " offset=%.2f deg"
+                " az={0:.2f} deg,"
+                " ze={1:.2f} deg,"
+                " pedvar={2:.1f},"
+                " offset={3:.2f} deg"
+            ).format(
+                self.__azimuth__, self.__zenith__, self.__pedvar__, self.__offset__
             )
-            % (self.__azimuth__, self.__zenith__, self.__pedvar__, self.__offset__)
         )
         self.__response__ = __fillRESPONSE__(
             self.__evt_file__,

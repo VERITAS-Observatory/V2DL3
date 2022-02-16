@@ -1,18 +1,24 @@
-from astropy.time import Time
 import logging
+
 import numpy as np
+import uproot
+from astropy.time import Time
+
 from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.eventdisplay.util import getGTI, getRunQuality
+from pyV2DL3.eventdisplay.util import getGTI
+from pyV2DL3.eventdisplay.util import getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
-import uproot
 
 logger = logging.getLogger(__name__)
 
 
-def __fillEVENTS__(edFileIO, select={}):
+def __fillEVENTS__(edFileIO, select=None):
+    if select is None:
+        select = {}
+
     evt_dict = {}
 
     # reading variables with uproot
@@ -63,7 +69,7 @@ def __fillEVENTS__(edFileIO, select={}):
 
         mask = np.ones(len(DL3EventTree["RA"]), bool)
         if select:
-            print(select)
+            logging.info(select)
             for key, value in select.items():
                 if isinstance(value, (list, tuple)):
                     mask = (
@@ -76,7 +82,7 @@ def __fillEVENTS__(edFileIO, select={}):
                         "select condition required \
                                      a list or tuple of ranges"
                     )
-            print(f"{np.sum(mask)} of {len(mask)} events after selection.")
+            logging.info(f"{np.sum(mask)} of {len(mask)} events after selection.")
 
         raArr = DL3EventTree["RA"][mask]
         decArr = DL3EventTree["DEC"][mask]
@@ -145,18 +151,20 @@ def __fillEVENTS__(edFileIO, select={}):
         evt_dict["TELLIST"] = produce_tel_list(telConfig)
         MaxImgSel = np.max(DL3EventTree["ImgSel"])
         evt_dict["N_TELS"] = np.binary_repr(MaxImgSel).count("1")
-        print("No. of Tel:", evt_dict["N_TELS"])
+        logging.info("Number of Telescopes: {}".format(evt_dict["N_TELS"]))
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
 
-        #Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
+        # Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
         try:
-            evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines")
+            evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member(
+                "fLines"
+            )
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
-        except (KeyError):
-            print("\033[1;31m  Eventdispaly logfile not found in anasum root file")
-            print(" Please make sure to use ED >= 486 \033[0;0m")
+        except KeyError:
+            logging.exception("Eventdisplay logfile not found in anasum root file")
+            logging.exception("Please make sure to use ED >= 486")
 
         avPedvar = runSummary["pedvarsOn"][0]
 
@@ -167,11 +175,9 @@ def __fillEVENTS__(edFileIO, select={}):
             gti_tstart_from_reference, gti_tstop_from_reference, ontime_s = getGTI(
                 BitArray, tstart_from_reference
             )
-        except (KeyError):
-            print(
-                "maskBits not found, Available keys:",
-                file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys(),
-            )
+        except KeyError:
+            for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
+                logging.info("maskBits not found, Available keys: {0}".format(k))
             gti_tstart_from_reference = [tstart_from_reference]
             gti_tstop_from_reference = [tstop_from_reference]
             ontime_s = tstop_from_reference - tstart_from_reference

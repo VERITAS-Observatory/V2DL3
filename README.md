@@ -1,96 +1,57 @@
-# V2DL3
-VERITAS (VEGAS and Eventdisplay) to DL3 Converter
+# V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter.
 
-Contact:
-	Ralph Bird (ralph.bird.1@gmail.com)
-	Tarek Hassan (tarek.hassan@desy.de)
-	Tony Lin (xyxlin@gmail.com)
-	Tobias Kleiner (tobias.kleiner@desy.de)
-        
-## Aim
+V2DL3 is a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [Gammapy science tools](https://gammapy.org/) for analysis. 
 
-This repository is for the code that will be used to convert VERITAS data into DL3 format. It can be used to convert point-like IRFs (as included in the joint-Crab paper), as well as full-enclosure IRFs.
+The converter can be used to convert point-like and full-enclosure IRFs. 
+The FITS output follows the data formats for gamma-ray astronomy as defined in open [gamma-astro-data-formats](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats) (GADF) repository.
 
-The project follows the most recent DL3 format definition from the [open gamma-ray astro data formats repository](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats).
+The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
+
+The two main tools required to convert VERITAS data products to DL3 FITS format and use them with gammapy are:
+- converter to DL3 (`v2dl3` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
+- tool to generate observation index tables
+
+For contributors: please note the section for developers below.
 
 ---
-# pyV2DL3 
-
-The python package for converting stage5/anasum files to the DL3 FITS format. Other than useful functions that can be called, a commandline tool `v2dl3` comes with the package.
-
-### Requirements
-The requirements are listed in the ```environment.yml``` file.
-
-#### VEGAS
+# V2DL3 for VEGAS
 
 * vegas version >= 2.5.7
+* requirements are listed in the ```environment.yml``` file.
 
-#### EventDisplay
+## Installation
 
-* The converter does not depend on EventDisplay. However, make sure that the EventDisplay anasum stage runs with version >= v485 to include the DL3EventTree in the ansum file.
-
-### Install pyV2DL3
-
-To install the needed python dependencies, use of conda is recommended. The necessary python environment can be created from ```environment.yml```.
-
-Just run:
+Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
 conda env create -f environment.yml
 ```
-and the environment ```v2dl3``` will be created. After activating the environment (`conda activate v2dl3`), install pyV2DL3 as follows:
+The environment ```v2dl3``` will be created and can be activated with:
 
 ```
-pip install .
-```
-### Usage of commandline tool v2dl3
-
-```
-Usage: v2dl3 [OPTIONS] <output>
-
-  Command line tool for converting stage5/anasum file to DL3
-
-  There are two modes:
-      1) Single file mode
-          When --file_pair is invoked, the path to the stage5/anasum file and the
-          corresponding effective area should be provided. The <output> argument
-          is then the resulting fits file name.
-      2) File list mode
-          When using the option --runlist, the path to a stage6/anasum runlist should be used.
-          The <output> is then the directory to which the fits files will be saved to.
-
-  Note: One one mode can be used at a time.
-
-Options:
-  -f, --file_pair PATH...  A stage5/anasum file (<file 1>) and the corresponding
-                           effective area (<file 2>).
-  -l, --runlist PATH       Stage6/anasum runlist
-  -g, --gen_index_file     Generate hdu and observation index list files. Only
-                           have effect in file list mode.
-  -m, --save_multiplicity  Save telescope multiplicity into event list
-  -e, --ed                 Eventdisplay mode
-  -d, --debug
-  -v, --verbose            Print root output
-  --help                   Show this message and exit.
+conda activate v2dl3
 ```
 
----
-### Examples
+Install now pyV2DL3:
+```
+pip install . --use-feature=in-tree-build
+```
 
-### VEGAS
+## The commandline tool v2dl3 with VEGAS
+
+Run `v2dl3 --help` to see all options.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
 
-##### One file at a time
+### One file at a time
 
 To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the ouput DL3 file.
-
 
 ```
 v2dl3 -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
 ```
 
-##### Generate from a VEGAS stage6 runlist
+### Generate from a VEGAS stage6 runlist
 
 You can also provide a stage6 runlist to the command line tool. In this case the last argument is the folder where all the output DL3 files will be saved. Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
@@ -98,26 +59,78 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 v2dl3 -l ./runlist.txt  ./test
 ```
 
-### EventDisplay
+---
 
-ROOT is installed directly into the environment from conda-forge following the above steps using the ```environment.yml```.
-Now, lets create the DL3 fits files from the anasum files in the ```./eventDisplay/``` folder. 
+# V2DL3 for EventDisplay
 
-##### One file at a time
+- use Eventdisplay version >= 487
+- recipes for Docker containers are available from the [V2DL3-Docker-recipes](https://github.com/Eventdisplay/V2DL3-Docker-recipes) repository.
 
-To convert an anasum file to DL3 you need to provide the path to the anasum file as well as the corresponding effective area file using the flag ```-f```. The only difference with VEGAS is that you need to add the '--ed' flag. The last argument is the name of the ouput DL3 file.
+## Installation
 
+Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
+```
+conda env create -f environment-eventdisplay.yml
+```
+
+Activate the environment ```v2dl3ED``` and set `PYTHONPATH`:
 
 ```
-v2dl3 --ed -f ./eventDisplay/54809.anasum.root [Effective Area File] ./eventDisplay/54809.anasum.fits
+conda activate v2dl3ED
+export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
-##### Full-enclosure
+Note that no pip is required for using the v2dl3 tool with Eventdisplay.
 
-For full-enclosure IRFs you need to pass the additional flag --full-enclosure and be sure to provide the proper effective area files:
+## Usage of commandline tool v2dl3
+
+Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
+
+Convert an anasum output file to DL3.
+The following input is required:
+- anasum file for a given run
+- effective area file for the corresponding cut applied during the preparation of the anasum file (DL3 version)
+
+Example for point-like analysis:
 ```
-v2dl3 -ed --full-enclosure -f 64080.anasum.root $VERITAS_EVNDISP_AUX_DIR/EffectiveAreas/effArea-v485-auxv01-CARE_June2020-Cut-NTel2-PointSource-Hard-TMVA-BDT-GEO-V6_2012_2013a-ATM62-T1234.root ./FITS/64080.anasum.fits
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
 ```
+Example for full-enclosure analysis:
+```
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
+```
+
+---
+# Data storage and generating index files
+
+Two index files are required for DL3-type analysis and can be generated with the tool `generate_index_file.py`.
+
+The tables are descriped on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+- [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
+- [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
+
+To use `generate_index_file.py`, run:
+- `generate_index_file --help` when using VEGAS
+- `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` when using Eventdisplay 
+
+---
+
+# Contributing and Developing Code
+
+A few remarks when contributing code:
+- goal is to keep as much common code for converting from VEGAS or Eventdisplay data products
+- put package specific code into the [pyV2DL3/vegas](pyV2DL3/vegas) and [pyV2DL3/eventdisplay](pyV2DL3/eventdisplay) directories. As different environments are used for both packages, do not put any imports to vegas/eventdisplay in modules in pyV2DL3
+
+To ensure readability, we try follow the Python [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide. 
+
+Functions and classes should contain a docstring with a short description.
+
+Unit tests are encouraged and are available for few cases at this point. Unit tests are in the tests directory and can be called using [pytest](http://docs.pytest.org/). 
+
+Use the [python logging system](https://docs.python.org/3/howto/logging.html) instead of the ‘print()’ function to output text. This allows to pipe all output into a log file and for different logging levels (INFO, DEBUG, …).
+
+---
+**TEXT BELOW REQUIRES REVIEW**
 
 ##### Multi file processing
 
