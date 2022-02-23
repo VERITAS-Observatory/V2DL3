@@ -111,7 +111,7 @@ The tables are descriped on the [GADF website](https://gamma-astro-data-formats.
 
 To use `generate_index_file.py`, run:
 - `generate_index_file --help` when using VEGAS
-- `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` when using Eventdisplay 
+- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay 
 
 ---
 
