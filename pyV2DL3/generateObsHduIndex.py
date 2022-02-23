@@ -12,7 +12,7 @@ hdu_class_type = {
     ("EVENTS", None): ("events", "events"),
     ("GTI", None): ("gti", "gti"),
     ("RESPONSE", "EFF_AREA"): ("aeff", "aeff_2d"),
-    ("RESPONSE", "EDISP"): ("aeff", "edisp_2d"),
+    ("RESPONSE", "EDISP"): ("edisp", "edisp_2d"),
     ("RESPONSE", "PSF"): ("psf", None),
     ("RESPONSE", "BKG"): ("bkg", None),
 }
