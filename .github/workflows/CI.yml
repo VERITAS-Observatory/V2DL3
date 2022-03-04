@@ -71,6 +71,7 @@ jobs:
                 -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
           cat test-pointlike.log
+          grep -q "No differences found" test-pointlike.log
           # full-enclosure tests
           python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
                -f ./64080.anasum.root \
@@ -80,4 +81,5 @@ jobs:
                 -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
+          grep -q "No differences found" test-full-enclosure.log
       
