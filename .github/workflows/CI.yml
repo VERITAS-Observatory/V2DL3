@@ -81,5 +81,5 @@ jobs:
                 -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
-          grep -q "No FFF differences found" test-full-enclosure.log
+          grep -q "No differences found" test-full-enclosure.log
       
