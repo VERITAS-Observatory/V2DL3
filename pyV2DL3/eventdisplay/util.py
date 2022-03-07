@@ -69,9 +69,19 @@ def getGTI(BitArray, run_start_from_reference):
 
     """
 
-    n = BitArray.size
-    TimeArray_s = [np.binary_repr(BitArray[i]).count("1") for i in range(n)]
-    duration_s = (n - 2) * 8 + TimeArray_s[-2] + TimeArray_s[-1]
+    nn = BitArray.size
+    TimeArray_s = np.array([np.binary_repr(BitArray[i]).count("1") for i in range(nn)])
+    for i in range(nn):
+        if TimeArray_s[-1] == 0:
+           TimeArray_s = np.delete(TimeArray_s, -1) 
+        else:
+           break
+
+    n = TimeArray_s.size
+    logging.info(
+        "No. of zero element found at the end of TimeArray_s: {}".format(nn - n)
+    ) 
+    duration_s = (n - 1) * 8 + TimeArray_s[-1]
     ontime_s = np.sum(TimeArray_s[0:n])
     logging.info(
         "Duration: {0:.0f} (sec.) {1:.2f} (min)".format(duration_s, duration_s / 60.0)
@@ -95,7 +105,7 @@ def getGTI(BitArray, run_start_from_reference):
             start = (i + 1) * 8 + (8 - TimeArray_s[i + 1])
             gti_start.append(start)
 
-    if (TimeArray_s[-1] != 0 or np.size(gti_end) == 0) :
+    if TimeArray_s[-1] != 0 :
         gti_end.append(duration_s)
 
     logging.info(
