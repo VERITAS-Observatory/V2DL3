@@ -3,9 +3,9 @@ Submit v2dl3 EventDisplay jobs to batch farm. Uses input from script that contai
 The required script is created using the script ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh.
 """
 
+from datetime import date
 import os
 import subprocess
-from datetime import date
 
 import click
 
@@ -52,7 +52,7 @@ def cli(v2dl3_script, conda_env, conda_exe, rootsys, add_option):
     conda_exe = os.path.expandvars(conda_exe)
     rootsys = os.path.expandvars(rootsys)
     logdir = os.path.expandvars(f"$VERITAS_USER_LOG_DIR/v2dl3/{today}")
-    qsub_cmd = f"qsub -t 1"
+    qsub_cmd = f'{"qsub -t 1"}'
 
     for ii, command in enumerate(commands):
         runnumber = command.split("/")[-1].split(".")[0]
