@@ -70,20 +70,20 @@ def getGTI(BitArray, run_start_from_reference):
     """
 
     n = BitArray.size
-    TimeArray_b = ""    
-    for i in range(n):   
-        
-         TimeArray_b = TimeArray_b + np.binary_repr(BitArray[i], width=8)[::-1] 
-     
-    nbits = len(TimeArray_b)    
-    for i in range(nbits):        
-            if (TimeArray_b[-1] == "0"):
-                TimeArray_b = TimeArray_b[:-1]   
-            else:
-                break
-  
-    duration_s = len(TimeArray_b)   
-    ontime_s = TimeArray_b.count("1")    
+    TimeArray_b = ""
+    for i in range(n):
+
+        TimeArray_b = TimeArray_b + np.binary_repr(BitArray[i], width=8)[::-1]
+
+    nbits = len(TimeArray_b)
+    for i in range(nbits):
+        if (TimeArray_b[-1] == "0"):
+            TimeArray_b = TimeArray_b[:-1]
+        else:
+            break
+
+    duration_s = len(TimeArray_b)
+    ontime_s = TimeArray_b.count("1")
     logging.info(
         "Duration: {0:.0f} (sec.) {1:.2f} (min)".format(duration_s, duration_s / 60.0)
     )
@@ -96,19 +96,19 @@ def getGTI(BitArray, run_start_from_reference):
 
     if TimeArray_b[0] != "0":
         gti_start.append(0)
-        
-    for i in range(1, duration_s-1):
-        
+
+    for i in range(1, duration_s - 1):
+
         if (TimeArray_b[i] == "0") & (TimeArray_b[i - 1] == "1"):
-            end = i 
+            end = i
             gti_end.append(end)
-            
+
         if (TimeArray_b[i] == "0") & (TimeArray_b[i + 1] == "1"):
             start = i + 1
             gti_start.append(start)
-               
+
     if (TimeArray_b[-1] != 0) :
-        gti_end.append(duration_s) 
+        gti_end.append(duration_s)
 
     logging.info(
         "GTIs start and stop in second since run start: {0} {1}".format(
