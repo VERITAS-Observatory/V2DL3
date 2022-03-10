@@ -1,8 +1,8 @@
 import logging
 
+from astropy.time import Time
 import numpy as np
 import uproot
-from astropy.time import Time
 
 from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
