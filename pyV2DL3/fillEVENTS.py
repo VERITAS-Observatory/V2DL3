@@ -1,10 +1,10 @@
 import logging
 
-from astropy.io import fits
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant
 
+from astropy.io import fits
 
 def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
 
