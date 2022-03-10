@@ -1,11 +1,14 @@
 import logging
 
-import numpy as np
 from astropy.time import Time
+import numpy as np
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.vegas.util import getGTArray, getTimeCut, mergeTimeCut
-from pyV2DL3.vegas.util import produceTelList, decodeConfigMask
+from pyV2DL3.vegas.util import decodeConfigMask
+from pyV2DL3.vegas.util import getGTArray
+from pyV2DL3.vegas.util import getTimeCut
+from pyV2DL3.vegas.util import mergeTimeCut
+from pyV2DL3.vegas.util import produceTelList
 
 logger = logging.getLogger(__name__)
 

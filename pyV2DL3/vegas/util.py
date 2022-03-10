@@ -26,9 +26,7 @@ def produceTelList(mask):
 
 
 def parseTimeCut(tCutStr):
-    """
-    Parse time cuts from time cut text
-    """
+    """Parse time cuts from time cut text"""
     cut_arr = []
     for cc in tCutStr.split(","):
         start = float(cc.split("/")[0])
@@ -38,9 +36,7 @@ def parseTimeCut(tCutStr):
 
 
 def getTimeCut(config_str_ori):
-    """
-    Get time cut from extracted cut config text.
-    """
+    """Get time cut from extracted cut config text."""
     config_str = str(config_str_ori)
     for i in config_str.splitlines():
         # Skip comment lines
@@ -69,9 +65,7 @@ def getThetaSquareCut(config_str_ori):
 
 
 def isMergable(cut1, cut2):
-    """
-    Check if two cuts can be merged.
-    """
+    """Check if two cuts can be merged."""
     s1, e1 = cut1
     s2, e2 = cut2
     if s1 > s2:
@@ -81,9 +75,7 @@ def isMergable(cut1, cut2):
 
 
 def mergeTwoTimeCut(cut1, cut2):
-    """
-    Merge two cuts.
-    """
+    """Merge two cuts."""
     s1, e1 = cut1
     s2, e2 = cut2
     if s1 > s2:
@@ -93,9 +85,7 @@ def mergeTwoTimeCut(cut1, cut2):
 
 
 def mergeTimeCut(cuts):
-    """
-    Go through each cut and merge
-    """
+    """Go through each cut and merge"""
     cut_sorted = sorted(cuts)
     merged_cut = []
     while len(cut_sorted) > 0:
@@ -115,9 +105,7 @@ def mergeTimeCut(cuts):
 
 
 def getGTArray(startTime_s, endTime_s, cuts):
-    """
-    Produc Good Time Interval start and stop time array.
-    """
+    """Produce Good Time Interval start and stop time array."""
     if len(cuts) == 0:
         return np.array([startTime_s]), np.array([endTime_s])
     goodTimeStart = [startTime_s] + [cc[1] + startTime_s for cc in cuts]

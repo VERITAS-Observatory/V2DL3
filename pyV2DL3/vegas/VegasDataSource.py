@@ -1,9 +1,9 @@
 import ROOT
 
-from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.vegas.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.vegas.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 from pyV2DL3.vegas.load_vegas import VEGASStatus
+from pyV2DL3.VtsDataSource import VtsDataSource
 
 
 class VegasDataSource(VtsDataSource):
