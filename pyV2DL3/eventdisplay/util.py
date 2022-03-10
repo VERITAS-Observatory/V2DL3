@@ -131,7 +131,7 @@ def getRunQuality(logdata, ntel=4):
 
     """
 
-    vpm = 2 ** (ntel + 3) - 2 ** 3
+    vpm = 2 ** (ntel + 3) - 2**3
     if np.size(logdata) <= 1:
         return vpm
 

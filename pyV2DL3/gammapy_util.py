@@ -1,8 +1,11 @@
 import os
 
-from gammapy.data import HDUIndexTable, ObservationTable, DataStore
+from gammapy.data import DataStore
+from gammapy.data import HDUIndexTable
+from gammapy.data import ObservationTable
 
-from pyV2DL3.generateObsHduIndex import gen_hdu_index, gen_obs_index
+from pyV2DL3.generateObsHduIndex import gen_hdu_index
+from pyV2DL3.generateObsHduIndex import gen_obs_index
 
 
 def getDSfromList(flist):

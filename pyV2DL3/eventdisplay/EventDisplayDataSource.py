@@ -1,8 +1,8 @@
 import logging
 
-from pyV2DL3.VtsDataSource import VtsDataSource
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fillRESPONSE__
+from pyV2DL3.VtsDataSource import VtsDataSource
 
 
 class EventDisplayDataSource(VtsDataSource):

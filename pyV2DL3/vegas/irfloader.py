@@ -1,9 +1,9 @@
-import logging
 from bisect import bisect_left
 from ctypes import c_float
+import logging
 
-import ROOT
 import numpy as np
+import ROOT
 from root_numpy import hist2array
 from scipy.interpolate import RegularGridInterpolator
 
