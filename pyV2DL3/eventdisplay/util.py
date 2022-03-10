@@ -99,11 +99,11 @@ def getGTI(BitArray, run_start_from_reference):
 
     for i in range(1, duration_s - 1):
 
-        if (TimeArray_b[i] == "0") & (TimeArray_b[i - 1] == "1"):
+        if (TimeArray_b[i] == "0") and (TimeArray_b[i - 1] == "1"):
             end = i
             gti_end.append(end)
 
-        if (TimeArray_b[i] == "0") & (TimeArray_b[i + 1] == "1"):
+        if (TimeArray_b[i] == "0") and (TimeArray_b[i + 1] == "1"):
             start = i + 1
             gti_start.append(start)
 

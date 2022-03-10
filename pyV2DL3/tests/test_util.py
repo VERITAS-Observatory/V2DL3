@@ -94,6 +94,14 @@ def test_getGTI():
                           255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
                           255, 255, 255, 255, 255, 255, 255, 255, 255, 255, ])
 
+    # No time mask
+    BitArray7 = np.array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                          255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                          255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                          255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                          255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                          255, 255, 255, 255, 255, 255, 255, 255, 255, 255, ])
+
     start0, stop0, ontime_s0 = getGTI(BitArray0, run_start_from_reference)
     start1, stop1, ontime_s1 = getGTI(BitArray1, run_start_from_reference)
     start2, stop2, ontime_s2 = getGTI(BitArray2, run_start_from_reference)
@@ -101,6 +109,7 @@ def test_getGTI():
     start4, stop4, ontime_s4 = getGTI(BitArray4, run_start_from_reference)
     start5, stop5, ontime_s5 = getGTI(BitArray5, run_start_from_reference)
     start6, stop6, ontime_s6 = getGTI(BitArray6, run_start_from_reference)
+    start7, stop7, ontime_s7 = getGTI(BitArray7, run_start_from_reference)
 
     assert all([a == b for a, b in zip(start0, [0, 320])])
     assert all([a == b for a, b in zip(stop0, [300, 600])])
@@ -116,6 +125,8 @@ def test_getGTI():
     assert all([a == b for a, b in zip(stop5, [3, 600])])
     assert all([a == b for a, b in zip(start6, [20, 309])])
     assert all([a == b for a, b in zip(stop6, [300, 600])])
+    assert all([a == b for a, b in zip(start7, [0])])
+    assert all([a == b for a, b in zip(stop7, [600])])
 
     assert (
            ontime_s0 == 580
@@ -125,6 +136,7 @@ def test_getGTI():
            and ontime_s4 == 591
            and ontime_s5 == 595
            and ontime_s6 == 571
+           and ontime_s7 == 600
            )
 
 
