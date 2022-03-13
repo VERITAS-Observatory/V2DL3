@@ -1,16 +1,16 @@
 class VtsDataSource(object):
     def __init__(self, source_name, evt_file, ea_file):
         self.__data_source_name__ = source_name
-        print ("Datasource:", source_name)
+        print("Reconstruction type:", source_name)
         self.__evt_file__ = evt_file
         self.__ea_file__ = ea_file
 
-        self.__evt__ = dict()
-        self.__git__ = dict()
+        self.__evt__ = {}
+        self.__git__ = {}
         self.__response__ = dict()
         # 'point-like' or 'full-enclosure'
         # Default is point like
-        self.__irf_to_store__ = {'point-like': True, 'full-enclosure': False}
+        self.__irf_to_store__ = {"point-like": True, "full-enclosure": False}
 
     def fill_data(self, **kwargs):
         self.__fill_evt__(**kwargs)
@@ -18,26 +18,25 @@ class VtsDataSource(object):
         self.__fill_response__(**kwargs)
 
     def __fill_evt__(self):
-        pass 
+        pass
 
     def __fill_gti__(self):
-        pass 
+        pass
 
     def __fill_response__(self):
         pass
 
     def get_source_name(self):
-        return self.__data_source_name__ 
+        return self.__data_source_name__
 
     def get_evt_data(self):
         return self.__evt__
 
     def get_gti_data(self):
         return self.__gti__
-    
+
     def get_response_data(self):
         return self.__response__
 
     def set_irfs_to_store(self, irf_to_store):
         self.__irf_to_store__ = irf_to_store
-

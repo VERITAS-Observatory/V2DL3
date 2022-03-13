@@ -1,17 +1,21 @@
-name: v2dl3 
+name: v2dl3
 channels:
   - astropy
   - conda-forge
 dependencies:
-  - python>=3.5 
-  - click 
-  - numpy>=1.13 
   - astropy>=4.0
+  - click
   - cython>=0.27
-  - pkgconfig
-  - uproot
-  - root
-  - tqdm
-  - ipywidgets
-  - pandas
   - gammapy
+  - ipywidgets
+  - numpy>=1.13
+  - pandas
+  - pkgconfig
+  - pytest
+  - python>=3.8
+  - pyyaml
+  - root
+  - root_numpy
+  - scipy
+  - tqdm
+  - uproot

@@ -1,0 +1,86 @@
+---
+name: CI
+
+on: [pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install conda dependencies
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
+          conda install -c conda-forge mamba
+          mamba env create -n v2dl3ED -f environment-eventdisplay.yml
+          conda activate v2dl3ED
+          conda info
+
+      - name: flake8
+        shell: bash -leo pipefail {0}
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          conda install flake8
+          flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
+                   --show-source --statistics .
+          flake8 --count --max-complexity=25 --ignore=E203,W503 \
+                 --max-line-length=127 --statistics .
+
+      - name: pytest
+        shell: bash -leo pipefail {0}
+        env:
+          PYTHONPATH: .
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          pytest .
+
+      - name: download test data
+        run: |
+          ./download_data_for_tests.sh
+
+      - name: V2Dl3-Eventdisplay
+        shell: bash -leo pipefail {0}
+        env:
+          PYTHONPATH: .
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          # point-like tests
+          python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+               -f ./64080.anasum.root \
+                  ./effectiveArea.root \
+                  test-pointlike-CI.fits.gz
+          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+                -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
+                -d test-pointlike.log
+          cat test-pointlike.log
+          grep -q "No differences found" test-pointlike.log
+          # full-enclosure tests
+          python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
+               -f ./64080.anasum.root \
+                  ./effectiveArea.root \
+                  test-full-enclosure-CI.fits.gz
+          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+                -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
+                -d test-full-enclosure.log
+          cat test-full-enclosure.log
+          grep -q "No differences found" test-full-enclosure.log
+      
