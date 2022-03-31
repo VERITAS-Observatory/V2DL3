@@ -50,7 +50,11 @@ class EventDisplayDataSource(VtsDataSource):
             )
         )
         logging.info(
-            ("Wobble: offset={0:.2f} deg".format(self.__offset__))
+            (
+                "Wobble direction of the run: ({0:.2f}N, {1:.2f}W) deg "
+            ).format(
+                self.__offset__[0], self.__offset__[1]
+            )
         )
 
         self.__response__ = __fillRESPONSE__(
