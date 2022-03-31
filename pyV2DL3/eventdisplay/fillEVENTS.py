@@ -168,6 +168,15 @@ def __fillEVENTS__(edFileIO, select=None):
 
         avPedvar = runSummary["pedvarsOn"][0]
 
+        wobble = np.array([
+            runSummary["WobbleNorth"][0],
+            runSummary["WobbleNorth"][1],
+            runSummary["WobbleWest"][0],
+            runSummary["WobbleWest"][1],
+        ])
+        print(np.sort(wobble))
+        Woffset = np.sort(wobble)[-1]
+
         try:
             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
                 "maskBits"
@@ -192,6 +201,6 @@ def __fillEVENTS__(edFileIO, select=None):
             "TSTART": tstart_from_reference,
             "TSTOP": tstop_from_reference,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "pedvar": avPedvar},
+        {"azimuth": avAz, "zenith": (90.0 - avAlt), "pedvar": avPedvar, "woffset": Woffset},
         evt_dict,
     )
