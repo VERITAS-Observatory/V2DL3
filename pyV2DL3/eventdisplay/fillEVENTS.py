@@ -168,7 +168,6 @@ def __fillEVENTS__(edFileIO, select=None):
 
         avPedvar = runSummary["pedvarsOn"][0]
 
-
         try:
             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
                 "maskBits"
