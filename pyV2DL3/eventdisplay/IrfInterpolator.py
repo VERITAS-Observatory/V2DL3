@@ -70,11 +70,11 @@ class IrfInterpolator:
            
             
         irf_axes[-2] = 1. /np.cos(np.radians(irf_axes[-2]))
-        print(irf_axes[-2])
+        logging.info(irf_axes[-2])
 
         self.irf_data = irf_data
         self.irf_axes = irf_axes 
-        print('IRF axes:', irf_axes)
+        print("IRF axes:", irf_axes)
         self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
