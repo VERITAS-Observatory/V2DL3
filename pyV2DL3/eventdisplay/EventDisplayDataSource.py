@@ -33,7 +33,6 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = ea_config["azimuth"]
         self.__zenith__ = ea_config["zenith"]
         self.__pedvar__ = ea_config["pedvar"]
-        self.__offset__ = ea_config["woffset"]
 
     def __fill_gti__(self, **kwargs):
         pass
@@ -49,13 +48,6 @@ class EventDisplayDataSource(VtsDataSource):
                 self.__azimuth__, self.__zenith__, self.__pedvar__,
             )
         )
-        logging.info(
-            (
-                "Wobble direction of the run: ({0:.2f}N, {1:.2f}W) deg "
-            ).format(
-                self.__offset__[0], self.__offset__[1]
-            )
-        )
 
         self.__response__ = __fillRESPONSE__(
             self.__evt_file__,
@@ -63,6 +55,5 @@ class EventDisplayDataSource(VtsDataSource):
             self.__azimuth__,
             self.__zenith__,
             self.__pedvar__,
-            self.__offset__,
             self.__irf_to_store__,
         )

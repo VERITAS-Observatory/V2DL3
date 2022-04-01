@@ -78,7 +78,6 @@ def fill_effective_area(
     camera_offsets,
     pedvar,
     zenith,
-    offset,
     theta_low,
     theta_high,
 ):
@@ -116,7 +115,6 @@ def fill_energy_migration(
     camera_offsets,
     pedvar,
     zenith,
-    offset,
     theta_low,
     theta_high,
 ):
@@ -158,7 +156,7 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-    irf_interpolator, camera_offsets, pedvar, zenith, offset, theta_low, theta_high
+    irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high
 ):
     """Direction dispersion (for full-enclosure IRFs)"""
 
@@ -206,7 +204,7 @@ def fill_direction_migration(
 
 
 def __fillRESPONSE__(
-    edFileIO, effectiveArea, azimuth, zenith, pedvar, offset, irf_to_store=None
+    edFileIO, effectiveArea, azimuth, zenith, pedvar, irf_to_store=None
 ):
     if irf_to_store is None:
         irf_to_store = {}
@@ -247,7 +245,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -265,7 +262,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -291,7 +287,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -303,7 +298,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -314,7 +308,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
