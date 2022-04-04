@@ -15,7 +15,6 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = 0
         self.__zenith__ = 0
         self.__pedvar__ = 0
-        self.__offset__ = 0
 
     def __fill_evt__(self, **kwargs):
         try:
