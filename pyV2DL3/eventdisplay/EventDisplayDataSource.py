@@ -15,7 +15,6 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = 0
         self.__zenith__ = 0
         self.__pedvar__ = 0
-        self.__offset__ = 0
 
     def __fill_evt__(self, **kwargs):
         try:
@@ -43,18 +42,17 @@ class EventDisplayDataSource(VtsDataSource):
                 "Parameters used to query IRFs:"
                 " az={0:.2f} deg,"
                 " ze={1:.2f} deg,"
-                " pedvar={2:.1f},"
-                " offset={3:.2f} deg"
+                " pedvar={2:.1f}"
             ).format(
-                self.__azimuth__, self.__zenith__, self.__pedvar__, self.__offset__
+                self.__azimuth__, self.__zenith__, self.__pedvar__,
             )
         )
+
         self.__response__ = __fillRESPONSE__(
             self.__evt_file__,
             self.__ea_file__,
             self.__azimuth__,
             self.__zenith__,
             self.__pedvar__,
-            self.__offset__,
             self.__irf_to_store__,
         )

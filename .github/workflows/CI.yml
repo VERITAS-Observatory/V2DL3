@@ -83,4 +83,3 @@ jobs:
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
           grep -q "No differences found" test-full-enclosure.log
-      
