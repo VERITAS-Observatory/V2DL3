@@ -68,7 +68,7 @@ class IrfInterpolator:
                 )
         self.irf_data = irf_data
         self.irf_axes = irf_axes
-        self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
+        self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=8.0)
 
     def interpolate(self, coordinate):
         for c in coordinate:
