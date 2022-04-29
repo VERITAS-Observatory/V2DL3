@@ -36,21 +36,25 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 def check_parameter_range(par, par_irf, par_name):
-    """Check that coordinates are in range of provided IRF"""
+    """Check that coordinates are in considerable range of provided IRF"""
 
     logging.info(
-        "\t{0} range of a given IRF: {1:.1f} - {2:.1f}".format(
+        "\t{0} range of a given IRF: {1:.2f} - {2:.2f}".format(
             par_name, np.min(par_irf), np.max(par_irf)
         )
     )
     if np.all(par_irf <= par) or np.all(par_irf >= par):
         print(np.round(np.max(par_irf)), np.round(par))
-        if np.round(np.min(par_irf)) == np.round(par) or np.round(np.max(par_irf)) == np.round(par):
+        if np.round(np.min(par_irf)) == np.round(par):
             logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
+            par = np.min(par_irf) 
+        elif np.round(np.max(par_irf)) == np.round(par):             
+            logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
+            par = np.max(par_irf)
         #Also include force extrapolation command line paramater
         else:
             raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
-
+    return par 
 
 def find_camera_offsets(camera_offsets):
     """Find camera offsets, depending on  availability in the effective area file."""
@@ -232,8 +236,8 @@ def __fillRESPONSE__(
 
     print_logging_info(irf_to_store, camera_offsets, pedvar, zenith)
 
-    check_parameter_range(zenith, zeniths_irf, "zenith")
-    check_parameter_range(pedvar, pedvar_irf, "pedvar")
+    zenith = check_parameter_range(zenith, zeniths_irf, "zenith")
+    pedvar = check_parameter_range(pedvar, pedvar_irf, "pedvar")
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
