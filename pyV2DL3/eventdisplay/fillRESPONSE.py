@@ -35,6 +35,7 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
         str_woff += " {0:.2f},".format(w)
     logging.info(str_woff)
 
+
 def check_parameter_range(par, par_irf, par_name):
     """Check that coordinates are in considerable range of provided IRF"""
 
@@ -44,17 +45,17 @@ def check_parameter_range(par, par_irf, par_name):
         )
     )
     if np.all(par_irf <= par) or np.all(par_irf >= par):
-        print(np.round(np.max(par_irf)), np.round(par))
         if np.round(np.min(par_irf)) == np.round(par):
             logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
-            par = np.min(par_irf) 
-        elif np.round(np.max(par_irf)) == np.round(par):             
+            par = np.min(par_irf)
+        elif np.round(np.max(par_irf)) == np.round(par):
             logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
             par = np.max(par_irf)
-        #Also include force extrapolation command line paramater
+        # Also include force extrapolation command line paramater
         else:
             raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
-    return par 
+    return par
+
 
 def find_camera_offsets(camera_offsets):
     """Find camera offsets, depending on  availability in the effective area file."""
