@@ -1,3 +1,4 @@
+import click
 import logging
 
 import numpy as np
@@ -44,16 +45,20 @@ def check_parameter_range(par, par_irf, par_name):
             par_name, np.min(par_irf), np.max(par_irf)
         )
     )
-    if np.all(par_irf <= par) or np.all(par_irf >= par):
-        if np.round(np.min(par_irf)) == np.round(par):
-            logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
-            par = np.min(par_irf)
-        elif np.round(np.max(par_irf)) == np.round(par):
-            logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
-            par = np.max(par_irf)
-        # Also include force extrapolation command line paramater
-        else:
-            raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
+    clk = click.get_current_context()
+    force_extrapolation = clk.params["force_extrapolation"]
+    if not force_extrapolation:
+        if np.all(par_irf <= par) or np.all(par_irf >= par):
+            if np.round(np.min(par_irf)) == np.round(par):
+                logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
+                par = np.min(par_irf)
+            elif np.round(np.max(par_irf)) == np.round(par):
+                logging.warning("Coordinate is not inside IRF but considerably close to boundry!")
+                par = np.max(par_irf)
+            else:
+                raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
+    else:
+        logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
     return par
 
 

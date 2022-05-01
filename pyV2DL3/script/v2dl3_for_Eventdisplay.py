@@ -52,6 +52,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.Path(exists=True),
     help="Load condition to filter events form json or yaml file.",
 )
+@click.option(
+    "--force_extrapolation",
+    "-e",
+    is_flag=False,
+    help="IRF is extrapolated when parameter is found to be outside IRF range"
+)
 def cli(
     file_pair,
     full_enclosure,
@@ -63,6 +69,7 @@ def cli(
     save_multiplicity,
     filename_to_obsid,
     evt_filter,
+    force_extrapolation,
 ):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:

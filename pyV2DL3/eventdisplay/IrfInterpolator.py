@@ -1,3 +1,4 @@
+import click
 import logging
 import numpy as np
 import os.path
@@ -68,7 +69,12 @@ class IrfInterpolator:
                 )
         self.irf_data = irf_data
         self.irf_axes = irf_axes
-        self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
+        clk = click.get_current_context()
+        force_extrapolation = clk.params["force_extrapolation"]
+        if not force_extrapolation:
+            self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
+        else:
+            self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
 
     def interpolate(self, coordinate):
         for c in coordinate:
