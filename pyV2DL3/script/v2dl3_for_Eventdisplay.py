@@ -54,9 +54,16 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--force_extrapolation",
-    "-e",
-    is_flag=False,
-    help="IRF is extrapolated when parameter is found to be outside IRF range"
+    nargs=1,
+    default=False,
+    help="IRF is extrapolated when parameter is found to be outside IRF range",
+)
+@click.option(
+    "--fuzzy_boundary",
+    nargs=1,
+    type=click.FLOAT,
+    default=0.0,
+    help="",
 )
 def cli(
     file_pair,
@@ -70,6 +77,7 @@ def cli(
     filename_to_obsid,
     evt_filter,
     force_extrapolation,
+    fuzzy_boundary,
 ):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
