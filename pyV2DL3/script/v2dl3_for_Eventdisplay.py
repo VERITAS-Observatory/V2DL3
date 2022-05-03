@@ -55,6 +55,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "--force_extrapolation",
     nargs=1,
+    type=click.BOOL,
     default=False,
     help="IRF is extrapolated when parameter is found to be outside IRF range",
 )
@@ -63,7 +64,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     nargs=1,
     type=click.FLOAT,
     default=0.0,
-    help="",
+    help="Parameter outside IRF range but within a given tolerance is interpolated\
+at boundary value. tolerance = ratio of differece between boundary value and parameter\
+ value to boundary value",
 )
 def cli(
     file_pair,
