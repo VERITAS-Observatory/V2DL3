@@ -37,7 +37,7 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 
-def check_parameter_range(par, par_irf, par_name):
+def check_parameter_range(par, irf_stored_par, par_name):
     """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
        0. checks if command line parameter force_extrapolation is given. If given,
           the extrapolation will happen when parameter is outside IRF range. If parameter is
@@ -49,32 +49,32 @@ def check_parameter_range(par, par_irf, par_name):
 
     logging.info(
         "\t{0} range of a given IRF: {1:.2f} - {2:.2f}".format(
-            par_name, np.min(par_irf), np.max(par_irf)
+            par_name, np.min(irf_stored_par), np.max(irf_stored_par)
         )
     )
     clk = click.get_current_context()
     force_extrapolation = clk.params["force_extrapolation"]
     fuzzy_boundary = clk.params["fuzzy_boundary"]
-    if np.all(par_irf < par) or np.all(par_irf > par):
+    if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
         if not force_extrapolation:
             if fuzzy_boundary > 0.0:
-                fuzzy_diff_u = 1 - np.max(par_irf) / par
+                fuzzy_diff_u = 1 - np.max(irf_stored_par) / par
                 if fuzzy_diff_u < fuzzy_boundary:
                     logging.warning(
                         "Coordinate difference is {0:0.3f} of upper boundary value and is within {1:0.3f}".format(
                             fuzzy_diff_u, fuzzy_boundary
                         )
                     )
-                    par = np.max(par_irf)
-                elif np.min(par_irf) != 0:
-                    fuzzy_diff_l = 1 - par / np.min(par_irf)
+                    par = np.max(irf_stored_par)
+                elif np.min(irf_stored_par) != 0:
+                    fuzzy_diff_l = 1 - par / np.min(irf_stored_par)
                     if fuzzy_diff_l <= fuzzy_boundary:
                         logging.warning(
                             "Coordinate difference is {0:0.3f} of lower boundary value and is within {1:0.3f}".format(
                                 fuzzy_diff_l, fuzzy_boundary
                             )
                         )
-                        par = np.min(par_irf)
+                        par = np.min(irf_stored_par)
                 else:
                     raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
             else:
