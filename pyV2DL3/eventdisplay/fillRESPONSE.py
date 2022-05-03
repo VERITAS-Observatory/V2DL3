@@ -44,7 +44,7 @@ def check_parameter_range(par, irf_stored_par, par_name):
           within IRF range, it works as normal. Default is False.
        1. Further checks for fuzzy boundary (parameter close to boundary value).
           If fuzzy boundary is within a given tolerance then IRF is interpolated for
-          at bounary value. Default is 0.0 tolerance.
+          at boundary value. Default is 0.0 tolerance.
     """
 
     logging.info(
@@ -53,35 +53,59 @@ def check_parameter_range(par, irf_stored_par, par_name):
         )
     )
     clk = click.get_current_context()
-    force_extrapolation = clk.params["force_extrapolation"]
-    fuzzy_boundary = clk.params["fuzzy_boundary"]
+    tolerance = clk.params["fuzzy_boundary"]
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
-        if not force_extrapolation:
-            if fuzzy_boundary > 0.0:
-                fuzzy_diff_u = 1 - np.max(irf_stored_par) / par
-                if fuzzy_diff_u < fuzzy_boundary:
-                    logging.warning(
-                        "Coordinate difference is {0:0.3f} of upper boundary value and is within {1:0.3f}".format(
-                            fuzzy_diff_u, fuzzy_boundary
-                        )
-                    )
-                    par = np.max(irf_stored_par)
-                elif np.min(irf_stored_par) != 0:
-                    fuzzy_diff_l = 1 - par / np.min(irf_stored_par)
-                    if fuzzy_diff_l <= fuzzy_boundary:
-                        logging.warning(
-                            "Coordinate difference is {0:0.3f} of lower boundary value and is within {1:0.3f}".format(
-                                fuzzy_diff_l, fuzzy_boundary
-                            )
-                        )
-                        par = np.min(irf_stored_par)
-                else:
-                    raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
-            else:
-                raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
-        else:
+        if clk.params["force_extrapolation"]:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
+        else:
+            if tolerance > 0.0:
+                boundary = np.max(irf_stored_par)
+                if check_fuzzy_boundary(par, boundary, tolerance):
+                    par = np.max(irf_stored_par)
+                else:
+                    if np.min(irf_stored_par) != 0:
+                        boundary = np.min(irf_stored_par)
+                        if check_fuzzy_boundary(par, boundary, tolerance):
+                            par = np.min(irf_stored_par)
+            else:
+                raise ValueError(
+                    "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
+                )
     return par
+
+
+def check_fuzzy_boundary(par, boundary, tolerance):
+    """" Checks if the paramters values is within the given tolerance.
+    tolerance parameter is defined as ratio of absolute difference
+    between boundary and par to the boundary.
+
+    Parameters
+    ----------
+    par: parameter of given run, it can be pedvar, zenith or camera offset
+    boundary: lower or upper boundary value of stored IRF
+    tolerance: allowed value of --fuzzy_boundary command line argument
+
+    Returns
+    -------
+    Boolean value if tolerance is within given allowed value
+
+    """
+
+    fuzzy_diff = np.abs(boundary - par) / boundary
+    if fuzzy_diff < tolerance:
+        logging.warning(
+            "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
+                fuzzy_diff, tolerance
+            )
+        )
+        return True
+    else:
+        raise ValueError(
+            "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
+                fuzzy_diff, tolerance
+            )
+        )
+        return False
 
 
 def find_camera_offsets(camera_offsets):

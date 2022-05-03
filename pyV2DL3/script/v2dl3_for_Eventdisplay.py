@@ -65,8 +65,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.FLOAT,
     default=0.0,
     help="Parameter outside IRF range but within a given tolerance is interpolated\
-at boundary value. tolerance = ratio of differece between boundary value and parameter\
- value to boundary value",
+at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
+value to boundary",
 )
 def cli(
     file_pair,
