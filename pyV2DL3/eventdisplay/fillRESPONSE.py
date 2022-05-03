@@ -75,7 +75,7 @@ def check_parameter_range(par, irf_stored_par, par_name):
 
 
 def check_fuzzy_boundary(par, boundary, tolerance):
-    """" Checks if the paramters values is within the given tolerance.
+    """" Checks if the parameter value is within the given tolerance.
     tolerance parameter is defined as ratio of absolute difference
     between boundary and par to the boundary.
 
