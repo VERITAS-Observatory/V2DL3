@@ -87,6 +87,8 @@ def check_fuzzy_boundary(par, boundary, tolerance):
     Boolean value if tolerance is within given allowed value
 
     """
+    if boundary == 0:
+        return False
 
     if boundary != 0:
         fuzzy_diff = np.abs(boundary - par) / boundary
@@ -103,6 +105,8 @@ def check_fuzzy_boundary(par, boundary, tolerance):
                     fuzzy_diff, tolerance
                 )
             )
+
+    return False
 
 
 def find_camera_offsets(camera_offsets):
