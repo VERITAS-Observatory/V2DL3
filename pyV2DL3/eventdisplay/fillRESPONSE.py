@@ -57,20 +57,17 @@ def check_parameter_range(par, irf_stored_par, par_name):
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
         if clk.params["force_extrapolation"]:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
-        else:
-            if tolerance > 0.0:
-                boundary = np.max(irf_stored_par)
-                if check_fuzzy_boundary(par, boundary, tolerance):
-                    par = np.max(irf_stored_par)
-                else:
-                    if np.min(irf_stored_par) != 0:
-                        boundary = np.min(irf_stored_par)
-                        if check_fuzzy_boundary(par, boundary, tolerance):
-                            par = np.min(irf_stored_par)
+        elif tolerance > 0.0:
+            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance):
+                par = np.max(irf_stored_par)
+            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance):
+                par = np.min(irf_stored_par)
             else:
-                raise ValueError(
-                    "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
-                )
+                raise ValueError("Tolerance not calculated for coordinate {0}".format(par_name))
+        else:
+            raise ValueError(
+                "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
+            )
     return par
 
 
@@ -91,21 +88,21 @@ def check_fuzzy_boundary(par, boundary, tolerance):
 
     """
 
-    fuzzy_diff = np.abs(boundary - par) / boundary
-    if fuzzy_diff < tolerance:
-        logging.warning(
-            "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
-                fuzzy_diff, tolerance
+    if boundary != 0:
+        fuzzy_diff = np.abs(boundary - par) / boundary
+        if fuzzy_diff < tolerance:
+            logging.warning(
+                "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
+                    fuzzy_diff, tolerance
+                )
             )
-        )
-        return True
-    else:
-        raise ValueError(
-            "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
-                fuzzy_diff, tolerance
+            return True
+        else:
+            raise ValueError(
+                "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
+                    fuzzy_diff, tolerance
+                )
             )
-        )
-        return False
 
 
 def find_camera_offsets(camera_offsets):
