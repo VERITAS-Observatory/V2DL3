@@ -15,9 +15,16 @@ def test_check_fuzzy_boundary(caplog):
     check_fuzzy_boundary(par, boundary, tolerance_1)
 
     assert caplog.record_tuples == [("root", logging.WARNING, "Coordinate tolerance is 0.005 and is within 0.050")]
+    assert check_fuzzy_boundary(par, boundary, tolerance_1) == 1
 
     with pytest.raises(ValueError):
         check_fuzzy_boundary(par, boundary, tolerance_2)
+
+    boundary = 0.0
+    assert check_fuzzy_boundary(par, boundary, tolerance_1) == 0
+
+    boundary = -1.0
+    assert check_fuzzy_boundary(par, boundary, tolerance_1) == 0
 
 
 if __name__ == "__main__":
