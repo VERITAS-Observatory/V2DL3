@@ -84,13 +84,14 @@ def check_fuzzy_boundary(par, boundary, tolerance):
 
     Returns
     -------
-    Boolean value if tolerance is within given allowed value
+    Boolean. Default is False. True if tolerance is within given allowed value.
+    If boundary zero then also returns default False.
 
     """
     if boundary == 0:
         return False
 
-    if boundary != 0:
+    if boundary > 0:
         fuzzy_diff = np.abs(boundary - par) / boundary
         if fuzzy_diff < tolerance:
             logging.warning(
