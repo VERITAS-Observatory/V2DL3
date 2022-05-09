@@ -225,31 +225,64 @@ def fill_direction_migration(
     irf_interpolator.set_irf("hAngularLogDiffEmc_2D")
 
     rpsf_final = []
+    rpsf_test = []
 
     for offset in camera_offsets:
 
+        # direction diff (rad, energy),
         direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
+        # energy axis from ~ 0.1 - 100 TeV
+        direction_diff = direction_diff[:, 5:-10]
+        axis[0] = axis[0][5:-10]
         _, eLow, eHigh = bin_centers_to_edges(axis[0])
         rad_edges, rLow, rHigh = bin_centers_to_edges(axis[1])
 
-        # Normalize rpsf by solid angle
-        rad_width_deg = np.diff(np.power(10, rad_edges))
-        e_sum = np.sum(
-            direction_diff
-            * 2
-            * rad_width_deg[:, np.newaxis]
-            * np.pi
-            * np.power(10, axis[1])[:, np.newaxis],
-            axis=0,
-        )
-        normsum = np.divide(((180 / np.pi) ** 2), e_sum, where=e_sum != 0)
+        ### normalize by using rad**bins and norm to rad ** 2 bins
+        rad_edges, rLow, rHigh = bin_centers_to_edges(axis[1], logaxis=True)
 
-        rpsf = direction_diff * normsum
-        rpsf_final.append(np.nan_to_num(rpsf).cumsum(axis=0))
+        rad_width_deg = np.diff(np.power(10, rad_edges))
+        norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], 15, axis=1) \
+               / np.repeat(((rLow + rHigh) / 2)[..., np.newaxis], 15, axis=1), axis=0)
+        norm = norm * 2 * np.pi
+        direction_diff = direction_diff / (np.repeat(((rLow + rHigh) / 2)[..., np.newaxis], 15, axis=1) ** 2)
+        normed = direction_diff / norm * ((180 / np.pi) ** 2)
+        rpsf = normed
+        rpsf_final.append(np.nan_to_num(rpsf))
+
+        ### generate psf data from halfnorm pdf
+        test_psf = False
+        if test_psf:
+            from scipy.stats import halfnorm
+
+            ##### interpolation test
+            rad_edges, rLow, rHigh = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
+
+            ## use linspace instead of rad_edges
+            rad_width_deg = np.diff(rad_edges)
+
+            x = np.linspace(0, 10, 4000)
+            sigma = 0.5
+            beta = 2.0
+            scale = sigma * np.sqrt(1 - 2 / np.pi)
+            y = halfnorm.pdf(x, loc=0, scale=scale)
+            cumsum = (2 * np.pi * rad_width_deg * y * (rLow + rHigh) / 2).cumsum()
+            normed = y / cumsum.max() * ((180 / np.pi) ** 2)
+            normed = np.nan_to_num(normed)
+
+            # PSF should be normed (deg**2 / sr), test should give 3200:
+            # values = 2 * np.pi * rad_width_deg * normed * (rLow + rHigh) / 2
+            # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
+
+            y = np.array(normed)
+            test = np.repeat(y[np.newaxis, ...], 15, axis=0)
+            rpsf_test.append(test)
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
     rpsf_final = np.swapaxes(rpsf_final, 0, 1)
+    if test_psf:
+        rpsf_final = np.swapaxes(rpsf_test, 0, 1)
+        rpsf_final = np.swapaxes(rpsf_final, 0, 2)
 
     return np.array(
         [(eLow, eHigh, theta_low, theta_high, rLow, rHigh, rpsf_final)],
