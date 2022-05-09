@@ -83,9 +83,9 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
     energies = fast_eff_area["e0"].array(library="np")[az_mask]
     irf = fast_eff_area[irf_name].array(library="np")[az_mask]
 
+    all_pedvars, pedvars = load_parameter("pedvar", fast_eff_area, az_mask)
     all_zds, zds = load_parameter("ze", fast_eff_area, az_mask)
     all_Woffs, woffs = load_parameter("Woff", fast_eff_area, az_mask)
-    all_pedvars, pedvars = load_parameter("pedvar", fast_eff_area, az_mask)
 
     data = get_empty_ndarray([len(irf[0]), len(pedvars), len(zds), len(woffs)])
 
@@ -139,9 +139,9 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
     irf2D = fast_eff_area[irf_name + "_value"].array(library="np")[az_mask]
 
     # parameter space
+    all_pedvars, pedvars = load_parameter("pedvar", fast_eff_area, az_mask)
     all_zds, zds = load_parameter("ze", fast_eff_area, az_mask)
     all_Woffs, woffs = load_parameter("Woff", fast_eff_area, az_mask)
-    all_pedvars, pedvars = load_parameter("pedvar", fast_eff_area, az_mask)
 
     data = get_empty_ndarray(
         [len(irf_dimension_1), len(irf_dimension_2), len(pedvars), len(zds), len(woffs)]
