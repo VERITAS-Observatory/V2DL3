@@ -102,7 +102,9 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
             logging.exception("Entry number ", i)
             raise
 
-    return data, [energies[0], pedvars, zds, woffs]
+    axes = {'energies': energies[0], 'pedvars': pedvars, 'zeniths': zds, 'woffs': woffs}
+
+    return data, axes
 
 
 def read_irf_axis(xy, fast_eff_area, irf_name, az_mask):
@@ -162,13 +164,15 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
             logging.exception("Entry number ", i)
             raise
 
-    return data, [
-        np.array(irf_dimension_1),
-        np.array(irf_dimension_2),
-        pedvars,
-        zds,
-        woffs,
-    ]
+    axes = {
+        'irf_dimension_1': np.array(irf_dimension_1),
+        'irf_dimension_2': np.array(irf_dimension_2),
+        'pedvars': pedvars,
+        'zeniths': zds,
+        'woffs': woffs
+    }
+
+    return data, axes
 
 
 def extract_irf(filename, irf_name, azimuth=None, irf1d=False):

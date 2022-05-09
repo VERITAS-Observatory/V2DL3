@@ -62,18 +62,25 @@ class IrfInterpolator:
         # Do the same with the axes:
         irf_data = duplicate_dimensions(irf_data)
         # Also the coordinates of the axes need to be in increasing order.
+        zenith_axis = None
         for i, axis in enumerate(irf_axes):
             if len(axis) == 1:
-                irf_axes[i] = np.concatenate(
-                    (axis.flatten(), axis.flatten() + 0.01), axis=None
+                irf_axes[axis] = np.concatenate(
+                    (irf_axes[axis].flatten(), irf_axes[axis].flatten() + 0.01), axis=None
                 )
 
-        irf_axes[-2] = np.cos(np.radians(irf_axes[-2]))[::-1]
-        logging.info(irf_axes[-2])
+            if axis == 'zeniths':
+                irf_axes['zeniths'] = np.cos(np.radians(irf_axes['zeniths']))[::-1]
+                zenith_axis = i
+                logging.info("zenith axis index: {}".format(zenith_axis))
 
-        self.irf_data = np.flip(irf_data, axis=-2)
-        self.irf_axes = irf_axes
+        if zenith_axis is None:
+            raise ValueError("zenith axis not found in irf_axes")
+
+        self.irf_data = np.flip(irf_data, axis=zenith_axis)
+        self.irf_axes = list(irf_axes.values())
         logging.info(str(("IRF axes:", irf_axes)))
+
         clk = click.get_current_context()
         if clk.params["force_extrapolation"]:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
