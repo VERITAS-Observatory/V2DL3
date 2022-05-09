@@ -52,6 +52,22 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.Path(exists=True),
     help="Load condition to filter events form json or yaml file.",
 )
+@click.option(
+    "--force_extrapolation",
+    nargs=1,
+    type=click.BOOL,
+    default=False,
+    help="IRF is extrapolated when parameter is found to be outside IRF range",
+)
+@click.option(
+    "--fuzzy_boundary",
+    nargs=1,
+    type=click.FLOAT,
+    default=0.0,
+    help="Parameter outside IRF range but within a given tolerance is interpolated\
+at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
+value to boundary",
+)
 def cli(
     file_pair,
     full_enclosure,
@@ -63,6 +79,8 @@ def cli(
     save_multiplicity,
     filename_to_obsid,
     evt_filter,
+    force_extrapolation,
+    fuzzy_boundary,
 ):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
