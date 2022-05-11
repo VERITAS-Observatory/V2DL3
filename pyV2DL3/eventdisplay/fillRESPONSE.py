@@ -274,11 +274,11 @@ def fill_direction_migration(
             rad_width_deg = np.diff(np.power(10, rad_edges))
             # this step makes sure all arrays have the same dimensions, rad_width_deg and the central rad values are
             # repeated by the length of the energy axis.
-            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1) /
-                          np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
+            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
+                          / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
-                    np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
+                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
             normed = direction_diff / norm * ((180 / np.pi) ** 2)
             rpsf_final.append(np.nan_to_num(normed))
 
