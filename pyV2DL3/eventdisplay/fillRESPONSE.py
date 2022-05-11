@@ -123,8 +123,7 @@ def find_camera_offsets(camera_offsets):
             )
         )
         logger.debug(
-            "IMPORTANT: Setting the IRFs of that given camera \
-                     offset value to the whole camera"
+            "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
         )
         return [0.0, 10.0], [0.0, 10.0]
 
