@@ -23,13 +23,13 @@ def test_getRunQuality():
     vpm_all = getRunQuality(vpm_messages)
 
     assert (
-            vpm0 == 120
-            and vpm[0] == 112
-            and vpm[1] == 104
-            and vpm[2] == 88
-            and vpm[3] == 56
-            and vpm2 == 80
-            and vpm_all == 0
+        vpm0 == 120
+        and vpm[0] == 112
+        and vpm[1] == 104
+        and vpm[2] == 88
+        and vpm[3] == 56
+        and vpm2 == 80
+        and vpm_all == 0
     )
 
 
@@ -129,14 +129,14 @@ def test_getGTI():
     assert all([a == b for a, b in zip(stop7, [600])])
 
     assert (
-            ontime_s0 == 580
-            and ontime_s1 == 580
-            and ontime_s2 == 580
-            and ontime_s3 == 540
-            and ontime_s4 == 591
-            and ontime_s5 == 595
-            and ontime_s6 == 571
-            and ontime_s7 == 600
+        ontime_s0 == 580
+        and ontime_s1 == 580
+        and ontime_s2 == 580
+        and ontime_s3 == 540
+        and ontime_s4 == 591
+        and ontime_s5 == 595
+        and ontime_s6 == 571
+        and ontime_s7 == 600
     )
 
 
