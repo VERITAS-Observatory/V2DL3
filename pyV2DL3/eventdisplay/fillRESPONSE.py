@@ -118,7 +118,7 @@ def find_camera_offsets(camera_offsets):
         # Assume that offset for the whole camera.
         logger.debug(
             "IMPORTANT: Only one camera offset bin "
-            + +"({} deg) simulated within the effective area file selected.".format(
+            + "({} deg) simulated within the effective area file selected.".format(
                 camera_offsets[0]
             )
         )
@@ -135,13 +135,13 @@ def find_camera_offsets(camera_offsets):
 
 
 def fill_effective_area(
-    irf_name,
-    irf_interpolator,
-    camera_offsets,
-    pedvar,
-    zenith,
-    theta_low,
-    theta_high,
+        irf_name,
+        irf_interpolator,
+        camera_offsets,
+        pedvar,
+        zenith,
+        theta_low,
+        theta_high,
 ):
     """Effective areas"""
 
@@ -172,13 +172,13 @@ def fill_effective_area(
 
 
 def fill_energy_migration(
-    irf_name,
-    irf_interpolator,
-    camera_offsets,
-    pedvar,
-    zenith,
-    theta_low,
-    theta_high,
+        irf_name,
+        irf_interpolator,
+        camera_offsets,
+        pedvar,
+        zenith,
+        theta_low,
+        theta_high,
 ):
     """Energy migration matrix"""
 
@@ -188,13 +188,13 @@ def fill_energy_migration(
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
-        _, eLow, eHigh = bin_centers_to_edges(axis[0])
-        _, bLow, bHigh = bin_centers_to_edges(axis[1], False)
+        _, e_low, e_high = bin_centers_to_edges(axis[0])
+        _, b_low, b_high = bin_centers_to_edges(axis[1], False)
 
         ac = []
 
         for aa in bias.transpose():
-            ab = aa / np.sum(aa * (bHigh - bLow)) if np.sum(aa) > 0 else aa
+            ab = aa / np.sum(aa * (b_high - b_low)) if np.sum(aa) > 0 else aa
             try:
                 ac = np.vstack((ac, ab))
             except ValueError:
@@ -204,12 +204,12 @@ def fill_energy_migration(
         ac_final.append(ac)
 
     return np.array(
-        [(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
+        [(e_low, e_high, b_low, b_high, theta_low, theta_high, ac_final)],
         dtype=[
-            ("ENERG_LO", ">f4", (len(eLow),)),
-            ("ENERG_HI", ">f4", (len(eHigh),)),
-            ("MIGRA_LO", ">f4", (len(bLow),)),
-            ("MIGRA_HI", ">f4", (len(bHigh),)),
+            ("ENERG_LO", ">f4", (len(e_low),)),
+            ("ENERG_HI", ">f4", (len(e_high),)),
+            ("MIGRA_LO", ">f4", (len(b_low),)),
+            ("MIGRA_HI", ">f4", (len(b_high),)),
             ("THETA_LO", ">f4", (len(theta_low),)),
             ("THETA_HI", ">f4", (len(theta_high),)),
             ("MATRIX", ">f4", (np.shape(ac_final))),
@@ -218,7 +218,7 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-    irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high
+        irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high
 ):
     """Direction dispersion (for full-enclosure IRFs)"""
 
@@ -238,29 +238,28 @@ def fill_direction_migration(
         energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
 
         axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
-        _, eLow, eHigh = bin_centers_to_edges(axis[0])
+        _, e_low, e_high = bin_centers_to_edges(axis[0])
 
         # generate psf data from halfnorm pdf
         if test_psf:
             from scipy.stats import halfnorm
 
             # interpolation test
-            rad_edges, rLow, rHigh = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
+            rad_edges, r_low, r_high = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
 
             # use linspace instead of rad_edges
             rad_width_deg = np.diff(rad_edges)
 
             x = np.linspace(0, 10, 4000)
             sigma = 0.5
-            beta = 2.0
             scale = sigma * np.sqrt(1 - 2 / np.pi)
             y = halfnorm.pdf(x, loc=0, scale=scale)
-            cumsum = (2 * np.pi * rad_width_deg * y * (rLow + rHigh) / 2).cumsum()
+            cumsum = (2 * np.pi * rad_width_deg * y * (r_low + r_high) / 2).cumsum()
             normed = y / cumsum.max() * ((180 / np.pi) ** 2)
             normed = np.nan_to_num(normed)
 
             # PSF should be normed (deg**2 / sr), test should give 3200:
-            # values = 2 * np.pi * rad_width_deg * normed * (rLow + rHigh) / 2
+            # values = 2 * np.pi * rad_width_deg * normed * (r_low + r_high) / 2
             # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
 
             y = np.array(normed)
@@ -271,16 +270,16 @@ def fill_direction_migration(
             direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
 
             # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
-            rad_edges, rLow, rHigh = bin_centers_to_edges(axis[1], logaxis=True)
+            rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
 
             rad_width_deg = np.diff(np.power(10, rad_edges))
             # this step makes sure all arrays have the same dimensions, rad_width_deg and the central rad values are
             # repeated by the length of the energy axis.
-            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1) \
-                          / np.repeat(((rLow + rHigh) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
+            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1) /
+                          np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
-                        np.repeat(((rLow + rHigh) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
+                    np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
             normed = direction_diff / norm * ((180 / np.pi) ** 2)
             rpsf_final.append(np.nan_to_num(normed))
 
@@ -292,21 +291,21 @@ def fill_direction_migration(
         rpsf_final = np.swapaxes(rpsf_final, 0, 1)
 
     return np.array(
-        [(eLow, eHigh, theta_low, theta_high, rLow, rHigh, rpsf_final)],
+        [(e_low, e_high, theta_low, theta_high, r_low, r_high, rpsf_final)],
         dtype=[
-            ("ENERG_LO", ">f4", (np.shape(eLow))),
-            ("ENERG_HI", ">f4", (np.shape(eHigh))),
+            ("ENERG_LO", ">f4", (np.shape(e_low))),
+            ("ENERG_HI", ">f4", (np.shape(e_high))),
             ("THETA_LO", ">f4", (np.shape(theta_low))),
             ("THETA_HI", ">f4", (np.shape(theta_high))),
-            ("RAD_LO", ">f4", (np.shape(rLow))),
-            ("RAD_HI", ">f4", (np.shape(rHigh))),
+            ("RAD_LO", ">f4", (np.shape(r_low))),
+            ("RAD_HI", ">f4", (np.shape(r_high))),
             ("RPSF", ">f4", (np.shape(rpsf_final))),
         ],
     )
 
 
-def __fillRESPONSE__(
-    edFileIO, effectiveArea, azimuth, zenith, pedvar, irf_to_store=None
+def __fill_response__(
+        ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None
 ):
     if irf_to_store is None:
         irf_to_store = {}
@@ -314,10 +313,10 @@ def __fillRESPONSE__(
     response_dict = {}
 
     # IRF interpolator
-    irf_interpolator = IrfInterpolator(effectiveArea, azimuth)
+    irf_interpolator = IrfInterpolator(effective_area, azimuth)
 
     # Extract camera offsets available from the effective areas file.
-    fast_eff_area = uproot.open(effectiveArea)["fEffArea"]
+    fast_eff_area = uproot.open(effective_area)["fEffArea"]
     camera_offsets = np.unique(
         np.round(fast_eff_area["Woff"].array(library="np"), decimals=2)
     )
@@ -352,9 +351,9 @@ def __fillRESPONSE__(
         )
 
         # Get RAD_MAX; cuts don't depend on energy/wobble
-        file = uproot.open(edFileIO)
-        runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
-        theta2cut = runSummary["Theta2Max"][0]
+        file = uproot.open(ed_file_io)
+        run_summary = file["total_1/stereo/tRunSummary"].arrays(library="np")
+        theta2cut = run_summary["Theta2Max"][0]
         response_dict["RAD_MAX"] = np.sqrt(theta2cut)
 
         # Energy dispersion (point-like)
