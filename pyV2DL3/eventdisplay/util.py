@@ -72,7 +72,6 @@ def getGTI(BitArray, run_start_from_reference):
     n = BitArray.size
     TimeArray_b = ""
     for i in range(n):
-
         TimeArray_b = TimeArray_b + np.binary_repr(BitArray[i], width=8)[::-1]
 
     nbits = len(TimeArray_b)
@@ -107,7 +106,7 @@ def getGTI(BitArray, run_start_from_reference):
             start = i + 1
             gti_start.append(start)
 
-    if (TimeArray_b[-1] != 0) :
+    if (TimeArray_b[-1] != 0):
         gti_end.append(duration_s)
 
     logging.info(
@@ -143,7 +142,7 @@ def getRunQuality(logdata, ntel=4):
 
     """
 
-    vpm = 2 ** (ntel + 3) - 2**3
+    vpm = 2 ** (ntel + 3) - 2 ** 3
     if np.size(logdata) <= 1:
         return vpm
 
