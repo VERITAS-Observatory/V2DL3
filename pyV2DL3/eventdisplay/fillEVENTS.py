@@ -24,7 +24,6 @@ def __fillEVENTS__(edFileIO, select=None):
     # reading variables with uproot
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
-        print("{:.2}".format(runSummary["WobbleWest"][0]))
         runNumber = runSummary["runOn"][0]
         telConfig = file["run_{}/stereo/telconfig".format(runNumber)].arrays(
             library="np"
