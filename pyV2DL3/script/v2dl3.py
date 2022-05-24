@@ -198,7 +198,11 @@ def cli(
         raise click.Abort()
     if file_pair is not None and event_class_mode:
         click.echo(cli.get_help(click.Context(cli)))
-        click.secho("event_class_mode requires a runlist", fg="yellow")
+        click.secho("Event_class_mode requires a runlist", fg="yellow")
+        raise click.Abort()
+    if point_like and full_enclosure:
+        click.echo(cli.get_help(click.Context(cli)))
+        click.secho("Choose point-like OR full-enclosure (both were selected)", fg="yellow")
         raise click.Abort()
 
     # Store in a dict the IRFs to be stored within a file.
@@ -213,7 +217,7 @@ def cli(
         if point_like:
             click.echo(cli.get_help(click.Context(cli)))
             click.secho(
-                "point-like king function is currently unsupported", fg="yellow")
+                "Point-like king function is currently unsupported", fg="yellow")
             raise click.Abort()
         irfs_to_store["psf-king"] = True
         irfs_to_store["psf-king-filename"] = king_function
