@@ -32,7 +32,7 @@ def get_hdu_type_and_class(header: fits.header):
     return hdu_type, hdu_class
 
 
-def gen_hdu_index(filelist, index_file_dir="./"):
+def gen_hdu_index(filelist, index_file_dir="./", psf_king=False):
     """create HDU index"""
 
     hdu_tables = []
@@ -68,6 +68,11 @@ def gen_hdu_index(filelist, index_file_dir="./"):
             hdu_type.append(class_)
             hdu_name.append(hdu.name)
 
+        if psf_king:
+            dtype=('>i8', 'S6', 'S15', 'S65', 'S54', 'S20')
+        else:
+            dtype=(">i8", "S6", "S10", "S40", "S54", "S20")
+            
         t = Table(
             [obs_id, hdu_type_name, hdu_type, file_dir, file_name, hdu_name],
             names=(
@@ -78,7 +83,7 @@ def gen_hdu_index(filelist, index_file_dir="./"):
                 "FILE_NAME",
                 "HDU_NAME",
             ),
-            dtype=(">i8", "S6", "S10", "S40", "S54", "S20"),
+            dtype=dtype
         )
 
         hdu_tables.append(t)
@@ -102,7 +107,7 @@ def get_unit_string_from_comment(comment_string):
     return None
 
 
-def gen_obs_index(filelist, index_file_dir="./"):
+def gen_obs_index(filelist, index_file_dir="./", psf_king=False):
     names = (
         "OBS_ID",
         "RA_PNT",
@@ -115,6 +120,11 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "DEADC",
         "TSTART",
         "TSTOP",
+    )
+    if psf_king:
+        names.append("SAFE_ENERGY_LO")
+        names.append("EVENT_COUNT")
+    names += (
         "N_TELS",
         "TELLIST",
         "OBJECT",
@@ -124,24 +134,29 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "DATE-END",
     )
     dtype = (
-        ">i8",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">f4",
-        ">i8",
-        "S20",
-        "S20",
-        ">f4",
-        ">f4",
-        "S20",
-        "S20",
+        ">i8", # OBS_ID
+        ">f4", # RA_PNT
+        ">f4", # DEC_PNT
+        ">f4", # ZEN_PNT
+        ">f4", # ALT_PNT
+        ">f4", # AZ_PNT
+        ">f4", # ONTIME
+        ">f4", # LIVETIME
+        ">f4", # DEADC
+        ">f4", # TSTART
+        ">f4", # TSTOP
+    )
+    if psf_king:
+        dtype.append("f4") # SAFE_ENERGY_LO
+        dtype.append("i8") # EVENT_COUNT
+    dtype += (
+        ">i8", # N_TELLS
+        "S20", # TELLIST
+        "S20", # OBJECT
+        ">f4", # RA_OBJ
+        ">f4", # DEC_OBJ
+        "S20", # DATE-OBS
+        "S20", # DATE-END
     )
     _tableunits = {}
     _tabledata = {n: [] for n in names}
@@ -159,6 +174,11 @@ def gen_obs_index(filelist, index_file_dir="./"):
                 _tableunits[key] = get_unit_string_from_comment(
                     dl3_hdu[1].header.comments["ALT_PNT"]
                 )
+            elif key == "SAFE_ENERGY_LO":
+                value.append(dl3_hdu[3].header['LO_THRES']) #energy threshold derived from EA
+                _tableunits[key] = "TeV"
+            elif key == "EVENT_COUNT":
+                value.append(dl3_hdu[1].header['NAXIS']) 
             else:
                 value.append(dl3_hdu[1].header[key])
                 _tableunits[key] = get_unit_string_from_comment(
@@ -196,6 +216,7 @@ def create_obs_hdu_index_file(
     index_file_dir="./",
     hdu_index_file="hdu-index.fits.gz",
     obs_index_file="obs-index.fits.gz",
+    psf_king=False,
 ):
     """Create Observation Index File and HDU index file
 
@@ -228,10 +249,10 @@ def create_obs_hdu_index_file(
 
     """
 
-    hdu_table = gen_hdu_index(filelist, index_file_dir)
+    hdu_table = gen_hdu_index(filelist, index_file_dir, psf_king=psf_king)
     logging.debug("Writing {} ...".format(hdu_index_file))
     hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
-    obs_table = gen_obs_index(filelist, index_file_dir)
+    obs_table = gen_obs_index(filelist, index_file_dir, psf_king=psf_king)
     logging.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
