@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 
 
@@ -62,6 +63,53 @@ def getThetaSquareCut(config_str_ori):
             if len(cut_str) == 0:
                 raise Exception("No theta2 cuts present in EA file")
             return float(cut_str)
+
+
+"""
+Search a ROOT fCutsFileText for the params named in cut_searches
+
+Returns a dict that will only contain keys for found cuts.
+Use `in` keyword on the returned dictionary to see if the cut was found.
+
+Do note that the cut values are saved as strings.
+"""
+def getCuts(config_str_ori, cut_searches: List[str]):
+    config_str = str(config_str_ori)
+    cuts_found = {}
+    for line in config_str.splitlines():
+        # Skip comment lines
+        if (len(line) == 0) or (line.strip()[0] == "#"):
+            continue
+        else:
+            for cut_search in cut_searches:
+                if line.find(cut_search) >= 0:
+                    key, cut_str = line.split(" ")
+                    if len(cut_str) > 0:
+                        cuts_found[cut_search] = cut_str
+    return cuts_found
+
+
+"""
+Load user cuts to be applied when filling events.
+Only does spatial exclusion regions for now
+
+https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#User_Cuts_File
+"""
+def loadUserCuts(user_cut_file):
+    srcra = []
+    srcdec = []
+    srcsep = []
+    f = open(user_cut_file, 'r')
+    for i in f.readlines():
+        srcra.append(i.split(',')[1])
+        srcdec.append(i.split(',')[2])
+        srcsep.append(i.split(',')[3])
+    f.close()
+
+    return {
+        "spatial_exclusion": (srcra, srcdec, srcsep),
+        # more user cuts could be added here
+    }
 
 
 def isMergable(cut1, cut2):
