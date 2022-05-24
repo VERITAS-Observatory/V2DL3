@@ -250,9 +250,13 @@ def cli(
     if file_pair is not None:
         st5_str, ea_str = file_pair
         if ed or st5_str.find(".anasum.root") >= 0:
-            datasource = loadROOTFiles(st5_str, ea_str, "ED", reco_type=reconstruction_type)
+            datasource = loadROOTFiles(st5_str, ea_str, "ED")
         else:
-            datasource = loadROOTFiles(st5_str, ea_str, "VEGAS", reco_type=reconstruction_type)
+            datasource = loadROOTFiles(st5_str, ea_str, "VEGAS", 
+                                       user_cut_file=event_cut_file, 
+                                       reco_type=reconstruction_type, 
+                                       store_msw_msl=store_msw_msl,
+                                       )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data(evt_filter=evt_filter)
