@@ -36,7 +36,6 @@ class EventClass(object):
         self.fov_cut_lower = None
         self.fov_cut_upper = None
 
-        # idx -1??
         # This dict will only contain keys from the found cuts.
         self.effective_area_IO.loadTheRootFile()
         for cuts in self.effective_area_IO.loadTheCutsInfo():
