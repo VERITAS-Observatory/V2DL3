@@ -3,6 +3,7 @@ import logging
 from astropy.io import fits
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
+from pyV2DL3.vegas.VegasDataSource import VegasDataSource
 import pyV2DL3.constant
 
 
@@ -10,9 +11,10 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
 
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
-    # get_evt_data() returns an array of evt_dicts for each event class.
-    # We'll just index it at 0 when not using multiple event classes.
-    evt_dict = evt_dict[event_class_idx]
+    # VegasDataSource will return a list of evt_dicts, so we'll index the list in that case.
+    # The default index value of 0 will work when not using event class mode.
+    if isinstance(datasource, VegasDataSource):
+        evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
     columns = [

@@ -3,6 +3,7 @@ import logging
 from astropy.io import fits
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
+from pyV2DL3.vegas.VegasDataSource import VegasDataSource
 
 
 def fill_bintablehdu(
@@ -83,10 +84,11 @@ def fillRESPONSE(datasource, instrument_epoch=None, event_class_idx=0):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
 
-    # get_response_data() and get_evt_data() return arrays of dicts for each event class.
-    # We'll just index it at 0 when not using event classes.
-    response_dict = response_dict[event_class_idx]
-    evt_dict = evt_dict[event_class_idx]
+    # VegasDataSource will return lists evt and response dicts, so we'll index the lists in that case.
+    # The default index value of 0 will work when not using event class mode.
+    if isinstance(datasource, VegasDataSource):
+        response_dict = response_dict[event_class_idx]
+        evt_dict = evt_dict[event_class_idx]
 
     epoch_str = "VERITAS"
     if instrument_epoch:
