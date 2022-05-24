@@ -26,27 +26,48 @@ def genPrimaryHDU():
     return hdu0
 
 
-def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS"):
+def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
+                  event_classes=None,
+                  user_cut_file=None,
+                  reco_type=1,
+                  store_msw_msl=False,
+                  ):
+
+    if effective_area_file is None and event_classes is None:
+        raise Exception("Running V2DL3 without effective area file(s) is currently unsupported."
+                        "\nRemove this exception if you are implementing this behavior.")
+    
     if file_type == "VEGAS":
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
+        return VegasDataSource(data_file, effective_area_file, 
+                               event_classes=event_classes, 
+                               user_cut_file=user_cut_file, 
+                               reco_type=reco_type, 
+                               store_msw_msl=store_msw_msl,
+                               )
 
-        return VegasDataSource(data_file, effective_area_file)
     if file_type != "ED":
         raise Exception("File type not supported: {}".format(file_type))
-    from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
 
-    return EventDisplayDataSource(data_file, effective_area_file)
+    if effective_area_file is not None:
+        from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
+        return EventDisplayDataSource(data_file, effective_area_file)
+    else:
+         raise Exception("EventDisplay requires an effective area file."
+                        "\nRunning EventDisplay with event classes is unsupported.")
 
 
-def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None):
+def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=0):
     hdus = [
         genPrimaryHDU(),
         fillEVENTS(
             datasource,
             save_multiplicity=save_multiplicity,
             instrument_epoch=instrument_epoch,
+            event_class_idx=event_class_idx,
         ),
         fillGTI(datasource),
     ]
-    hdus.extend(fillRESPONSE(datasource, instrument_epoch))
+    hdus.extend(fillRESPONSE(datasource, instrument_epoch, event_class_idx=event_class_idx))
+
     return fits.HDUList(hdus)
