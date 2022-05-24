@@ -28,18 +28,20 @@ def parseSectionTag(in_tag):
     return isEnd, key, gid
 
 
-def validateRunlist(r_dict):
+def validateRunlist(r_dict, event_class_mode=False):
     must_have = ["EA", "RUNLIST"]
     # Check if EA and RUNLIST are present
     for k in must_have:
         if k not in r_dict.keys():
             raise RunlistValidationError("Missing {}".format(k))
-    # Cehck if there's only one EA per group
-    for gid, item in r_dict["EA"].items():
-        if len(item) != 1:
-            exception_str = "Only one EA file can be used for each group.\n"
-            exception_str += "[EA ID: {:d}] have {:d} files.".format(gid, len(item))
-            raise RunlistValidationError(exception_str)
+    # Check if there's only one EA per group
+    if not event_class_mode:
+        for gid, item in r_dict["EA"].items():
+            if len(item) != 1:
+                exception_str = "Only one EA file can be used for each group.\n"
+                exception_str += "[EA ID: {:d}] has {:d} files.\n".format(gid, len(item))
+                exception_str += "If you meant to define event classes, run again with -ec"
+                raise RunlistValidationError(exception_str)
     # Check if all files exists
     for gid, item in r_dict["EA"].items():
         if not os.path.exists(item[0]):
