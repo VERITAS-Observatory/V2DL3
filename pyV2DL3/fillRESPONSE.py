@@ -49,14 +49,26 @@ def fill_bintablehdu(
         )
     # PSF
     elif hdu_name == "PSF":
-        hdu.header.set("TUNIT3 ", "deg", "")
-        hdu.header.set("TUNIT4 ", "deg", "")
-        hdu.header.set("TUNIT5 ", "deg", "")
-        hdu.header.set("TUNIT6 ", "deg", "")
-        hdu.header.set("TUNIT7 ", "sr^-1", "")
-        hdu.header.set(
-            "CREF7", "(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)", ""
-        )
+        # PSF king function
+        if class_4 == "PSF_KING":
+            hdu.header.set('TUNIT1 ', 'TeV', "")  #ENERGY_LO
+            hdu.header.set('TUNIT2 ', 'TeV', "")  #ENERGY_HI
+            hdu.header.set('TUNIT3 ', 'deg', "")  #THETA_LO
+            hdu.header.set('TUNIT4 ', 'deg', "")  #THETA_HI
+            hdu.header.set('TUNIT5 ', 'none', "") #GAMMA
+            hdu.header.set('TUNIT6 ', 'none', "") #SIGMA                                                                                                                              
+            hdu.header.set('CREF6', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,GAMMA:SIGMA)', '')
+
+        # PSF table
+        else:
+            hdu.header.set("TUNIT3 ", "deg", "")
+            hdu.header.set("TUNIT4 ", "deg", "")
+            hdu.header.set("TUNIT5 ", "deg", "")
+            hdu.header.set("TUNIT6 ", "deg", "")
+            hdu.header.set("TUNIT7 ", "sr^-1", "")
+            hdu.header.set(
+                "CREF7", "(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,RAD_LO:RAD_HI)", ""
+            )
 
     # point-like IRFs
     if class_3 == "POINT-LIKE":
@@ -67,9 +79,14 @@ def fill_bintablehdu(
     return hdu
 
 
-def fillRESPONSE(datasource, instrument_epoch=None):
+def fillRESPONSE(datasource, instrument_epoch=None, event_class_idx=0):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
+
+    # get_response_data() and get_evt_data() return arrays of dicts for each event class.
+    # We'll just index it at 0 when not using event classes.
+    response_dict = response_dict[event_class_idx]
+    evt_dict = evt_dict[event_class_idx]
 
     epoch_str = "VERITAS"
     if instrument_epoch:
@@ -108,7 +125,7 @@ def fillRESPONSE(datasource, instrument_epoch=None):
 
         response_hdus.append(
             fill_bintablehdu(
-                "FULL_EA",
+                "EA",
                 "EFFECTIVE AREA",
                 "EFF_AREA",
                 "FULL-ENCLOSURE",
@@ -120,7 +137,7 @@ def fillRESPONSE(datasource, instrument_epoch=None):
         )
         response_hdus.append(
             fill_bintablehdu(
-                "FULL_MIGRATION",
+                "MIGRATION",
                 "ENERGY DISPERSION",
                 "EDISP",
                 "FULL-ENCLOSURE",
@@ -130,18 +147,34 @@ def fillRESPONSE(datasource, instrument_epoch=None):
                 epoch_str,
             )
         )
-        response_hdus.append(
-            fill_bintablehdu(
-                "PSF",
-                "PSF",
-                "PSF",
-                "FULL-ENCLOSURE",
-                "PSF_TABLE",
-                response_dict,
-                evt_dict,
-                epoch_str,
+        # PSF King format if king function was used
+        if datasource.__irf_to_store__["psf-king"]:
+            response_hdus.append(
+                fill_bintablehdu(
+                    "PSF",
+                    "PSF",
+                    "PSF",
+                    "FULL-ENCLOSURE",
+                    "PSF_KING",
+                    response_dict,
+                    evt_dict,
+                    epoch_str,
+                )
             )
-        )
+        # Else PSF table
+        else:
+            response_hdus.append(
+                fill_bintablehdu(
+                    "PSF",
+                    "PSF",
+                    "PSF",
+                    "FULL-ENCLOSURE",
+                    "PSF_TABLE",
+                    response_dict,
+                    evt_dict,
+                    epoch_str,
+                )
+            )
 
     else:
         raise Exception("No IRF to store...")
