@@ -263,7 +263,7 @@ def cli(
                                        )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
-            datasource.fill_data()
+            datasource.fill_data(evt_filter=evt_filter)
         hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
         fname_base = os.path.splitext(os.path.basename(output))[0]
         if filename_to_obsid:
