@@ -6,10 +6,13 @@ from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant
 
 
-def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
+def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=0):
 
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
+    # get_evt_data() returns an array of evt_dicts for each event class.
+    # We'll just index it at 0 when not using multiple event classes.
+    evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
     columns = [
@@ -17,10 +20,21 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         fits.Column(name="TIME", format="1D", array=evt_dict["TIME"], unit="s"),
         fits.Column(name="RA", format="1E", array=evt_dict["RA"], unit="deg"),
         fits.Column(name="DEC", format="1E", array=evt_dict["DEC"], unit="deg"),
-        fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV"),
+        fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV")
     ]
+    if "MSW" in evt_dict:
+        columns.append(
+            fits.Column(name='MSW', format='1D', array=evt_dict['MSW'])
+        )
+    if "MSL" in evt_dict:
+        columns.append(
+            fits.Column(name='MSL', format='1D', array=evt_dict['MSL'])
+        )
+    # Try BDT arrays
     try:
-        columns.append(fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"]))
+        columns.append(
+            fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"])
+        )
         columns.append(
             fits.Column("BDT_SCORE", format="1E", array=evt_dict["BDT_SCORE"])
         )
@@ -32,6 +46,10 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         columns.append(
             fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict["EVENT_TYPE"])
         )
+        if "EVENT_CLASS" in evt_dict:
+            columns.append(
+                fits.Column(name="EVENT_CLASS", format="32X", array=evt_dict['EVENT_CLASS'])
+            )
 
     # Create HDU
     hdu1 = fits.BinTableHDU.from_columns(columns)
