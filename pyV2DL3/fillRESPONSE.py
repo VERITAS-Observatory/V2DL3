@@ -127,7 +127,7 @@ def fillRESPONSE(datasource, instrument_epoch=None, event_class_idx=0):
 
         response_hdus.append(
             fill_bintablehdu(
-                "EA",
+                "FULL_EA",
                 "EFFECTIVE AREA",
                 "EFF_AREA",
                 "FULL-ENCLOSURE",
@@ -139,7 +139,7 @@ def fillRESPONSE(datasource, instrument_epoch=None, event_class_idx=0):
         )
         response_hdus.append(
             fill_bintablehdu(
-                "MIGRATION",
+                "FULL_MIGRATION",
                 "ENERGY DISPERSION",
                 "EDISP",
                 "FULL-ENCLOSURE",
@@ -150,19 +150,20 @@ def fillRESPONSE(datasource, instrument_epoch=None, event_class_idx=0):
             )
         )
         # PSF King format if king function was used
-        if datasource.__irf_to_store__["psf-king"]:
-            response_hdus.append(
-                fill_bintablehdu(
-                    "PSF",
-                    "PSF",
-                    "PSF",
-                    "FULL-ENCLOSURE",
-                    "PSF_KING",
-                    response_dict,
-                    evt_dict,
-                    epoch_str,
+        if "psf-king" in datasource.__irf_to_store__:
+            if datasource.__irf_to_store__["psf-king"]:
+                response_hdus.append(
+                    fill_bintablehdu(
+                        "PSF",
+                        "PSF",
+                        "PSF",
+                        "FULL-ENCLOSURE",
+                        "PSF_KING",
+                        response_dict,
+                        evt_dict,
+                        epoch_str,
+                    )
                 )
-            )
         # Else PSF table
         else:
             response_hdus.append(

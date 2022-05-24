@@ -24,9 +24,12 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, irf_to_st
     minEnergy, maxEnergy = irfloader.getSafeEnergy(azimuth, zenith, noise)
     response_dict["LO_THRES"] = minEnergy
     response_dict["HI_THRES"] = maxEnergy
-    response_dict["EA"] = ea_final_data
-    response_dict["MIGRATION"] = ebias_final_data
+    
+    # Point-like
     if irf_to_store["point-like"]:
+        response_dict["EA"] = ea_final_data
+        response_dict["MIGRATION"] = ebias_final_data
+        
         # Load the theta squared cut
         logger.debug("Getting Theta2 cut from EA file")
         cuts = effectiveAreaIO.loadTheCutsInfo()
@@ -36,7 +39,9 @@ def __fillRESPONSE_not_safe__(effectiveAreaIO, azimuth, zenith, noise, irf_to_st
         response_dict["RAD_MAX"] = np.sqrt(theta2cut)
 
     # Full-enclosure
-    elif irf_to_store["full-enclosure"] or irf_to_store["psf-king"]:
+    elif irf_to_store["full-enclosure"]:
+        response_dict["FULL_EA"] = ea_final_data
+        response_dict["FULL_MIGRATION"] = ebias_final_data
         response_dict["PSF"] = abias_final_data
     else:
         raise ValueError("IRF requested should be point-like or full-enclosure")
