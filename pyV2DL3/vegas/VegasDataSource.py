@@ -72,7 +72,7 @@ class VegasDataSource(VtsDataSource):
                 self.__ea_file__.closeTheRootFile()
 
 
-    def __fill_evt__(self):
+    def __fill_evt__(self, **kwargs):
         gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__,
                                                        reco_type=self.__reco_type__,
                                                        user_cuts_dict=self.__user_cuts__,
@@ -87,11 +87,11 @@ class VegasDataSource(VtsDataSource):
         self.__noise__ = ea_config["noise"]
 
 
-    def __fill_gti__(self):
+    def __fill_gti__(self, **kwargs):
         pass
 
 
-    def __fill_response__(self):
+    def __fill_response__(self, **kwargs):
         az = self.__azimuth__
         ze = self.__zenith__
         nn = self.__noise__

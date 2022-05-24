@@ -52,7 +52,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     '--event_class_mode',
     '-ec',
     is_flag=True,
-    help="Treat EAs from the runlist as different event classes of the same run.",
+    help="Use EAs of the same runlist ID to define event classes for that runlist ID.",
 )
 @click.option(
     '--_4dmlm',
@@ -198,7 +198,11 @@ def cli(
         raise click.Abort()
     if file_pair is not None and event_class_mode:
         click.echo(cli.get_help(click.Context(cli)))
-        click.secho("Event_class_mode requires a runlist", fg="yellow")
+        click.secho("event_class_mode requires runlist mode", fg="yellow")
+        raise click.Abort()
+    if file_pair is not None and king_function:
+        click.echo(cli.get_help(click.Context(cli)))
+        click.secho("king_function requires runlist mode", fg="yellow")
         raise click.Abort()
     if point_like and full_enclosure:
         click.echo(cli.get_help(click.Context(cli)))
@@ -259,7 +263,7 @@ def cli(
                                        )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
-            datasource.fill_data(evt_filter=evt_filter)
+            datasource.fill_data()
         hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
         fname_base = os.path.splitext(os.path.basename(output))[0]
         if filename_to_obsid:
