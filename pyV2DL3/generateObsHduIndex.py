@@ -103,7 +103,7 @@ def get_unit_string_from_comment(comment_string):
     bstart = comment_string.find("[")
     bstopp = comment_string.find("]")
     if bstart != -1 and bstopp != -1:
-        return comment_string[bstart + 1 : bstopp]
+        return comment_string[bstart + 1: bstopp]
     return None
 
 
@@ -212,11 +212,11 @@ def gen_obs_index(filelist, index_file_dir="./", psf_king=False):
 
 
 def create_obs_hdu_index_file(
-    filelist,
-    index_file_dir="./",
-    hdu_index_file="hdu-index.fits.gz",
-    obs_index_file="obs-index.fits.gz",
-    psf_king=False,
+        filelist,
+        index_file_dir="./",
+        hdu_index_file="hdu-index.fits.gz",
+        obs_index_file="obs-index.fits.gz",
+        psf_king=False,
 ):
     """Create Observation Index File and HDU index file
 
