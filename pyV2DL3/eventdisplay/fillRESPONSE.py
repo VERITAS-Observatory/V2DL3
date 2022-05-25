@@ -1,3 +1,4 @@
+import click
 import logging
 
 import numpy as np
@@ -36,16 +37,77 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 
-def check_parameter_range(par, par_irf, par_name):
-    """Check that coordinates are in range of provided IRF"""
+def check_parameter_range(par, irf_stored_par, par_name):
+    """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
+       0. checks if command line parameter force_extrapolation is given. If given,
+          the extrapolation will happen when parameter is outside IRF range. If parameter is
+          within IRF range, it works as normal. Default is False.
+       1. Further checks for fuzzy boundary (parameter close to boundary value).
+          If fuzzy boundary is within a given tolerance then IRF is interpolated for
+          at boundary value. Default is 0.0 tolerance.
+    """
 
     logging.info(
-        "\t{0} range of a given IRF: {1:.1f} - {2:.1f}".format(
-            par_name, np.min(par_irf), np.max(par_irf)
+        "\t{0} range of a given IRF: {1:.2f} - {2:.2f}".format(
+            par_name, np.min(irf_stored_par), np.max(irf_stored_par)
         )
     )
-    if np.all(par_irf < par) or np.all(par_irf > par):
-        raise ValueError("Coordinate not inside IRF {0} range".format(par_name))
+    clk = click.get_current_context()
+    tolerance = clk.params["fuzzy_boundary"]
+    if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
+        if clk.params["force_extrapolation"]:
+            logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
+        elif tolerance > 0.0:
+            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance):
+                par = np.max(irf_stored_par)
+            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance):
+                par = np.min(irf_stored_par)
+            else:
+                raise ValueError("Tolerance not calculated for coordinate {0}".format(par_name))
+        else:
+            raise ValueError(
+                "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
+            )
+    return par
+
+
+def check_fuzzy_boundary(par, boundary, tolerance):
+    """" Checks if the parameter value is within the given tolerance.
+    tolerance parameter is defined as ratio of absolute difference
+    between boundary and par to the boundary.
+
+    Parameters
+    ----------
+    par: parameter of given run, it can be pedvar, zenith or camera offset
+    boundary: lower or upper boundary value of stored IRF
+    tolerance: allowed value of --fuzzy_boundary command line argument
+
+    Returns
+    -------
+    Boolean. Default is False. True if tolerance is within given allowed value.
+    If boundary zero then also returns default False.
+
+    """
+    if boundary == 0:
+        return False
+
+    if boundary > 0:
+        fuzzy_diff = np.abs(boundary - par) / boundary
+        if fuzzy_diff < tolerance:
+            logging.warning(
+                "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
+                    fuzzy_diff, tolerance
+                )
+            )
+            return True
+        else:
+            raise ValueError(
+                "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
+                    fuzzy_diff, tolerance
+                )
+            )
+
+    return False
 
 
 def find_camera_offsets(camera_offsets):
@@ -56,13 +118,12 @@ def find_camera_offsets(camera_offsets):
         # Assume that offset for the whole camera.
         logger.debug(
             "IMPORTANT: Only one camera offset bin "
-            + +"({} deg) simulated within the effective area file selected.".format(
+            + "({} deg) simulated within the effective area file selected.".format(
                 camera_offsets[0]
             )
         )
         logger.debug(
-            "IMPORTANT: Setting the IRFs of that given camera \
-                     offset value to the whole camera"
+            "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
         )
         return [0.0, 10.0], [0.0, 10.0]
 
@@ -73,14 +134,13 @@ def find_camera_offsets(camera_offsets):
 
 
 def fill_effective_area(
-    irf_name,
-    irf_interpolator,
-    camera_offsets,
-    pedvar,
-    zenith,
-    offset,
-    theta_low,
-    theta_high,
+        irf_name,
+        irf_interpolator,
+        camera_offsets,
+        pedvar,
+        zenith,
+        theta_low,
+        theta_high,
 ):
     """Effective areas"""
 
@@ -111,14 +171,13 @@ def fill_effective_area(
 
 
 def fill_energy_migration(
-    irf_name,
-    irf_interpolator,
-    camera_offsets,
-    pedvar,
-    zenith,
-    offset,
-    theta_low,
-    theta_high,
+        irf_name,
+        irf_interpolator,
+        camera_offsets,
+        pedvar,
+        zenith,
+        theta_low,
+        theta_high,
 ):
     """Energy migration matrix"""
 
@@ -128,13 +187,13 @@ def fill_energy_migration(
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
-        _, eLow, eHigh = bin_centers_to_edges(axis[0])
-        _, bLow, bHigh = bin_centers_to_edges(axis[1], False)
+        _, e_low, e_high = bin_centers_to_edges(axis[0])
+        _, b_low, b_high = bin_centers_to_edges(axis[1], False)
 
         ac = []
 
         for aa in bias.transpose():
-            ab = aa / np.sum(aa * (bHigh - bLow)) if np.sum(aa) > 0 else aa
+            ab = aa / np.sum(aa * (b_high - b_low)) if np.sum(aa) > 0 else aa
             try:
                 ac = np.vstack((ac, ab))
             except ValueError:
@@ -144,12 +203,12 @@ def fill_energy_migration(
         ac_final.append(ac)
 
     return np.array(
-        [(eLow, eHigh, bLow, bHigh, theta_low, theta_high, ac_final)],
+        [(e_low, e_high, b_low, b_high, theta_low, theta_high, ac_final)],
         dtype=[
-            ("ENERG_LO", ">f4", (len(eLow),)),
-            ("ENERG_HI", ">f4", (len(eHigh),)),
-            ("MIGRA_LO", ">f4", (len(bLow),)),
-            ("MIGRA_HI", ">f4", (len(bHigh),)),
+            ("ENERG_LO", ">f4", (len(e_low),)),
+            ("ENERG_HI", ">f4", (len(e_high),)),
+            ("MIGRA_LO", ">f4", (len(b_low),)),
+            ("MIGRA_HI", ">f4", (len(b_high),)),
             ("THETA_LO", ">f4", (len(theta_low),)),
             ("THETA_HI", ">f4", (len(theta_high),)),
             ("MATRIX", ">f4", (np.shape(ac_final))),
@@ -158,55 +217,94 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-    irf_interpolator, camera_offsets, pedvar, zenith, offset, theta_low, theta_high
+        irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high
 ):
     """Direction dispersion (for full-enclosure IRFs)"""
 
     irf_interpolator.set_irf("hAngularLogDiffEmc_2D")
 
     rpsf_final = []
+    rpsf_test = []
+    test_psf = False  # use PSF distribution from IRFs by default
 
     for offset in camera_offsets:
 
+        # direction diff (rad, energy),
         direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
-        _, eLow, eHigh = bin_centers_to_edges(axis[0])
-        rad_edges, rLow, rHigh = bin_centers_to_edges(axis[1])
+        # energy axis from ~ 0.1 - 100 TeV
+        energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
+        energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
 
-        # Normalize rpsf by solid angle
-        rad_width_deg = np.diff(np.power(10, rad_edges))
-        e_sum = np.sum(
-            direction_diff
-            * 2
-            * rad_width_deg[:, np.newaxis]
-            * np.pi
-            * np.power(10, axis[1])[:, np.newaxis],
-            axis=0,
-        )
-        normsum = np.divide(((180 / np.pi) ** 2), e_sum, where=e_sum != 0)
+        axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        _, e_low, e_high = bin_centers_to_edges(axis[0])
 
-        rpsf = direction_diff * normsum
-        rpsf_final.append(np.nan_to_num(rpsf).cumsum(axis=0))
+        # generate psf data from halfnorm pdf
+        if test_psf:
+            from scipy.stats import halfnorm
+
+            # interpolation test
+            rad_edges, r_low, r_high = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
+
+            # use linspace instead of rad_edges
+            rad_width_deg = np.diff(rad_edges)
+
+            x = np.linspace(0, 10, 4000)
+            sigma = 0.5
+            scale = sigma * np.sqrt(1 - 2 / np.pi)
+            y = halfnorm.pdf(x, loc=0, scale=scale)
+            cumsum = (2 * np.pi * rad_width_deg * y * (r_low + r_high) / 2).cumsum()
+            normed = y / cumsum.max() * ((180 / np.pi) ** 2)
+            normed = np.nan_to_num(normed)
+
+            # PSF should be normed (deg**2 / sr), test should give 3200:
+            # values = 2 * np.pi * rad_width_deg * normed * (r_low + r_high) / 2
+            # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
+
+            y = np.array(normed)
+            test = np.repeat(y[np.newaxis, ...], len(axis[0]), axis=0)
+            rpsf_test.append(test)
+
+        else:
+            direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
+
+            # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
+            rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
+
+            rad_width_deg = np.diff(np.power(10, rad_edges))
+            # this step makes sure all arrays have the same dimensions, rad_width_deg and the central rad values are
+            # repeated by the length of the energy axis.
+            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
+                          / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
+            norm = norm * 2 * np.pi
+            direction_diff = direction_diff / (
+                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
+            normed = direction_diff / norm * ((180 / np.pi) ** 2)
+            rpsf_final.append(np.nan_to_num(normed))
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
-    rpsf_final = np.swapaxes(rpsf_final, 0, 1)
+    if test_psf:
+        rpsf_test = np.swapaxes(rpsf_test, 0, 1)
+        rpsf_final = np.swapaxes(rpsf_test, 0, 2)
+    else:
+        rpsf_final = np.swapaxes(rpsf_final, 0, 1)
 
     return np.array(
-        [(eLow, eHigh, theta_low, theta_high, rLow, rHigh, rpsf_final)],
+        [(e_low, e_high, theta_low, theta_high, r_low, r_high, rpsf_final)],
         dtype=[
-            ("ENERG_LO", ">f4", (np.shape(eLow))),
-            ("ENERG_HI", ">f4", (np.shape(eHigh))),
+            ("ENERG_LO", ">f4", (np.shape(e_low))),
+            ("ENERG_HI", ">f4", (np.shape(e_high))),
             ("THETA_LO", ">f4", (np.shape(theta_low))),
             ("THETA_HI", ">f4", (np.shape(theta_high))),
-            ("RAD_LO", ">f4", (np.shape(rLow))),
-            ("RAD_HI", ">f4", (np.shape(rHigh))),
+            ("RAD_LO", ">f4", (np.shape(r_low))),
+            ("RAD_HI", ">f4", (np.shape(r_high))),
             ("RPSF", ">f4", (np.shape(rpsf_final))),
         ],
     )
 
 
-def __fillRESPONSE__(
-    edFileIO, effectiveArea, azimuth, zenith, pedvar, offset, irf_to_store=None
+def __fill_response__(
+        ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None
 ):
     if irf_to_store is None:
         irf_to_store = {}
@@ -214,10 +312,10 @@ def __fillRESPONSE__(
     response_dict = {}
 
     # IRF interpolator
-    irf_interpolator = IrfInterpolator(effectiveArea, azimuth)
+    irf_interpolator = IrfInterpolator(effective_area, azimuth)
 
     # Extract camera offsets available from the effective areas file.
-    fast_eff_area = uproot.open(effectiveArea)["fEffArea"]
+    fast_eff_area = uproot.open(effective_area)["fEffArea"]
     camera_offsets = np.unique(
         np.round(fast_eff_area["Woff"].array(library="np"), decimals=2)
     )
@@ -230,8 +328,8 @@ def __fillRESPONSE__(
 
     print_logging_info(irf_to_store, camera_offsets, pedvar, zenith)
 
-    check_parameter_range(zenith, zeniths_irf, "zenith")
-    check_parameter_range(pedvar, pedvar_irf, "pedvar")
+    zenith = check_parameter_range(zenith, zeniths_irf, "zenith")
+    pedvar = check_parameter_range(pedvar, pedvar_irf, "pedvar")
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
@@ -247,15 +345,14 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
 
         # Get RAD_MAX; cuts don't depend on energy/wobble
-        file = uproot.open(edFileIO)
-        runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
-        theta2cut = runSummary["Theta2Max"][0]
+        file = uproot.open(ed_file_io)
+        run_summary = file["total_1/stereo/tRunSummary"].arrays(library="np")
+        theta2cut = run_summary["Theta2Max"][0]
         response_dict["RAD_MAX"] = np.sqrt(theta2cut)
 
         # Energy dispersion (point-like)
@@ -265,7 +362,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -291,7 +387,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -303,7 +398,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
@@ -314,7 +408,6 @@ def __fillRESPONSE__(
             camera_offsets,
             pedvar,
             zenith,
-            offset,
             theta_low,
             theta_high,
         )
