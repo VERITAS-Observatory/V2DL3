@@ -65,22 +65,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.Path(exists=True),
     help="Load condition to filter events form json or yaml file.",
 )
-@click.option(
-    "--force_extrapolation",
-    nargs=1,
-    type=click.BOOL,
-    default=False,
-    help="IRF is extrapolated when parameter is found to be outside IRF range",
-)
-@click.option(
-    "--fuzzy_boundary",
-    nargs=1,
-    type=click.FLOAT,
-    default=0.0,
-    help="Parameter outside IRF range but within a given tolerance is interpolated\
-at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
-value to boundary",
-)
 @click.argument("output", metavar="<output>")
 def cli(
     file_pair,
@@ -93,8 +77,6 @@ def cli(
     point_like,
     debug,
     verbose,
-    force_extrapolation,
-    fuzzy_boundary,
     output,
     evt_filter,
 ):
