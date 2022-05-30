@@ -115,7 +115,6 @@ def cli(
 
     Note: One one mode can be used at a time.
     """
-    print(trans_finder)
     if len(file_pair) == 0 and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
