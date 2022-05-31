@@ -27,8 +27,7 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda install -c conda-forge mamba
-          mamba env create -n v2dl3ED -f environment-eventdisplay.yml
+          conda env create -n v2dl3ED -f environment-eventdisplay.yml
           conda activate v2dl3ED
           conda info
 
