@@ -100,6 +100,12 @@ Example for full-enclosure analysis:
 python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
 ```
 
+The run having their observational parameters (zenith, night sky background) outside but close to corresponding IRF axes range can be run with the one of the following two commandline parameters: 
+
+- `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the exptrapolation happens even for run parameter values very far from the corresponding IRF axes range.
+
+- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`. 
+
 ---
 # Data storage and generating index files
 
