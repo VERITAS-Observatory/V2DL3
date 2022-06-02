@@ -315,7 +315,7 @@ def __fill_response__(
     irf_interpolator = IrfInterpolator(effective_area, azimuth)
 
     # Extract camera offsets available from the effective areas file.
-    fast_eff_area = uproot.open(effective_area)["fEffArea"]
+    fast_eff_area = uproot.open(effective_area)["fEffAreaH2F"]
     camera_offsets = np.unique(
         np.round(fast_eff_area["Woff"].array(library="np"), decimals=2)
     )
