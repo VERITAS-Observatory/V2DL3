@@ -4,17 +4,28 @@ from pyV2DL3.vegas.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.vegas.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 from pyV2DL3.vegas.load_vegas import VEGASStatus
 from pyV2DL3.VtsDataSource import VtsDataSource
-
+from pyV2DL3.EventClass import EventClass
 
 class VegasDataSource(VtsDataSource):
-    def __init__(self, etv_file, ea_file):
+    def __init__(self, etv_file, ea_file,
+                 event_classes=None,
+                 ):
         super(VegasDataSource, self).__init__("VEGAS", etv_file, ea_file)
+
+        # Developer exceptions to ensure this was constructed with an EA xor EventClass(es)
+        if ea_file is None and event_classes is None:
+            raise Exception( "Running V2DL3 without effective area file(s) is currently unsupported.")
+        elif ea_file is not None and event_classes is not None:
+            raise Exception("VegasDataSource was somehow constructed with both an effective area"
+                           +"file and event class")
 
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(etv_file, True)
-        self.__ea_file__ = ROOT.VARootIO(ea_file, True)
+
+        if ea_file is not None:
+            self.__ea_file__ = ROOT.VARootIO(ea_file, True)
 
         # Auxiliary storage
         self.__azimuth__ = 0
@@ -24,7 +35,8 @@ class VegasDataSource(VtsDataSource):
     def __del__(self):
         # Close the root files
         self.__evt_file__.closeTheRootFile()
-        self.__ea_file__.closeTheRootFile()
+        if self.__ea_file__ is not None:
+            self.__ea_file__.closeTheRootFile()
 
     def __fill_evt__(self):
         gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)

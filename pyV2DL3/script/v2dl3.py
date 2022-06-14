@@ -3,15 +3,28 @@ import os
 
 import click
 
+from pyV2DL3.EventClass import EventClass
 
-def runlist_to_file_pair(rl_dict):
+# In event_class_mode, The user can provide multiple EAs per tag to define the event classes for that group.
+def runlist_to_file_pair(rl_dict, event_class_mode=False):
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
     file_pair = []
-    for k in st5s.keys():
-        ea = eas[k][0]
-        for f in st5s[k]:
-            file_pair.append((f, ea))
+    # If using multiple EAs for event classes
+    if event_class_mode:
+        for k in st5s.keys():
+            event_classes = []
+            for ea in eas[k]:
+                    event_classes.append(EventClass(ea))
+            if len(event_classes) == 0:
+                raise Exception("No EA filenames defined for runlist tag: " + k)
+            for f in st5s[k]:
+                file_pair.append((f, event_classes))
+    else:
+        for k in st5s.keys():
+            ea = eas[k][0]
+            for f in st5s[k]:
+                file_pair.append((f, ea))
     return file_pair
 
 
@@ -29,6 +42,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--runlist", "-l", nargs=1, type=click.Path(exists=True), help="Stage6 runlist"
+)
+@click.option(
+    '--event_class_mode',
+    '-ec',
+    is_flag=True,
+    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID.",
 )
 @click.option(
     "--gen_index_file",
@@ -69,6 +88,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def cli(
     file_pair,
     runlist,
+    event_class_mode,
     gen_index_file,
     save_multiplicity,
     ed,
@@ -98,10 +118,15 @@ def cli(
     if len(file_pair) == 0 and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
-    if len(file_pair) > 0 and runlist is not None:
-        click.echo(cli.get_help(click.Context(cli)))
-        click.secho("Only one file source can be used.", fg="yellow")
-        raise click.Abort()
+    if len(file_pair) > 0:
+        if runlist is not None:
+            click.echo(cli.get_help(click.Context(cli)))
+            click.secho("Only one file source can be used.", fg="yellow")
+            raise click.Abort()
+        if event_class_mode:
+            click.echo(cli.get_help(click.Context(cli)))
+            click.secho("event class mode requires runlist", fg="yellow")
+            raise click.Abort()
 
     if debug:
         logging.basicConfig(
@@ -158,7 +183,7 @@ def cli(
             click.secho(str(e), fg="red")
             raise click.Abort()
         try:
-            validateRunlist(rl_dict)
+            validateRunlist(rl_dict, event_class_mode=event_class_mode)
         except RunlistValidationError as e:
             click.secho(str(e), fg="red")
             raise click.Abort()
@@ -172,16 +197,23 @@ def cli(
             )
             raise click.Abort()
 
-        file_pairs = runlist_to_file_pair(rl_dict)
+        file_pairs = runlist_to_file_pair(rl_dict, event_class_mode=event_class_mode)
         flist = []
         for st5_str, ea_str in file_pairs:
             logging.info(f"Processing file: {st5_str}")
-            logging.debug(f"Stage5 file:{st5_str}, EA file:{ea_str}")
-            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            if ed or st5_str.find(".anasum.root") >= 0:
-                datasource = loadROOTFiles(st5_str, ea_str, "ED")
+            event_classes = None
+            # Reassign vars if using event classes
+            if event_class_mode:
+                event_classes = ea_str
+                ea_str = None
+                logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
             else:
-                datasource = loadROOTFiles(st5_str, ea_str, "VEGAS")
+                logging.debug(f"Stage5 file:{st5_str}, EA file:{ea_str}")
+            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
+            file_type = "ED" if (ed or st5_str.find(".anasum.root") >= 0) else "VEGAS"
+            datasource = loadROOTFiles(st5_str, ea_str, file_type,
+                                       event_classes=event_classes,
+                                       )
 
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
