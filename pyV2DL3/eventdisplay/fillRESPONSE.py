@@ -124,7 +124,7 @@ def find_camera_offsets(camera_offsets):
         )
         logger.debug(
             "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
-        ) 
+        )
         return [0.0, 10.0], [0.0, 10.0]
 
     # Note in the camera offset _low and _high may refer
@@ -135,15 +135,15 @@ def find_camera_offsets(camera_offsets):
 
 def duplicate_interpolating_coordinate(camera_offsets):
     """
-    This function duplicates the camera offsets value, when the dimension of 
+    This function duplicates the camera offsets value, when the dimension of
     camera offset axis in the stored IRF is 1.
-    
     """
 
     if len(camera_offsets) == 1:
         camera_offsets = [camera_offsets[0], camera_offsets[0]]
 
-    return camera_offsets 
+    return camera_offsets
+
 
 def fill_effective_area(
         irf_name,
@@ -162,7 +162,7 @@ def fill_effective_area(
 
     # Loop over offsets and store
     camera_offsets = duplicate_interpolating_coordinate(camera_offsets)
-  
+
     for offset in camera_offsets:
         eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
         ea_final.append(np.array(eff_area))
@@ -179,7 +179,7 @@ def fill_effective_area(
             ("THETA_HI", ">f4", np.shape(theta_high)),
             ("EFFAREA", ">f4", np.shape(ea_final)),
         ],
-    )   
+    )
 
     return x, min(energy_low), max(energy_high)
 
