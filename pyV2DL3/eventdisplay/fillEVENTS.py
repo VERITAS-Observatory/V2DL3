@@ -25,6 +25,7 @@ def __fillEVENTS__(edFileIO, select=None):
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
         runNumber = runSummary["runOn"][0]
+        logging.info("Run number: {}".format(runNumber))
         telConfig = file["run_{}/stereo/telconfig".format(runNumber)].arrays(
             library="np"
         )
