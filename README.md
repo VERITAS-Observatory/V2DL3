@@ -136,14 +136,14 @@ Unit tests are encouraged and are available for few cases at this point. Unit te
 Use the [python logging system](https://docs.python.org/3/howto/logging.html) instead of the ‘print()’ function to output text. This allows to pipe all output into a log file and for different logging levels (INFO, DEBUG, …).
 
 ---
-**TEXT BELOW REQUIRES REVIEW**
 
 ##### Multi file processing
 
-To convert many runs at once with different Effective Area files there is a modified anasum script here ( ``` VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/scripts/ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh ``` ), that can be used to create a ``` v2dl3_for_runlist_from_ED485-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the full-enclosure case. 
+To convert many runs at once with different Effective Area files there is a anasum script [ANALYSIS.anasum_parallel_from_runlist.sh](https://github.com/VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/blob/main/scripts/ANALYSIS.anasum_parallel_from_runlist.sh), that can be used to create a ``` v2dl3_for_runlist_from_EDxxxx-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the point-like case. Here, xxxx is the Eventdisply version (for eg. v487).
+
 Then in your bash run 
 ```
-./v2dl3_for_runlist_from_ED485-anasum.sh
+./v2dl3_for_runlist_from_EDxxxx-anasum.sh
 ```
 to create the fits files one after another. 
 
@@ -157,6 +157,9 @@ where `<script>` is the script that was written out by `ANALYSIS.anasum_parallel
  - `--conda_exe` path to the conda executable. Only needed if `$CONDA_EXE` is not set.
  - `--rootsys` path to rootsys. Only needed if `$ROOTSYS` is not set
  - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml'`)
+
+---
+**TEXT BELOW REQUIRES REVIEW**
 
 #### Filter events
 Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 
