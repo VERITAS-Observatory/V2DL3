@@ -13,6 +13,7 @@ here in order to access them when filling events and IRFs.
 https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#Event_Classes
 """
 
+
 class EventClass(object):
     def __init__(self, effective_area):
         self.effective_area_IO = ROOT.VARootIO(effective_area, True)
@@ -55,9 +56,6 @@ class EventClass(object):
         if (self.msw_lower >= self.msw_upper):
             raise Exception("MeanScaledWidthLower: " + str(
                 self.msw_lower) + " must be < MeanScaledWidthUpper: " + str(self.msw_upper))
-
-        # Validations for the other parameters will go here later in the 4DMLM updates
-
 
     def __del__(self):
         cpy_nonestring = "<class 'CPyCppyy_NoneType'>"

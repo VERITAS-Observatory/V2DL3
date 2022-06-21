@@ -46,6 +46,8 @@ Arguments:
     config_str_ori  -- fCutsFileText
     cut_searches    -- List of the desired parameter names as strings
 """
+
+
 def getCuts(config_str_ori, cut_searches):
     config_str = str(config_str_ori)
     cuts_found = {}

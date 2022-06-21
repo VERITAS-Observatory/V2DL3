@@ -3,7 +3,8 @@ import os
 
 import click
 
-from pyV2DL3.EventClass import EventClass
+from pyV2DL3 import EventClass
+
 
 # In event_class_mode, The user can provide multiple EAs per tag to define the event classes for that group.
 def runlist_to_file_pair(rl_dict, event_class_mode=False):
@@ -15,7 +16,7 @@ def runlist_to_file_pair(rl_dict, event_class_mode=False):
         for k in st5s.keys():
             event_classes = []
             for ea in eas[k]:
-                    event_classes.append(EventClass(ea))
+                event_classes.append(EventClass(ea))
             if len(event_classes) == 0:
                 raise Exception("No EA filenames defined for runlist tag: " + k)
             for f in st5s[k]:

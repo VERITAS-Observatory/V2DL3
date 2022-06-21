@@ -41,7 +41,7 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
 
     if file_type != "ED":
         raise Exception("File type not supported: {}".format(file_type))
-    
+
     if effective_area_file is None:
         raise Exception("EventDisplay requires an effective area file."
                         "\nEventDisplay with event classes is unsupported.")
