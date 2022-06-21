@@ -23,7 +23,8 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status = VEGASStatus()
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(etv_file, True)
-
+        self.__event_classes__ = event_classes
+        
         if ea_file is not None:
             self.__ea_file__ = ROOT.VARootIO(ea_file, True)
 
