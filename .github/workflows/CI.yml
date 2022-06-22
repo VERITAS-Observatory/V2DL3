@@ -67,7 +67,7 @@ jobs:
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   test-pointlike-CI.fits.gz
-          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+          python pyV2DL3/script/compareFitsFiles.py \
                 -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
           cat test-pointlike.log
@@ -77,7 +77,7 @@ jobs:
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   test-full-enclosure-CI.fits.gz
-          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+          python pyV2DL3/script/compareFitsFiles.py \
                 -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
