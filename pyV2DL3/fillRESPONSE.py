@@ -56,8 +56,8 @@ def fill_bintablehdu(
             hdu.header.set('TUNIT2 ', 'TeV', "")  #ENERGY_HI
             hdu.header.set('TUNIT3 ', 'deg', "")  #THETA_LO
             hdu.header.set('TUNIT4 ', 'deg', "")  #THETA_HI
-            hdu.header.set('TUNIT5 ', 'none', "") #GAMMA
-            hdu.header.set('TUNIT6 ', 'none', "") #SIGMA                                                                                                                              
+            hdu.header.set('TUNIT5 ', "", "")     #GAMMA
+            hdu.header.set('TUNIT6 ', 'deg', "")  #SIGMA                                                                                                                              
             hdu.header.set('CREF6', '(ENERG_LO:ENERG_HI,THETA_LO:THETA_HI,GAMMA:SIGMA)', '')
 
         # PSF table
