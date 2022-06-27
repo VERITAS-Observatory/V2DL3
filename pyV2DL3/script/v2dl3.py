@@ -58,7 +58,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     '--_4dmlm',
     '-4d',
     nargs=2,
-    help=("Presets -l, -e, -k, -r 2, --full-enclosure. "
+    help=("Presets -l, -ec, -k, -r 2, --full-enclosure. "
           "ARGS: <runlist> <king params file>")
 )
 @click.option(
