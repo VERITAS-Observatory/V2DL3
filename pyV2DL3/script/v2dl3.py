@@ -334,12 +334,13 @@ def cli(
             if eclass_count < 1:
                 raise Exception("No event data found")
             for i in range(0, eclass_count):
-                # If multiple event classes, create a subdirectory and append eclass # to filename
+                # If multiple event classes, each one gets a subdirectory
                 if eclass_count > 1:
+                    output_path = f"{output}/ec" + str(i)
                     if not os.path.exists(output_path):
                         os.makedirs(output_path)
                     stage_idx = fname_base.find(".")
-                    # Splice our '_ec#' identifier into the filename just before the first '.'
+                    # Splice an '_ec#' identifier into the filename just before the first '.'
                     if(stage_idx > -1):
                         eclass_fname = fname_base[:stage_idx] + "_ec" + str(i) + fname_base[stage_idx:]
                     # If no '.' found, append to end
@@ -358,14 +359,26 @@ def cli(
                 hdulist.writeto(final_output_path, overwrite=True)
                 flist.append(final_output_path)
 
-        # Generate hdu obs index file
+        # Generate master hdu obs index file
         if gen_index_file:
             logging.info(
                 f"Generating index files {output}/obs-index.fits.gz "
                 f"and {output}/hdu-index.fits.gz"
             )
             create_obs_hdu_index_file(flist, output, psf_king=irfs_to_store["psf-king"])
-
+            # Generate index files per event class
+            if eclass_count > 1:
+                for i in range(0, eclass_count):
+                    eclass_flist = []
+                    eclass_output = f"{output}/ec" + str(i)
+                    for fname in os.listdir(eclass_output):
+                        eclass_flist.append(eclass_output + "/" + fname)
+                    logging.info(
+                        f"Generating index files {eclass_output}/obs-index.fits.gz "
+                        f"and {eclass_output}/hdu-index.fits.gz"
+                    )
+                    create_obs_hdu_index_file(eclass_flist, eclass_output, psf_king=irfs_to_store["psf-king"])
+            
 
 if __name__ == "__main__":
     cli()
