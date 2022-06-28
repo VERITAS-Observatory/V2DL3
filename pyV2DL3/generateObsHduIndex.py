@@ -122,8 +122,10 @@ def gen_obs_index(filelist, index_file_dir="./", psf_king=False):
         "TSTOP",
     )
     if psf_king:
-        names.append("SAFE_ENERGY_LO")
-        names.append("EVENT_COUNT")
+        names += (
+            "SAFE_ENERGY_LO",
+            "EVENT_COUNT",
+        )
     names += (
         "N_TELS",
         "TELLIST",
@@ -147,8 +149,10 @@ def gen_obs_index(filelist, index_file_dir="./", psf_king=False):
         ">f4", # TSTOP
     )
     if psf_king:
-        dtype.append("f4") # SAFE_ENERGY_LO
-        dtype.append("i8") # EVENT_COUNT
+        dtype += (
+            "f4", # SAFE_ENERGY_LO
+            "i8", # EVENT_COUNT
+        )
     dtype += (
         ">i8", # N_TELLS
         "S20", # TELLIST
