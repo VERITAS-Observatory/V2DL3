@@ -41,7 +41,7 @@ class IrfInterpolator:
             )
             raise WrongIrf
 
-    def __load_irf(self):
+    def __load_irf(self, **kwargs):
         """Load IRFs from effective area file"""
 
         logging.info(
@@ -81,8 +81,13 @@ class IrfInterpolator:
         self.irf_axes = list(irf_axes.values())
         logging.debug(str(("IRF axes:", irf_axes)))
 
-        clk = click.get_current_context()
-        if clk.params["force_extrapolation"]:
+        try:
+            clk = click.get_current_context()
+            extrapolation = clk.params["force_extrapolation"]
+        except:
+            extrapolation = kwargs.get("force_extrapolation", False)
+
+        if extrapolation:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
         else:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
