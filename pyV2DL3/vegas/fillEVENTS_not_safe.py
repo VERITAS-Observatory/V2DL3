@@ -91,6 +91,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, reco_type=1, user_cuts_dict=None, event
         # For a single event class (or when not using EventClass), this will stay 0
         # so that all qualifying events will be added to our single dict
         event_class_idx = 0
+        skip = False
 
         if reco_type == 1:
             reco = ev.S
@@ -116,6 +117,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, reco_type=1, user_cuts_dict=None, event
                     break
             # Remove event
             if (sep < xsep):
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                             + " spatial exclusion")
                 continue
 
         if event_classes is not None:
@@ -134,6 +137,20 @@ def __fillEVENTS_not_safe__(vegasFileIO, reco_type=1, user_cuts_dict=None, event
                     break
                 event_class_idx += 1
 
+            # FoVcut check
+            if event_classes[event_class_idx].fov_cut_upper is not None and not skip:
+                c2 = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
+                        reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+                pointing_position = SkyCoord(np.rad2deg(reco.fArrayTrackingRA_J2000_Rad), np.rad2deg(
+                        reco.fArrayTrackingDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+                
+                # Remove event if event falls outside FoV
+                tel_sep = pointing_position.separation(c2).degree
+                if  tel_sep > event_classes[event_class_idx].fov_cut_upper:
+                    logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                              + " separation > fov_cut_lower: " + str(tel_sep))
+                    continue
+
             # If this event falls into one of our event classes
             if event_class_idx < num_event_classes:
                 array_dicts[event_class_idx]["eclassArr"].append(
@@ -145,7 +162,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, reco_type=1, user_cuts_dict=None, event
                              + "MSW: " + str(fMSW))
                 # Skip to next event
                 continue
-
+                    
         elif store_msw_msl:
             array_dicts[event_class_idx]["mswArr"].append(reco.fMSW)
             array_dicts[event_class_idx]["mslArr"].append(reco.fMSL)

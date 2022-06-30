@@ -139,21 +139,21 @@ class EventClass(object):
             exception_messages.append(
                 "MaxHeightUpper was found in EA but not event cuts")
 
-        # Events FoV cuts are optional but must match EA
-        if "FoVCutLower" in event_cuts:
-            if float(event_cuts["FoVCutLower"]) != self.fov_cut_lower:
-                exception_messages.append(
-                    "events FoVCutLower: " + event_cuts["FoVCutLower"] + " != EA FoVCutLower: " + str(self.fov_cut_lower))
-        elif self.fov_cut_lower is not None:
-            exception_messages.append(
-                "FoVCutLower was found in EA but not event cuts")
-        if "FoVCutUpper" in event_cuts:
-            if float(event_cuts["FoVCutUpper"]) != self.fov_cut_upper:
-                exception_messages.append(
-                    "events FoVCutUpper: " + event_cuts["FoVCutUpper"] + " != EA FoVCutUpper: " + str(self.fov_cut_upper))
-        elif self.fov_cut_upper is not None:
-            exception_messages.append(
-                "FoVCutUpper was found in EA but not event cuts")
+        # Events FoV cuts are optional but must match EA -- update to fovcut
+        # if "FoVCutLower" in event_cuts:
+        #     if float(event_cuts["FoVCutLower"]) != self.fov_cut_lower:
+        #         exception_messages.append(
+        #             "events FoVCutLower: " + event_cuts["FoVCutLower"] + " != EA FoVCutLower: " + str(self.fov_cut_lower))
+        # elif self.fov_cut_lower is not None:
+        #     exception_messages.append(
+        #         "FoVCutLower was found in EA but not event cuts")
+        # if "FoVCutUpper" in event_cuts:
+        #     if float(event_cuts["FoVCutUpper"]) != self.fov_cut_upper:
+        #         exception_messages.append(
+        #             "events FoVCutUpper: " + event_cuts["FoVCutUpper"] + " != EA FoVCutUpper: " + str(self.fov_cut_upper))
+        # elif self.fov_cut_upper is not None:
+        #     exception_messages.append(
+        #         "FoVCutUpper was found in EA but not event cuts")
 
         # Raise exception with all exception messages for the user.
         if len(exception_messages) > 0:
