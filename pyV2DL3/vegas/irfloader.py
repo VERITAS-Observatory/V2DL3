@@ -313,7 +313,6 @@ class IRFLoader:
 
         # If using king function, determine bin values from the king params file
         if self.__psf_king__:
-            print("Loading PSF bins...")
             psf_king_index = {}
             index_keys = ["Zenith", "AbsoluteOffset", "Noise", "Azimuth"]
             # Initialize dict from keys
