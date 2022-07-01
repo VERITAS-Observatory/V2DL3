@@ -54,5 +54,5 @@ class EventDisplayDataSource(VtsDataSource):
             self.__azimuth__,
             self.__zenith__,
             self.__pedvar__,
-            self.__irf_to_store__,
+            self.__irf_to_store__, **kwargs
         )
