@@ -80,7 +80,7 @@ class IrfInterpolator:
         self.irf_data = np.flip(irf_data, axis=zenith_axis)
         self.irf_axes = list(irf_axes.values())
         logging.debug(str(("IRF axes:", irf_axes)))
-        
+
         if kwargs.get("use_click", True):
             clk = click.get_current_context()
             extrapolation = clk.params["force_extrapolation"]
