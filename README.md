@@ -14,10 +14,14 @@
 - Outputs conform to psf_king format https://gamma-astro-data-formats.readthedocs.io/en/v0.1/irfs/psf/psf_king/index.html
 - Note that psf king needs params to match your EA(s) MSW ranges
 
-#### User Cuts File
+#### Spatial Exclusions
 - The user may provide a file `-c <cutfile>` to define additional cuts for their stage6 run
 - For now only supports spatial exclusion zones
 - Easily extensible to more cuts using new `loadUserCuts()` in vegas/util.py ([see dev notes](https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#Extending_2))
+
+#### FoVCuts
+- Events can be automatically cut according to the EA's FoVCut parameters. 
+- For now this only works in event class mode; will decoupled and added as a flag soon
 
 #### Reconstruction Mode
 - Users may choose ITM (.M3D) via `-r` flag (`-r 2` for M3D)
