@@ -25,14 +25,14 @@ class IrfInterpolator:
         else:
             raise FileNotFoundError
 
-    def set_irf(self, irf_name):
+    def set_irf(self, irf_name, **kwargs):
         """Check consistency of IRF name"""
         if (
             irf_name in self.implemented_irf_names_1d
             or irf_name in self.implemented_irf_names_2d
         ):
             self.irf_name = irf_name
-            self.__load_irf()
+            self.__load_irf(**kwargs)
         else:
             logging.exception(
                 "The irf you entered: {} is either wrong or not implemented.".format(
@@ -80,11 +80,11 @@ class IrfInterpolator:
         self.irf_data = np.flip(irf_data, axis=zenith_axis)
         self.irf_axes = list(irf_axes.values())
         logging.debug(str(("IRF axes:", irf_axes)))
-
-        try:
+        
+        if kwargs.get("use_click", True):
             clk = click.get_current_context()
             extrapolation = clk.params["force_extrapolation"]
-        except:
+        else:
             extrapolation = kwargs.get("force_extrapolation", False)
 
         if extrapolation:
