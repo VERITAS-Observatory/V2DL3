@@ -60,7 +60,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     else:
         tolerance = kwargs.get("fuzzy_boundary", 0.0)
         extrapolation = kwargs.get("force_extrapolation", False)
-    
+
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
         if extrapolation:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))

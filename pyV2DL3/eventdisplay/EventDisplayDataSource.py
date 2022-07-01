@@ -37,7 +37,6 @@ class EventDisplayDataSource(VtsDataSource):
         pass
 
     def __fill_response__(self, **kwargs):
-        
         logging.info(
             (
                 "Parameters used to query IRFs:"

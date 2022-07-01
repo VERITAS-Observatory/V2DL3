@@ -1,5 +1,6 @@
 import logging
 
+
 class VtsDataSource(object):
     def __init__(self, source_name, evt_file, ea_file):
         self.__data_source_name__ = source_name
