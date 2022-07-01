@@ -10,7 +10,7 @@ def convertROOT2fits(files, eff, **kwargs):
     if type(files) == str:
         files = [files]
     else:
-        files = glob.glob(files+"/*anasum.root")
+        files = glob.glob(files + "/*anasum.root")
 
     full_enclosure = kwargs.pop("full_enclosure", True)
     point_like = kwargs.pop("point_like", True)
@@ -55,7 +55,7 @@ def convertROOT2fits(files, eff, **kwargs):
             hdulist[1].header["OBS_ID"] = obs_id
 
         output = kwargs.get("output", file.replace(".root", ".fits"))
-        
+
         if ".fits" not in output:
             output += ".fits"
 
