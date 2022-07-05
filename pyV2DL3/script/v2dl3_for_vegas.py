@@ -38,7 +38,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-f",
     nargs=2,
     type=click.Path(exists=True),
-    help="A stage5 ROOT file (<file 1>) and "
+    help="A stage5 file (<file 1>) and "
     "the corresponding effective area (<file 2>).",
 )
 @click.option(
