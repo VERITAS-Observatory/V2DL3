@@ -3,7 +3,7 @@ import os
 
 import click
 
-from pyV2DL3 import EventClass
+from pyV2DL3.vegas.EventClass import EventClass
 
 
 # In event_class_mode, The user can provide multiple EAs per tag to define the event classes for that group.

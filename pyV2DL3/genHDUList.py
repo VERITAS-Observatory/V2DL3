@@ -36,7 +36,7 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
     if file_type == "VEGAS":
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, effective_area_file,
-                               event_classes=None,
+                               event_classes=event_classes,
                                )
 
     if file_type != "ED":
