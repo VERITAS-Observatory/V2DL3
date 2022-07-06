@@ -41,11 +41,11 @@ class VegasDataSource(VtsDataSource):
         """
         cpy_nonestring = "<class 'CPyCppyy_NoneType'>"
 
-        if str(type(self.__evt_file__)) != cpy_nonestring:
+        if str(type(self.__evt_file__)) != cpy_nonestring and not isinstance(self.__evt_file__, str):
             self.__evt_file__.closeTheRootFile()
 
         if self.__ea_file__ is not None:
-            if str(type(self.__ea_file__)) != cpy_nonestring:
+            if str(type(self.__ea_file__)) != cpy_nonestring and not isinstance(self.__ea_file__, str):
                 self.__ea_file__.closeTheRootFile()
 
     def __fill_evt__(self):
