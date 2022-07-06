@@ -14,14 +14,14 @@ def main():
             For VEGAS flags:
 
                 v2dl3-vegas --help
-            
+
 
             For ED flags:
 
                 pyV2DL3/script/v2dl3_for_Eventdisplay.py --help
-            
 
-            For more information, see V2DL3/README.md 
+
+            For more information, see V2DL3/README.md
             or
             https://github.com/VERITAS-Observatory/V2DL3
             """
