@@ -34,10 +34,19 @@ class VegasDataSource(VtsDataSource):
         self.__noise__ = 0
 
     def __del__(self):
-        # Close the root files
-        self.__evt_file__.closeTheRootFile()
+        """Close the root files
+
+        These typechecks will prevent the user from having their true exception
+        buried by a CPyCppyy exception on program exit.
+        """
+        cpy_nonestring = "<class 'CPyCppyy_NoneType'>"
+
+        if str(type(self.__evt_file__)) != cpy_nonestring:
+            self.__evt_file__.closeTheRootFile()
+
         if self.__ea_file__ is not None:
-            self.__ea_file__.closeTheRootFile()
+            if str(type(self.__ea_file__)) != cpy_nonestring:
+                self.__ea_file__.closeTheRootFile()
 
     def __fill_evt__(self):
         gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)
