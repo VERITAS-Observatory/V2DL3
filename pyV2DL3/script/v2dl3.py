@@ -1,17 +1,32 @@
 import logging
 
-logging.info(
-    """
-    Run V2DL3 for VEGAS (.stage5) or EventDisplay (.anasum):
 
-    v2dl3_vegas --help
-    for VEGAS flags
+def main():
+    logging.basicConfig(
+        format="%(levelname)s: %(message)s",
+        level=logging.INFO
+    )
+    logging.info(
+        """
+            Run V2DL3 for VEGAS (.stage5) or EventDisplay (.anasum):
 
-    pyV2DL3/script/v2dl3_for_Eventdisplay.py --help
-    for ED flags
 
-    For more information, see V2DL3/README.md 
-    or
-    https://github.com/VERITAS-Observatory/V2DL3
-    """
-)
+            For VEGAS flags:
+
+                v2dl3-vegas --help
+            
+
+            For ED flags:
+
+                pyV2DL3/script/v2dl3_for_Eventdisplay.py --help
+            
+
+            For more information, see V2DL3/README.md 
+            or
+            https://github.com/VERITAS-Observatory/V2DL3
+            """
+    )
+
+
+if __name__ == "__main__":
+    main()
