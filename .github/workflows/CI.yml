@@ -27,8 +27,7 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda install -c conda-forge mamba
-          mamba env create -n v2dl3ED -f environment-eventdisplay.yml
+          conda env create -n v2dl3ED -f environment-eventdisplay.yml
           conda activate v2dl3ED
           conda info
 
@@ -68,7 +67,7 @@ jobs:
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   test-pointlike-CI.fits.gz
-          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+          python pyV2DL3/script/compareFitsFiles.py \
                 -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
           cat test-pointlike.log
@@ -78,7 +77,7 @@ jobs:
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   test-full-enclosure-CI.fits.gz
-          python notebooks/eventdisplay-testing/compareFitsFiles.py \
+          python pyV2DL3/script/compareFitsFiles.py \
                 -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
