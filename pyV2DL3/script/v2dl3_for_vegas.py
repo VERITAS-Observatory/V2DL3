@@ -64,6 +64,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Save telescope multiplicity into event list",
 )
 @click.option(
+    "--save_msw_msl",
+    is_flag=True,
+    help="Append MSW and MSL columns to event tables."
+    "This is done automatically if using MSW-based event classes."
+)
+@click.option(
     "--filename_to_obsid",
     "-I",
     is_flag=True,
@@ -86,6 +92,7 @@ def cli(
     event_class_mode,
     gen_index_file,
     save_multiplicity,
+    save_msw_msl,
     filename_to_obsid,
     full_enclosure,
     point_like,
@@ -144,9 +151,12 @@ def cli(
         full_enclosure = False
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
+    # File pair mode
     if len(file_pair) > 0:
         st5_str, ea_str = file_pair
-        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS")
+        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+                                   save_msw_msl=save_msw_msl,
+                                   )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
@@ -158,6 +168,7 @@ def cli(
             )
             hdulist[1].header["OBS_ID"] = fname_base
         hdulist.writeto(output, overwrite=True)
+    # Runlist mode
     else:
         from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
         from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
@@ -202,27 +213,64 @@ def cli(
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
                                        event_classes=event_classes,
+                                       save_msw_msl=save_msw_msl,
                                        )
 
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
                 datasource.fill_data()
-            hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
-            if filename_to_obsid:
-                logging.info(
-                    f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
-                )
-                hdulist[1].header["OBS_ID"] = fname_base
-            hdulist.writeto(f"{output}/{fname_base}.fits", overwrite=True)
-            flist.append(f"{output}/{fname_base}.fits")
-            # Generate hdu obs index file
+
+            # Prepare output paths
+            output_path = f"{output}/{fname_base}"
+            # This is length 1 when not using event class mode
+            eclass_count = len(datasource.get_evt_data())
+            if eclass_count < 1:
+                raise Exception("No event data found")
+            for i in range(0, eclass_count):
+                # If multiple event classes, each one gets a subdirectory
+                if eclass_count > 1:
+                    output_path = f"{output}/ec" + str(i)
+                    if not os.path.exists(output_path):
+                        os.makedirs(output_path)
+                    stage_idx = fname_base.find(".")
+                    # Splice an '_ec#' identifier into the filename just before the first '.'
+                    if(stage_idx > -1):
+                        eclass_fname = fname_base[:stage_idx] + "_ec" + str(i) + fname_base[stage_idx:]
+                    # If no '.' found, append to end
+                    else:
+                        eclass_fname = fname_base + "_ec" + str(i)
+                    output_path + "/" + eclass_fname
+
+                # Write out the fits files
+                hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
+                if filename_to_obsid:
+                    logging.info(
+                        f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
+                    )
+                    hdulist[1].header["OBS_ID"] = fname_base
+                output_path += ".fits"
+                hdulist.writeto(output_path, overwrite=True)
+                flist.append(output_path)
+        
+        # Generate master index files
         if gen_index_file:
             logging.info(
                 f"Generating index files {output}/obs-index.fits.gz "
                 f"and {output}/hdu-index.fits.gz"
             )
             create_obs_hdu_index_file(flist, output)
-
+            # Generate index files per event class
+            if eclass_count > 1:
+                for i in range(0, eclass_count):
+                    eclass_flist = []
+                    eclass_output = f"{output}/ec" + str(i)
+                    for fname in os.listdir(eclass_output):
+                        eclass_flist.append(eclass_output + "/" + fname)
+                    logging.info(
+                        f"Generating index files {eclass_output}/obs-index.fits.gz "
+                        f"and {eclass_output}/hdu-index.fits.gz"
+                    )
+                    create_obs_hdu_index_file(eclass_flist, eclass_output, psf_king=irfs_to_store["psf-king"])
 
 if __name__ == "__main__":
     cli()

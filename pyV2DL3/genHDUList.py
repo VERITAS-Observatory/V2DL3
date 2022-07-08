@@ -50,15 +50,16 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
         return EventDisplayDataSource(data_file, effective_area_file)
 
 
-def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None):
+def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
     hdus = [
         genPrimaryHDU(),
         fillEVENTS(
             datasource,
             save_multiplicity=save_multiplicity,
             instrument_epoch=instrument_epoch,
+            event_class_idx=event_class_idx,
         ),
         fillGTI(datasource),
     ]
-    hdus.extend(fillRESPONSE(datasource, instrument_epoch))
+    hdus.extend(fillRESPONSE(datasource, instrument_epoch, event_class_idx=event_class_idx))
     return fits.HDUList(hdus)

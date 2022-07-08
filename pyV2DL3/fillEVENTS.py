@@ -6,10 +6,13 @@ from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant as constant
 
 
-def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
+def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
 
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
+
+    if event_class_idx is not None:
+        evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
     columns = [
@@ -19,6 +22,14 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         fits.Column(name="DEC", format="1E", array=evt_dict["DEC"], unit="deg"),
         fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV"),
     ]
+    if "MSW" in evt_dict:
+        columns.append(
+            fits.Column(name='MSW', format='1D', array=evt_dict['MSW'])
+        )
+    if "MSL" in evt_dict:
+        columns.append(
+            fits.Column(name='MSL', format='1D', array=evt_dict['MSL'])
+        )
     try:
         columns.append(fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"]))
         columns.append(
@@ -32,6 +43,10 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         columns.append(
             fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict["EVENT_TYPE"])
         )
+    if "EVENT_CLASS" in evt_dict:
+            columns.append(
+                fits.Column(name="EVENT_CLASS", format="32X", array=evt_dict['EVENT_CLASS'])
+            )
 
     # Create HDU
     hdu1 = fits.BinTableHDU.from_columns(columns)
@@ -118,7 +133,8 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
-
+    if event_class_idx is not None:
+        hdu1.header.set("EV_CLASS", event_class_idx, "Event class number")
     try:
         hdu1.header.set(
             "QUALITY",

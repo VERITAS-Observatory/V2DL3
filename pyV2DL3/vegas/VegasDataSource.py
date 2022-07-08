@@ -9,6 +9,7 @@ from pyV2DL3.VtsDataSource import VtsDataSource
 class VegasDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file,
                  event_classes=None,
+                 save_msw_msl=False,
                  ):
         super(VegasDataSource, self).__init__("VEGAS", etv_file, ea_file)
 
@@ -24,6 +25,7 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(etv_file, True)
         self.__event_classes__ = event_classes
+        self.__save_msw_msl__ = save_msw_msl
 
         if ea_file is not None:
             self.__ea_file__ = ROOT.VARootIO(ea_file, True)
@@ -49,9 +51,13 @@ class VegasDataSource(VtsDataSource):
                 self.__ea_file__.closeTheRootFile()
 
     def __fill_evt__(self):
-        gti, ea_config, evts = __fillEVENTS_not_safe__(self.__evt_file__)
+        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__,
+                                                            event_classes=self.__event_classes__,
+                                                            save_msw_msl=self.__save_msw_msl__,
+                                                            )
         self.__gti__ = gti
-        self.__evt__ = evts
+        # This is an array of dicts for each event class (array of one when not using event class mode)
+        self.__evt__ = evt_dicts
         self.__azimuth__ = ea_config["azimuth"]
         self.__zenith__ = ea_config["zenith"]
         self.__noise__ = ea_config["noise"]
@@ -63,6 +69,18 @@ class VegasDataSource(VtsDataSource):
         az = self.__azimuth__
         ze = self.__zenith__
         nn = self.__noise__
-        self.__response__ = __fillRESPONSE_not_safe__(
-            self.__ea_file__, az, ze, nn, self.__irf_to_store__
-        )
+        response_dicts = []
+        # Event class mode
+        if self.__event_classes__ is not None:
+            # Fill responses per event class
+            for ec in self.__event_classes__:
+                ea = ec.effective_area_IO
+                response_dicts.append(
+                    __fillRESPONSE_not_safe__(ea, az, ze, nn, self.__irf_to_store__)
+                )
+        # When not using event class mode
+        else:
+            response_dicts.append( 
+                __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, self.__irf_to_store__)
+            )
+        self.__response__ = response_dicts
