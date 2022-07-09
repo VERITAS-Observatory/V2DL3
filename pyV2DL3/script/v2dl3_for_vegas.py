@@ -239,7 +239,7 @@ def cli(
                     # If no '.' found, append to end
                     else:
                         eclass_fname = fname_base + "_ec" + str(i)
-                    output_path + "/" + eclass_fname
+                    output_path += "/" + eclass_fname
 
                 # Write out the fits files
                 hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)

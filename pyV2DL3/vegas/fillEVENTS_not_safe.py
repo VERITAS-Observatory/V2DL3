@@ -114,7 +114,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
                 continue
 
         elif save_msw_msl:
-            event_class_dicts[event_class_idx]["mswArr"].append(fMSW)
+            event_class_dicts[event_class_idx]["mswArr"].append(ev.S.fMSW)
             event_class_dicts[event_class_idx]["mslArr"].append(ev.S.fMSL)
 
         # seconds since first light

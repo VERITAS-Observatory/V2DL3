@@ -28,6 +28,7 @@ def genPrimaryHDU():
 
 def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
                   event_classes=None,
+                  save_msw_msl=False,
                   ):
 
     if effective_area_file is None and event_classes is None:
@@ -37,6 +38,7 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, effective_area_file,
                                event_classes=event_classes,
+                               save_msw_msl=save_msw_msl,
                                )
 
     if file_type != "ED":
