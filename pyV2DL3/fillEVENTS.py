@@ -12,6 +12,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     evt_dict = datasource.get_evt_data()
 
     if event_class_idx is not None:
+        add_evclass = True if len(evt_dict) > 1 else False
         evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
@@ -129,7 +130,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
-    if event_class_idx is not None:
+    if event_class_idx is not None and add_evclass:
         hdu1.header.set("EV_CLASS", event_class_idx, "Event class number")
     try:
         hdu1.header.set(
