@@ -1,0 +1,55 @@
+# YAML 1.2
+# Metadata for citation of this software according to the CFF format (https://citation-file-format.github.io/)
+cff-version: 1.2.0
+message: If you use this software, please cite it using these metadata.
+title: "V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter."
+# doi: TO BE FILLED
+version: 0.2.0
+date-released: 2022-02-28
+keywords:
+- "gamma-ray astronomy"
+- "astronomy software"
+- "Imaging Atmospheric Cherenkov Telescope"
+- VERITAS
+- Eventdisplay
+- VEGAS
+repository-code: "https://github.com/VERITAS-Observatory/V2DL3"
+license: BSD-3-Clause
+# authors appear in reverse appearance in time of contribution
+# (earliest first)
+authors:
+- given-names: Ralph
+  family-names: Bird
+  affiliation: UCLA
+- given-names: Tony
+  family-names: Lin
+- given-names: Tarek
+  family-names: Hassan
+  affiliation: DESY
+- given-names: Josh
+  family-names: Cardenzana
+- given-names: Mireia
+  family-names: Nievas
+  affiliation: DESY
+- given-names: Tobias
+  family-names: Kleiner
+  affiliation: DESY
+- given-names: Gernot
+  family-names: Maier
+  affiliation: DESY
+  orcid: https://orcid.org/0000-0001-9868-4700
+- given-names: Sonal
+  family-names: Patel
+  affiliation: DESY
+- given-names: Konstantin
+  family-names: Pfrang
+  affiliation: DESY
+- given-names: Donggeun
+  family-names: Tak
+  affiliation: DESY
+- given-names: Greg
+  family-names: Foote
+  affiliation: "Department of Physics and Astronomy and the Bartol Research Institute, University of Delaware, Newark, DE 19716, USA"
+- given-names: Tyler
+  family-names: Cahill
+  affiliation: "Iowa State University"
