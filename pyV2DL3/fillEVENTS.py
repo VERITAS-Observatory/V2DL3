@@ -43,10 +43,6 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         columns.append(
             fits.Column(name="EVENT_TYPE", format="1J", array=evt_dict["EVENT_TYPE"])
         )
-    if "EVENT_CLASS" in evt_dict:
-            columns.append(
-                fits.Column(name="EVENT_CLASS", format="32X", array=evt_dict['EVENT_CLASS'])
-            )
 
     # Create HDU
     hdu1 = fits.BinTableHDU.from_columns(columns)

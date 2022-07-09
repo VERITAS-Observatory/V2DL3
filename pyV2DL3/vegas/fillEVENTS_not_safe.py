@@ -71,8 +71,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     if event_classes is not None or save_msw_msl:
         event_arrays["mswArr"] = []
         event_arrays["mslArr"] = []
-        if event_classes is not None:
-            event_arrays["eClassArr"] = []
 
     # Deep copy the dictionary for each event class
     event_class_dicts = [event_arrays]
@@ -103,8 +101,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
 
             # If this event falls into an event classes
             if event_class_idx < num_event_classes:
-                event_class_dicts[event_class_idx]["eClassArr"].append(
-                    8 * 2**event_class_idx)
                 event_class_dicts[event_class_idx]["mswArr"].append(fMSW)
                 event_class_dicts[event_class_idx]["mslArr"].append(ev.S.fMSL)
             # Else skip to next event
@@ -176,8 +172,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
             evt_dict["MSW"] = arr_dict["mswArr"]
         if "mslArr" in arr_dict:
             evt_dict["MSL"] = arr_dict["mslArr"]
-        if "eclassArr" in arr_dict:
-            evt_dict["EVENT_CLASS"] = arr_dict["eClassArr"]
         # Filling Header info
         evt_dict["OBS_ID"] = runHeader.getRunNumber()
         evt_dict["DATE-OBS"] = startTime.getString().split()[0]
