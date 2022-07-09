@@ -270,7 +270,7 @@ def cli(
                         f"Generating index files {eclass_output}/obs-index.fits.gz "
                         f"and {eclass_output}/hdu-index.fits.gz"
                     )
-                    create_obs_hdu_index_file(eclass_flist, eclass_output, psf_king=irfs_to_store["psf-king"])
+                    create_obs_hdu_index_file(eclass_flist, eclass_output)
 
 if __name__ == "__main__":
     cli()
