@@ -4,12 +4,15 @@ from pyV2DL3.vegas.fillEVENTS_not_safe import __fillEVENTS_not_safe__
 from pyV2DL3.vegas.fillRESPONSE_not_safe import __fillRESPONSE_not_safe__
 from pyV2DL3.vegas.load_vegas import VEGASStatus
 from pyV2DL3.VtsDataSource import VtsDataSource
+from pyV2DL3.vegas.util import loadUserCuts
 
 
 class VegasDataSource(VtsDataSource):
     def __init__(self, etv_file, ea_file,
                  event_classes=None,
+                 reco_type=1,
                  save_msw_msl=False,
+                 user_cut_file=None,
                  ):
         super(VegasDataSource, self).__init__("VEGAS", etv_file, ea_file)
 
@@ -25,7 +28,11 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(etv_file, True)
         self.__event_classes__ = event_classes
+        self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
+        if user_cut_file is not None:
+            # Load user defined cuts. See loadUserCuts() in util.py for possible keys.
+            self.__user_cuts__ = loadUserCuts(user_cut_file)
 
         if ea_file is not None:
             self.__ea_file__ = ROOT.VARootIO(ea_file, True)
@@ -53,7 +60,9 @@ class VegasDataSource(VtsDataSource):
     def __fill_evt__(self):
         gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__,
                                                             event_classes=self.__event_classes__,
+                                                            reco_type=self.__reco_type__,
                                                             save_msw_msl=self.__save_msw_msl__,
+                                                            user_cuts_dict=self.__user_cuts__,
                                                             )
         self.__gti__ = gti
         # This is an array of dicts for each event class (array of one when not using event class mode)

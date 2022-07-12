@@ -52,6 +52,21 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID.",
 )
 @click.option(
+    '--event_cuts_file',
+    '-c',
+    nargs=1,
+    type=click.Path(exists=True),
+    help='File defining spatial exclusion regions to cut'
+)
+@click.option(
+    "--reconstruction_type",
+    "-r",
+    nargs=1,
+    default=1,
+    type=click.INT,
+    help="1: Standard (.S) - default, 2: ITM (.M3D)"
+)
+@click.option(
     "--gen_index_file",
     "-g",
     is_flag=True,
@@ -91,6 +106,8 @@ def cli(
     file_pair,
     runlist,
     event_class_mode,
+    event_cuts_file,
+    reconstruction_type,
     gen_index_file,
     save_multiplicity,
     save_msw_msl,
@@ -156,7 +173,9 @@ def cli(
     if len(file_pair) > 0:
         st5_str, ea_str = file_pair
         datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+                                   reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
+                                   user_cut_file=event_cuts_file,
                                    )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
@@ -213,7 +232,9 @@ def cli(
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
                                        event_classes=event_classes,
+                                       reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
+                                       user_cut_file=event_cuts_file,
                                        )
 
             datasource.set_irfs_to_store(irfs_to_store)
