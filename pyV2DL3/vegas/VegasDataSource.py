@@ -80,7 +80,7 @@ class VegasDataSource(VtsDataSource):
                 )
         # When not using event class mode
         else:
-            response_dicts.append( 
+            response_dicts.append(
                 __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, self.__irf_to_store__)
             )
         self.__response__ = response_dicts

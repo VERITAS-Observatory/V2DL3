@@ -149,7 +149,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
 
     goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))
     real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
-    
+
     # Construct an array to hold the event dict(s) to be returned:
     returned_dicts = []
     for i in range(num_event_classes):

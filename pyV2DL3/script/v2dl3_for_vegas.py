@@ -3,6 +3,7 @@ import os
 
 import click
 
+from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 from pyV2DL3.vegas.EventClass import EventClass
 
 
@@ -169,8 +170,7 @@ def cli(
             hdulist[1].header["OBS_ID"] = fname_base
         hdulist.writeto(output, overwrite=True)
     # Runlist mode
-    else:
-        from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
+    else:        
         from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
         from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
         from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
@@ -227,19 +227,8 @@ def cli(
             if eclass_count < 1:
                 raise Exception("No event data found")
             for i in range(0, eclass_count):
-                # If multiple event classes, each one gets a subdirectory
                 if eclass_count > 1:
-                    output_path = f"{output}/ec" + str(i)
-                    if not os.path.exists(output_path):
-                        os.makedirs(output_path)
-                    stage_idx = fname_base.find(".")
-                    # Splice an '_ec#' identifier into the filename just before the first '.'
-                    if(stage_idx > -1):
-                        eclass_fname = fname_base[:stage_idx] + "_ec" + str(i) + fname_base[stage_idx:]
-                    # If no '.' found, append to end
-                    else:
-                        eclass_fname = fname_base + "_ec" + str(i)
-                    output_path += "/" + eclass_fname
+                    output_path = make_eclass_path(fname_base, output, i)
 
                 # Write out the fits files
                 hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
@@ -251,26 +240,64 @@ def cli(
                 output_path += ".fits"
                 hdulist.writeto(output_path, overwrite=True)
                 flist.append(output_path)
-        
-        # Generate master index files
+
         if gen_index_file:
-            logging.info(
+            gen_index_files(flist, output, eclass_count=eclass_count)
+
+
+"""
+Generates the index files for a list of files.
+
+Arguments:
+    flist         --  List of .fits filepaths
+    output        --  Destination to write the generated index files.
+    eclass_count  --  Number of event classes for this run
+"""
+def gen_index_files(flist, output, eclass_count=1):
+    # Generate master index files
+    logging.info(
                 f"Generating index files {output}/obs-index.fits.gz "
                 f"and {output}/hdu-index.fits.gz"
+    )
+    create_obs_hdu_index_file(flist, output)
+
+    # Generate index files per event class
+    if eclass_count > 1:
+        for i in range(0, eclass_count):
+            eclass_flist = []
+            eclass_output = f"{output}/ec" + str(i)
+            for fname in os.listdir(eclass_output):
+                eclass_flist.append(eclass_output + "/" + fname)
+            logging.info(
+                f"Generating index files {eclass_output}/obs-index.fits.gz "
+                f"and {eclass_output}/hdu-index.fits.gz"
             )
-            create_obs_hdu_index_file(flist, output)
-            # Generate index files per event class
-            if eclass_count > 1:
-                for i in range(0, eclass_count):
-                    eclass_flist = []
-                    eclass_output = f"{output}/ec" + str(i)
-                    for fname in os.listdir(eclass_output):
-                        eclass_flist.append(eclass_output + "/" + fname)
-                    logging.info(
-                        f"Generating index files {eclass_output}/obs-index.fits.gz "
-                        f"and {eclass_output}/hdu-index.fits.gz"
-                    )
-                    create_obs_hdu_index_file(eclass_flist, eclass_output)
+            create_obs_hdu_index_file(eclass_flist, eclass_output)
+
+
+"""
+Sorts output files to subdirectories and appends "_ec#" to their filename 
+according to event class.
+
+Arguments:
+    fname_base   --  Filename of the fits file
+    output       --  Base output directory
+    eclass_idx   --  The event class # that this file belongs to.
+"""
+def make_eclass_path(fname_base, output, eclass_idx):
+    output_path = f"{output}/ec" + str(eclass_idx)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    stage_idx = fname_base.find(".")
+    # Splice an '_ec#' identifier into the filename just before the first '.'
+    if(stage_idx > -1):
+        eclass_fname = fname_base[:stage_idx] + "_ec" + str(eclass_idx) + fname_base[stage_idx:]
+    # If no '.' found, append to end
+    else:
+        eclass_fname = fname_base + "_ec" + str(eclass_idx)
+    
+    return output_path + "/" + eclass_fname
+
 
 if __name__ == "__main__":
     cli()
