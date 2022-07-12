@@ -50,6 +50,11 @@ authors:
 - given-names: Greg
   family-names: Foote
   affiliation: "Department of Physics and Astronomy and the Bartol Research Institute, University of Delaware, Newark, DE 19716, USA"
+- given-names: Alisha
+  family-names: Chromey
+- given-names: Amanda
+  family-names: Weinstein
+  affiliation: "Iowa State University"
 - given-names: Tyler
   family-names: Cahill
   affiliation: "Iowa State University"
