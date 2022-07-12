@@ -170,7 +170,7 @@ def cli(
             hdulist[1].header["OBS_ID"] = fname_base
         hdulist.writeto(output, overwrite=True)
     # Runlist mode
-    else:        
+    else:   
         from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
         from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
         from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
@@ -253,11 +253,13 @@ Arguments:
     output        --  Destination to write the generated index files.
     eclass_count  --  Number of event classes for this run
 """
+
+
 def gen_index_files(flist, output, eclass_count=1):
     # Generate master index files
     logging.info(
-                f"Generating index files {output}/obs-index.fits.gz "
-                f"and {output}/hdu-index.fits.gz"
+        f"Generating index files {output}/obs-index.fits.gz "
+        f"and {output}/hdu-index.fits.gz"
     )
     create_obs_hdu_index_file(flist, output)
 
@@ -276,7 +278,7 @@ def gen_index_files(flist, output, eclass_count=1):
 
 
 """
-Sorts output files to subdirectories and appends "_ec#" to their filename 
+Sorts output files to subdirectories and appends "_ec#" to their filename
 according to event class.
 
 Arguments:
@@ -284,6 +286,8 @@ Arguments:
     output       --  Base output directory
     eclass_idx   --  The event class # that this file belongs to.
 """
+
+
 def make_eclass_path(fname_base, output, eclass_idx):
     output_path = f"{output}/ec" + str(eclass_idx)
     if not os.path.exists(output_path):
@@ -295,7 +299,7 @@ def make_eclass_path(fname_base, output, eclass_idx):
     # If no '.' found, append to end
     else:
         eclass_fname = fname_base + "_ec" + str(eclass_idx)
-    
+
     return output_path + "/" + eclass_fname
 
 
