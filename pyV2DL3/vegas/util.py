@@ -43,8 +43,11 @@ Use the `in` operator on the returned dictionary to see if the cut was found.
 Do note that the cut values are saved as strings.
 
 Arguments:
-    config_str_ori  -- fCutsFileText
-    cut_searches    -- List of the desired parameter names as strings
+    config_str_ori  --  fCutsFileText
+    cut_searches    --  List of the desired parameter names as strings
+
+Returns:
+    Dict containing found param names as strings, and their values as strings.
 """
 
 
@@ -62,6 +65,36 @@ def getCuts(config_str_ori, cut_searches):
                     if len(cut_str) > 0:
                         cuts_found[cut_search] = cut_str
     return cuts_found
+
+
+"""
+Load user cuts to be applied when filling events.
+Only does spatial exclusion regions for now
+
+Arguments:
+    user_cut_file  --  https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#User_Cuts_File
+
+Returns:
+    Dict: {
+        "spatial_exclusions": List of spatial exclusion regions as tuples containing (ra, dec, sep)
+    }
+"""
+def loadUserCuts(user_cut_file):
+    exclusion_regions = []
+    f = open(user_cut_file, 'r')
+    for i in f.readlines():
+        srcra = (i.split(',')[1])
+        srcdec = (i.split(',')[2])
+        srcsep = (i.split(',')[3])
+        # Named tuples would be nice, but unnamed tuples are ~ 40% faster to access.
+        # They will need to be accessed thousands of times per stage5 file.
+        exclusion_regions.append(srcra, srcdec, srcsep)
+    f.close()
+
+    return {
+        "spatial_exclusions": exclusion_regions,
+        # more user cuts could be added here
+    }
 
 
 def getTimeCut(config_str_ori):
