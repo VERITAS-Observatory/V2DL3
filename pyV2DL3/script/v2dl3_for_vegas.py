@@ -170,7 +170,7 @@ def cli(
             hdulist[1].header["OBS_ID"] = fname_base
         hdulist.writeto(output, overwrite=True)
     # Runlist mode
-    else:   
+    else:
         from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
         from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
         from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
