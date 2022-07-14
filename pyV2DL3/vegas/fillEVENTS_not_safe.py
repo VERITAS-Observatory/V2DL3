@@ -87,6 +87,13 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
             spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
             spatial_exclusions = True
 
+    spatial_exclusions = False
+    # Load user cuts if provided
+    if user_cuts_dict is not None:
+        if "spatial_exclusion" in user_cuts_dict:
+            spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
+            spatial_exclusions = True
+
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
@@ -94,7 +101,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
         event_class_idx = 0
 
         # Event reconstruction method
-        if reco_type == 1: reco = reco
+        if reco_type == 1: reco = ev.S
         elif reco_type == 2: reco = ev.M3D
         else: raise Exception("Invalid reconstruction type!"
                               "\nSee --help for supported arguments")
