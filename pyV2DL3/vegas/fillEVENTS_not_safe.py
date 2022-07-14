@@ -2,6 +2,8 @@ import logging
 from copy import deepcopy
 
 from astropy.time import Time
+from astropy.coordinates import SkyCoord
+import astropy.units as units
 import numpy as np
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
@@ -16,7 +18,8 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False):
+def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
+                            reco_type=1, save_msw_msl=False, user_cuts_dict=None,):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -77,14 +80,38 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     for i in range(num_event_groups - 1):
         event_groups.append(deepcopy(event_arrays))
 
+    spatial_exclusions = False
+    # Load user cuts if provided
+    if user_cuts_dict is not None:
+        if "spatial_exclusion" in user_cuts_dict:
+            spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
+            spatial_exclusions = True
+
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
         # When not using event class mode, this will stay 0
         event_class_idx = 0
 
+        # Event reconstruction method
+        if reco_type == 1: reco = reco
+        elif reco_type == 2: reco = ev.M3D
+        else: raise Exception("Invalid reconstruction type!"
+                              "\nSee --help for supported arguments")
+
+        # Reconstructed shower direction
+        event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
+                    reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+
+        # Check spatial exclusion regions if provided
+        if spatial_exclusions:
+            if check_spatial_exclusion(event_skycoord, spatial_exclusion_regions):
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                             + " fell within a spatial exclusion region")
+                continue
+
         if event_classes is not None:
-            fMSW = ev.S.fMSW
+            fMSW = reco.fMSW
             """Determine which event class (if any) the event falls into.
 
             Simply loop through the event classes and break if this event meets all
@@ -93,7 +120,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
             For now, we only do it based on the MSW intervals
             """
             event_class_idx = 0
-            # Loop through event classes to check if this event satisfies the parameters
+            # Loop through event classes to check if this event satisfies the event class parameters
             for ec in event_classes:
                 if ec.msw_lower <= fMSW < ec.msw_upper:
                     break
@@ -102,35 +129,43 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
             # If this event falls into an event classes
             if event_class_idx < num_event_groups:
                 event_groups[event_class_idx]["mswArr"].append(fMSW)
-                event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
+                event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
             # Else skip to next event
             else:
-                logger.debug("Event excluded: " + str(ev.S.fArrayEventNum)
-                             + " MSW: " + str(fMSW))
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
+                continue
+
+        # Check FoV if appropriate
+        if fov_cut_upper is not None:
+            excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper)
+            if excluded:
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                              + " separation: " + str(tel_sep) + " > fov_cut_upper: " + str(fov_cut_upper))
                 continue
 
         elif save_msw_msl:
-            event_groups[event_class_idx]["mswArr"].append(ev.S.fMSW)
-            event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
+            event_groups[event_class_idx]["mswArr"].append(reco.fMSW)
+            event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
 
         # seconds since first light
         time_relative_to_reference = (
-            float(ev.S.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
+            float(reco.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
         )
         this_event_group = event_groups[event_class_idx]
-        this_event_group["evNumArr"].append(ev.S.fArrayEventNum)
+        this_event_group["evNumArr"].append(reco.fArrayEventNum)
         this_event_group["timeArr"].append(time_relative_to_reference)
-        this_event_group["raArr"].append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
-        this_event_group["decArr"].append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
-        this_event_group["azArr"].append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
-        this_event_group["altArr"].append(np.rad2deg(ev.S.fDirectionElevation_Rad))
-        this_event_group["energyArr"].append(ev.S.fEnergy_GeV / 1000.0)
-        this_event_group["nTelArr"].append(ev.S.fImages)
+        this_event_group["raArr"].append(np.rad2deg(reco.fDirectionRA_J2000_Rad))
+        this_event_group["decArr"].append(np.rad2deg(reco.fDirectionDec_J2000_Rad))
+        this_event_group["azArr"].append(np.rad2deg(reco.fDirectionAzimuth_Rad))
+        this_event_group["altArr"].append(np.rad2deg(reco.fDirectionElevation_Rad))
+        this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
+        this_event_group["nTelArr"].append(reco.fImages)
 
-        avAlt.append(ev.S.fArrayTrackingElevation_Deg)
-        avAz.append(ev.S.fArrayTrackingAzimuth_Deg)
-        avRA.append(ev.S.fArrayTrackingRA_J2000_Rad)
-        avDec.append(ev.S.fArrayTrackingDec_J2000_Rad)
+        avAlt.append(reco.fArrayTrackingElevation_Deg)
+        avAz.append(reco.fArrayTrackingAzimuth_Deg)
+        avRA.append(reco.fArrayTrackingRA_J2000_Rad)
+        avDec.append(reco.fArrayTrackingDec_J2000_Rad)
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -214,3 +249,50 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
         {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
         returned_dicts,
     )
+
+
+"""
+Check event against the provided spatial exclusion regions as tuples (ra, dec, sep)
+
+Arguments:
+    event_skycoord  --  Reconstructed shower direction as an astropy.SkyCoord
+    reco            --  The reco attribute of the selectedEventsTree (e.g reco or ev.ITM)
+    fov_cut_upper   --  The FoV upper limit in degrees.
+
+Returns: 
+    Bool  --  True if event falls outside of the FoV (event needs excluded)
+    float --  The computed separation from the FoV center
+"""
+def check_FoV_exclusion(event_skycoord, reco, fov_cut_upper):
+    pointing_position = SkyCoord(np.rad2deg(reco.fArrayTrackingRA_J2000_Rad), np.rad2deg(
+            reco.fArrayTrackingDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+    
+    tel_sep = pointing_position.separation(event_skycoord).degree
+    if  tel_sep > fov_cut_upper:
+        return True, tel_sep
+
+    return False, tel_sep
+
+
+"""
+Check event against the provided spatial exclusion regions as tuples (ra, dec, sep)
+
+Arguments:
+    event_skycoord  --  reconstructed shower direction as an astropy.SkyCoord
+
+Returns: 
+    Bool  --  True if event falls within an exclusion region (event needs excluded) 
+"""
+def check_spatial_exclusion(event_skycoord, exclusion_regions):
+    for xra, xdec, xsep in exclusion_regions:
+        # Source position
+        src_skycoord = SkyCoord(xra, xdec, frame='icrs',
+                        unit=(units.deg, units.deg))
+
+        sep = src_skycoord.separation(event_skycoord).degree
+        xsep = float(xsep)
+        # If one event falls in an exclusion region, skip the other exclusion regions
+        if (sep < xsep):
+            return True
+
+    return False
