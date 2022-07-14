@@ -87,13 +87,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
             spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
             spatial_exclusions = True
 
-    spatial_exclusions = False
-    # Load user cuts if provided
-    if user_cuts_dict is not None:
-        if "spatial_exclusion" in user_cuts_dict:
-            spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
-            spatial_exclusions = True
-
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
