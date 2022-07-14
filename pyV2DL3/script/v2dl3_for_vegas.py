@@ -221,7 +221,7 @@ def cli(
                 datasource.fill_data()
 
             # Prepare output paths
-            output_path = f"{output}/{fname_base}"
+            output_path = os.path.join(output, fname_base)
             # This is length 1 when not using event class mode
             num_event_groups = len(datasource.get_evt_data())
             if num_event_groups < 1:
@@ -229,7 +229,7 @@ def cli(
             for i in range(0, num_event_groups):
                 # Make event class subdirectories if there is more than one event group in the VegasDataSource
                 if num_event_groups > 1:
-                    output_path = make_eclass_path(fname_base, output, i)
+                    output_path = make_eclass_path(output, fname_base, i)
 
                 # Write out the fits files
                 hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
@@ -268,14 +268,14 @@ def gen_index_files(flist, output, eclass_count=1):
     if eclass_count > 1:
         for i in range(0, eclass_count):
             eclass_flist = []
-            eclass_output = f"{output}/ec" + str(i)
-            for fname in os.listdir(eclass_output):
-                eclass_flist.append(eclass_output + "/" + fname)
+            eclass_output_dir = os.path.join(output, "ec" + str(i))
+            for fname in os.listdir(eclass_output_dir):
+                eclass_flist.append(os.path.join(eclass_output_dir, fname))
             logging.info(
-                f"Generating index files {eclass_output}/obs-index.fits.gz "
-                f"and {eclass_output}/hdu-index.fits.gz"
+                f"Generating index files {eclass_output_dir}/obs-index.fits.gz "
+                f"and {eclass_output_dir}/hdu-index.fits.gz"
             )
-            create_obs_hdu_index_file(eclass_flist, eclass_output)
+            create_obs_hdu_index_file(eclass_flist, eclass_output_dir)
 
 
 """
@@ -283,14 +283,17 @@ Sorts output files to subdirectories and appends "_ec#" to their filename
 according to event class.
 
 Arguments:
-    fname_base   --  Filename of the fits file
-    output       --  Base output directory
-    eclass_idx   --  The event class # that this file belongs to.
+    output       --  Output directory
+    fname_base   --  Name of the fits file (without '.fits')
+    eclass_idx   --  The event class # that this file belongs to
+
+Returns:
+    New output path (excluding '.fits') as a string
 """
 
 
-def make_eclass_path(fname_base, output, eclass_idx):
-    output_path = f"{output}/ec" + str(eclass_idx)
+def make_eclass_path(output, fname_base, eclass_idx):
+    output_path = os.path.join(output, "ec" + str(eclass_idx))
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     stage_idx = fname_base.find(".")
@@ -301,7 +304,7 @@ def make_eclass_path(fname_base, output, eclass_idx):
     else:
         eclass_fname = fname_base + "_ec" + str(eclass_idx)
 
-    return output_path + "/" + eclass_fname
+    return os.path.join(output_path, eclass_fname)
 
 
 if __name__ == "__main__":
