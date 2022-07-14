@@ -223,11 +223,12 @@ def cli(
             # Prepare output paths
             output_path = f"{output}/{fname_base}"
             # This is length 1 when not using event class mode
-            eclass_count = len(datasource.get_evt_data())
-            if eclass_count < 1:
+            num_event_groups = len(datasource.get_evt_data())
+            if num_event_groups < 1:
                 raise Exception("No event data found")
-            for i in range(0, eclass_count):
-                if eclass_count > 1:
+            for i in range(0, num_event_groups):
+                # Make event class subdirectories if there is more than one event group in the VegasDataSource
+                if num_event_groups > 1:
                     output_path = make_eclass_path(fname_base, output, i)
 
                 # Write out the fits files
@@ -242,7 +243,7 @@ def cli(
                 flist.append(output_path)
 
         if gen_index_file:
-            gen_index_files(flist, output, eclass_count=eclass_count)
+            gen_index_files(flist, output, eclass_count=num_event_groups)
 
 
 """

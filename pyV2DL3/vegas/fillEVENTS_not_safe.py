@@ -39,23 +39,23 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     endTime_s = endTime_s + seconds_from_reference_t0
 
     if event_classes is None:
-        # We use a single "event class" when not in event class mode
-        num_event_classes = 1
+        # We use a single event group when not in event class mode
+        num_event_groups = 1
     else:
         # Set num_event_classes so we dont call len(event_classes)
         # thousands of times when filling events.
-        num_event_classes = len(event_classes)
-        if num_event_classes < 1:
+        num_event_groups = len(event_classes)
+        if num_event_groups < 1:
             # Dev exception
             raise Exception("event_classes was passed in as an empty List")
 
-    # These arrays are the same for every event class
+    # These arrays are the same for every event group
     avAlt = []
     avAz = []
     avRA = []
     avDec = []
 
-    # These arrays are unique to each event class
+    # These arrays are unique to each event group
     event_arrays = {
         "evNumArr": [],
         "timeArr": [],
@@ -73,9 +73,9 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
         event_arrays["mslArr"] = []
 
     # Deep copy the dictionary for each event class
-    event_class_dicts = [event_arrays]
-    for i in range(num_event_classes - 1):
-        event_class_dicts.append(deepcopy(event_arrays))
+    event_groups = [event_arrays]
+    for i in range(num_event_groups - 1):
+        event_groups.append(deepcopy(event_arrays))
 
     logger.debug("Start filling events ...")
 
@@ -100,9 +100,9 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
                 event_class_idx += 1
 
             # If this event falls into an event classes
-            if event_class_idx < num_event_classes:
-                event_class_dicts[event_class_idx]["mswArr"].append(fMSW)
-                event_class_dicts[event_class_idx]["mslArr"].append(ev.S.fMSL)
+            if event_class_idx < num_event_groups:
+                event_groups[event_class_idx]["mswArr"].append(fMSW)
+                event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
             # Else skip to next event
             else:
                 logger.debug("Event excluded: " + str(ev.S.fArrayEventNum)
@@ -110,22 +110,22 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
                 continue
 
         elif save_msw_msl:
-            event_class_dicts[event_class_idx]["mswArr"].append(ev.S.fMSW)
-            event_class_dicts[event_class_idx]["mslArr"].append(ev.S.fMSL)
+            event_groups[event_class_idx]["mswArr"].append(ev.S.fMSW)
+            event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
 
         # seconds since first light
         time_relative_to_reference = (
             float(ev.S.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
         )
-        this_event_class = event_class_dicts[event_class_idx]
-        this_event_class["evNumArr"].append(ev.S.fArrayEventNum)
-        this_event_class["timeArr"].append(time_relative_to_reference)
-        this_event_class["raArr"].append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
-        this_event_class["decArr"].append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
-        this_event_class["azArr"].append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
-        this_event_class["altArr"].append(np.rad2deg(ev.S.fDirectionElevation_Rad))
-        this_event_class["energyArr"].append(ev.S.fEnergy_GeV / 1000.0)
-        this_event_class["nTelArr"].append(ev.S.fImages)
+        this_event_group = event_groups[event_class_idx]
+        this_event_group["evNumArr"].append(ev.S.fArrayEventNum)
+        this_event_group["timeArr"].append(time_relative_to_reference)
+        this_event_group["raArr"].append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
+        this_event_group["decArr"].append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
+        this_event_group["azArr"].append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
+        this_event_group["altArr"].append(np.rad2deg(ev.S.fDirectionElevation_Rad))
+        this_event_group["energyArr"].append(ev.S.fEnergy_GeV / 1000.0)
+        this_event_group["nTelArr"].append(ev.S.fImages)
 
         avAlt.append(ev.S.fArrayTrackingElevation_Deg)
         avAz.append(ev.S.fArrayTrackingAzimuth_Deg)
@@ -152,14 +152,14 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
 
     # Construct an array to hold the event dict(s) to be returned:
     returned_dicts = []
-    for i in range(num_event_classes):
+    for i in range(num_event_groups):
         returned_dicts.append({})
 
     # Filling Event List(s)
-    for index in range(num_event_classes):
+    for index in range(num_event_groups):
         # Fill each event class's FITS format from its corresponding event arrays
         evt_dict = returned_dicts[index]
-        arr_dict = event_class_dicts[index]
+        arr_dict = event_groups[index]
         evt_dict["EVENT_ID"] = arr_dict["evNumArr"]
         evt_dict["TIME"] = arr_dict["timeArr"]
         evt_dict["RA"] = arr_dict["raArr"]
