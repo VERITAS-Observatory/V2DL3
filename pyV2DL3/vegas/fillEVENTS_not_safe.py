@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
+def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
                             reco_type=1, save_msw_msl=False, user_cuts_dict=None,):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
@@ -41,16 +41,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    if event_classes is None:
-        # We use a single event group when not in event class mode
-        num_event_groups = 1
-    else:
-        # Set num_event_classes so we dont call len(event_classes)
-        # thousands of times when filling events.
-        num_event_groups = len(event_classes)
-        if num_event_groups < 1:
-            # Dev exception
-            raise Exception("event_classes was passed in as an empty List")
+    # Set num_event_classes so we dont call len(event_classes)
+    # thousands of times when filling events.
+    num_event_groups = len(event_classes)
+    if num_event_groups < 1:
+        # Dev exception
+        raise Exception("event_classes was passed in as an empty List")
 
     # These arrays are the same for every event group
     avAlt = []
@@ -87,12 +83,10 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
             spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
             spatial_exclusions = True
 
+
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
-        # When not using event class mode, this will stay 0
-        event_class_idx = 0
-
         # Event reconstruction method
         if reco_type == 1: reco = ev.S
         elif reco_type == 2: reco = ev.M3D
@@ -110,34 +104,33 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, fov_cut_upper=None,
                              + " fell within a spatial exclusion region")
                 continue
 
-        if event_classes is not None:
-            fMSW = reco.fMSW
-            """Determine which event class (if any) the event falls into.
+        fMSW = reco.fMSW
+        """Determine which event class (if any) the event falls into.
 
-            Simply loop through the event classes and break if this event meets all
-            of an event class' parameters
+        Simply loop through the event classes and break if this event meets all
+        of an event class' parameters
 
-            For now, we only do it based on the MSW intervals
-            """
-            event_class_idx = 0
-            # Loop through event classes to check if this event satisfies the event class parameters
-            for ec in event_classes:
-                if ec.msw_lower <= fMSW < ec.msw_upper:
-                    break
-                event_class_idx += 1
+        For now, we only do it based on the MSW intervals
+        """
+        event_class_idx = 0
+        for ec in event_classes:
+            if ec.msw_lower <= fMSW < ec.msw_upper:
+                break
+            event_class_idx += 1
 
-            # If this event falls into an event classes
-            if event_class_idx < num_event_groups:
-                event_groups[event_class_idx]["mswArr"].append(fMSW)
-                event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
-            # Else skip to next event
-            else:
-                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
-                continue
+        # If this event falls into an event classes
+        if event_class_idx < num_event_groups:
+            event_groups[event_class_idx]["mswArr"].append(fMSW)
+            event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
+        # Else skip to next event
+        else:
+            logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                            + " MSW: " + str(fMSW) + " not within an event class' MSW range")
+            continue
 
         # Check FoV if appropriate
-        if fov_cut_upper is not None:
+        if event_classes[event_class_idx].fov_cut_upper is not None:
+            fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
             excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper)
             if excluded:
                 logger.debug("Event excluded: " + str(reco.fArrayEventNum)
@@ -284,15 +277,15 @@ Returns:
     Bool  --  True if event falls within an exclusion region (event needs excluded) 
 """
 def check_spatial_exclusion(event_skycoord, exclusion_regions):
-    for xra, xdec, xsep in exclusion_regions:
+    for src_ra, src_dec, src_radius in exclusion_regions:
         # Source position
-        src_skycoord = SkyCoord(xra, xdec, frame='icrs',
+        src_skycoord = SkyCoord(src_ra, src_dec, frame='icrs',
                         unit=(units.deg, units.deg))
 
         sep = src_skycoord.separation(event_skycoord).degree
-        xsep = float(xsep)
+        src_radius = float(src_radius)
         # If one event falls in an exclusion region, skip the other exclusion regions
-        if (sep < xsep):
+        if (sep < src_radius):
             return True
 
     return False

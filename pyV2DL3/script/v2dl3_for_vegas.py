@@ -7,26 +7,19 @@ from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 from pyV2DL3.vegas.EventClass import EventClass
 
 
-# In event_class_mode, The user can provide multiple EAs per tag to define the event classes for that group.
-def runlist_to_file_pair(rl_dict, event_class_mode=False):
+def runlist_to_file_pair(rl_dict):
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
     file_pair = []
-    # If using multiple EAs for event classes
-    if event_class_mode:
-        for k in st5s.keys():
-            event_classes = []
-            for ea in eas[k]:
-                event_classes.append(EventClass(ea))
-            if len(event_classes) == 0:
-                raise Exception("No EA filenames defined for runlist tag: " + k)
-            for f in st5s[k]:
-                file_pair.append((f, event_classes))
-    else:
-        for k in st5s.keys():
-            ea = eas[k][0]
-            for f in st5s[k]:
-                file_pair.append((f, ea))
+    for k in st5s.keys():
+        event_classes = []
+        for ea in eas[k]:
+            event_classes.append(EventClass(ea))
+        if len(event_classes) == 0:
+            raise Exception("No EA filenames defined for runlist tag: " + k)
+        for f in st5s[k]:
+            file_pair.append((f, event_classes))
+
     return file_pair
 
 
@@ -171,8 +164,9 @@ def cli(
 
     # File pair mode
     if len(file_pair) > 0:
-        st5_str, ea_str = file_pair
-        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+        st5_str, event_classes = file_pair
+        datasource = loadROOTFiles(st5_str, None, "VEGAS",
+                                   event_classes=event_classes,
                                    reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
                                    user_cut_file=event_cuts_file,
@@ -217,20 +211,13 @@ def cli(
             )
             raise click.Abort()
 
-        file_pairs = runlist_to_file_pair(rl_dict, event_class_mode=event_class_mode)
+        file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
-        for st5_str, ea_str in file_pairs:
+        for st5_str, event_classes in file_pairs:
             logging.info(f"Processing file: {st5_str}")
-            event_classes = None
-            # Reassign vars if using event classes
-            if event_class_mode:
-                event_classes = ea_str
-                ea_str = None
-                logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
-            else:
-                logging.debug(f"Stage5 file:{st5_str}, EA file:{ea_str}")
+            logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+            datasource = loadROOTFiles(st5_str, None, "VEGAS",
                                        event_classes=event_classes,
                                        reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
@@ -244,12 +231,12 @@ def cli(
             # Prepare output paths
             output_path = os.path.join(output, fname_base)
             # This is length 1 when not using event class mode
-            num_event_groups = len(datasource.get_evt_data())
-            if num_event_groups < 1:
+            num_event_class = len(datasource.get_evt_data())
+            if num_event_class < 1:
                 raise Exception("No event data found")
-            for i in range(0, num_event_groups):
+            for i in range(0, num_event_class):
                 # Make event class subdirectories if there is more than one event group in the VegasDataSource
-                if num_event_groups > 1:
+                if num_event_class > 1:
                     output_path = make_eclass_path(output, fname_base, i)
 
                 # Write out the fits files
@@ -264,7 +251,7 @@ def cli(
                 flist.append(output_path)
 
         if gen_index_file:
-            gen_index_files(flist, output, eclass_count=num_event_groups)
+            gen_index_files(flist, output, eclass_count=num_event_class)
 
 
 """
@@ -273,7 +260,7 @@ Generates the index files for a list of files.
 Arguments:
     flist         --  List of .fits filepaths
     output        --  Destination to write the generated index files.
-    eclass_count  --  Number of event classes for this run
+    eclass_count  --  Number of event classes for this batch
 """
 
 

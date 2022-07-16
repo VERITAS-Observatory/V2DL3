@@ -8,34 +8,30 @@ from pyV2DL3.vegas.util import loadUserCuts
 
 
 class VegasDataSource(VtsDataSource):
-    def __init__(self, etv_file, ea_file,
-                 event_classes=None,
+    def __init__(self, evt_file,
+                 event_classes,
                  reco_type=1,
                  save_msw_msl=False,
                  user_cut_file=None,
                  ):
-        super(VegasDataSource, self).__init__("VEGAS", etv_file, ea_file)
+        super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
-        # Developer exceptions to ensure this was constructed with an EA xor EventClass(es)
-        if ea_file is None and event_classes is None:
-            raise Exception("Running V2DL3 without effective area file(s) is currently unsupported.")
-        elif ea_file is not None and event_classes is not None:
-            raise Exception("VegasDataSource was somehow constructed with both an effective area"
-                            + " file and event class")
+        # Developer exceptions to ensure this was constructed with EventClass(es)
+        if event_classes is None:
+            raise Exception("VegasDataSource uses EventClasses for effective areas")
 
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()
         self.vegas_status.loadVEGAS()
-        self.__evt_file__ = ROOT.VARootIO(etv_file, True)
+        self.__evt_file__ = ROOT.VARootIO(evt_file, True)
         self.__event_classes__ = event_classes
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
         if user_cut_file is not None:
             # Load user defined cuts. See loadUserCuts() in util.py for possible keys.
             self.__user_cuts__ = loadUserCuts(user_cut_file)
-
-        if ea_file is not None:
-            self.__ea_file__ = ROOT.VARootIO(ea_file, True)
+        else:
+            self.__user_cuts__ = None
 
         # Auxiliary storage
         self.__azimuth__ = 0
@@ -53,13 +49,9 @@ class VegasDataSource(VtsDataSource):
         if str(type(self.__evt_file__)) != cpy_nonestring and not isinstance(self.__evt_file__, str):
             self.__evt_file__.closeTheRootFile()
 
-        if self.__ea_file__ is not None:
-            if str(type(self.__ea_file__)) != cpy_nonestring and not isinstance(self.__ea_file__, str):
-                self.__ea_file__.closeTheRootFile()
 
     def __fill_evt__(self):
-        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__,
-                                                            event_classes=self.__event_classes__,
+        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__event_classes__,
                                                             reco_type=self.__reco_type__,
                                                             save_msw_msl=self.__save_msw_msl__,
                                                             user_cuts_dict=self.__user_cuts__,
@@ -79,17 +71,11 @@ class VegasDataSource(VtsDataSource):
         ze = self.__zenith__
         nn = self.__noise__
         response_dicts = []
-        # Event class mode
-        if self.__event_classes__ is not None:
-            # Fill responses per event class
-            for ec in self.__event_classes__:
-                ea = ec.effective_area_IO
-                response_dicts.append(
-                    __fillRESPONSE_not_safe__(ea, az, ze, nn, self.__irf_to_store__)
-                )
-        # When not using event class mode
-        else:
+        # Fill response for each event class
+        for ec in self.__event_classes__:
+            ea = ec.effective_area_IO
             response_dicts.append(
-                __fillRESPONSE_not_safe__(self.__ea_file__, az, ze, nn, self.__irf_to_store__)
+                __fillRESPONSE_not_safe__(ea, az, ze, nn, self.__irf_to_store__)
             )
+
         self.__response__ = response_dicts

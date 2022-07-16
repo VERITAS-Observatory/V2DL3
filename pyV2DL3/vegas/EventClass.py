@@ -7,7 +7,10 @@ logger = logging.getLogger(__name__)
 """
 Construct an event class from an effective area cuts info
 
-To extend event classes to include your parameters, start by adding them
+Event Classes are wrappers for VEGAS effective area files to efficiently
+read, store, and validate the parameters needed for cuts or sorting
+
+To extend event classes to include more parameters, add them
 here in order to access them when filling events and IRFs.
 
 https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#Event_Classes
@@ -18,15 +21,14 @@ class EventClass(object):
     def __init__(self, effective_area):
         self.effective_area_IO = ROOT.VARootIO(effective_area, True)
 
-        # Initialize the parameter names to search for
-        self.cut_searches = ["ThetaSquareUpper",
-                             "MeanScaledWidthLower",
-                             "MeanScaledWidthUpper",
-                             "MaxHeightLower",
-                             "MaxHeightUpper",
-                             "FoVCutUpper",
-                             "FoVCutLower",
-                             ]
+        # Initialize the cuts parameter names to search for
+        cut_searches = [
+                        "ThetaSquareUpper",
+                        "MeanScaledWidthLower", "MeanScaledWidthUpper",  # MSW
+                        "MaxHeightLower", "MaxHeightUpper",              # Max height
+                        "FoVCutUpper", "FoVCutLower",                    # Field of view
+                        ]
+                        
         # Initialize corresponding class variables
         self.theta_square_upper = None
         self.msw_lower = None
@@ -36,12 +38,25 @@ class EventClass(object):
         self.fov_cut_lower = None
         self.fov_cut_upper = None
 
+        # Now load the cuts params
+        self.__load_cuts_info__(cut_searches)
+
+        
+    def __del__(self):
+        cpy_nonestring = "<class 'CPyCppyy_NoneType'>"
+        if self.effective_area_IO is not None:
+            if str(type(self.effective_area_IO)) != cpy_nonestring:
+                self.effective_area_IO.closeTheRootFile()
+
+
+    """
+    Loads and stores the effective area's cuts parameters values
+    """
+    def __load_cuts_info__(self, cut_searches):
         # This dict will only contain keys from the found cuts.
         self.effective_area_IO.loadTheRootFile()
         for cuts in self.effective_area_IO.loadTheCutsInfo():
-            ea_cut_dict = getCuts(cuts.fCutsFileText, self.cut_searches)
-
-        # ------------- Handle params found in this EA's cuts -------------
+            ea_cut_dict = getCuts(cuts.fCutsFileText, cut_searches)
 
         # MSW cuts are optional
         if "MeanScaledWidthLower" in ea_cut_dict:
@@ -56,9 +71,3 @@ class EventClass(object):
         if (self.msw_lower >= self.msw_upper):
             raise Exception("MeanScaledWidthLower: " + str(
                 self.msw_lower) + " must be < MeanScaledWidthUpper: " + str(self.msw_upper))
-
-    def __del__(self):
-        cpy_nonestring = "<class 'CPyCppyy_NoneType'>"
-        if self.effective_area_IO is not None:
-            if str(type(self.effective_area_IO)) != cpy_nonestring:
-                self.effective_area_IO.closeTheRootFile()

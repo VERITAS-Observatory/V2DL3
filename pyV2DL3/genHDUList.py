@@ -37,9 +37,10 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
         raise Exception("Running V2DL3 without effective area file(s) is currently unsupported.")
 
     if file_type == "VEGAS":
+        if event_classes is None:
+            raise Exception("VegasDataSource uses EventClass for effective areas")
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
-        return VegasDataSource(data_file, effective_area_file,
-                               event_classes=event_classes,
+        return VegasDataSource(data_file, event_classes,
                                reco_type=reco_type,
                                save_msw_msl=save_msw_msl,
                                user_cut_file=user_cut_file,
