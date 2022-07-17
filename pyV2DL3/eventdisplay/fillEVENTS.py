@@ -8,6 +8,7 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
+
 from pyV2DL3.eventdisplay.util import getGTI
 from pyV2DL3.eventdisplay.util import getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
@@ -25,6 +26,7 @@ def __fillEVENTS__(edFileIO, select=None, trans_finder=False):
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
         runNumber = runSummary["runOn"][0]
+        logging.info("Run number: {}".format(runNumber))
         telConfig = file["run_{}/stereo/telconfig".format(runNumber)].arrays(
             library="np"
         )

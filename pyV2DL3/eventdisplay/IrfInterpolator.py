@@ -25,14 +25,14 @@ class IrfInterpolator:
         else:
             raise FileNotFoundError
 
-    def set_irf(self, irf_name):
+    def set_irf(self, irf_name, **kwargs):
         """Check consistency of IRF name"""
         if (
             irf_name in self.implemented_irf_names_1d
             or irf_name in self.implemented_irf_names_2d
         ):
             self.irf_name = irf_name
-            self.__load_irf()
+            self.__load_irf(**kwargs)
         else:
             logging.exception(
                 "The irf you entered: {} is either wrong or not implemented.".format(
@@ -41,7 +41,7 @@ class IrfInterpolator:
             )
             raise WrongIrf
 
-    def __load_irf(self):
+    def __load_irf(self, **kwargs):
         """Load IRFs from effective area file"""
 
         logging.info(
@@ -62,22 +62,41 @@ class IrfInterpolator:
         # Do the same with the axes:
         irf_data = duplicate_dimensions(irf_data)
         # Also the coordinates of the axes need to be in increasing order.
+        zenith_axis = None
         for i, axis in enumerate(irf_axes):
             if len(axis) == 1:
-                irf_axes[i] = np.concatenate(
-                    (axis.flatten(), axis.flatten() + 0.01), axis=None
+                irf_axes[axis] = np.concatenate(
+                    (irf_axes[axis].flatten(), irf_axes[axis].flatten() + 0.01), axis=None
                 )
-        self.irf_data = irf_data
-        self.irf_axes = irf_axes
-        clk = click.get_current_context()
-        if clk.params["force_extrapolation"]:
+
+            if axis == 'zeniths':
+                irf_axes['zeniths'] = np.cos(np.radians(irf_axes['zeniths']))[::-1]
+                zenith_axis = i
+                logging.debug("zenith axis index: {}".format(zenith_axis))
+
+        if zenith_axis is None:
+            raise ValueError("zenith axis not found in irf_axes")
+
+        self.irf_data = np.flip(irf_data, axis=zenith_axis)
+        self.irf_axes = list(irf_axes.values())
+        logging.debug(str(("IRF axes:", irf_axes)))
+
+        if kwargs.get("use_click", True):
+            clk = click.get_current_context()
+            extrapolation = clk.params["force_extrapolation"]
+        else:
+            extrapolation = kwargs.get("force_extrapolation", False)
+
+        if extrapolation:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
         else:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
+        coordinate[1] = np.cos(np.radians(coordinate[1]))
         for c in coordinate:
             logging.debug("Interpolating coordinates: {0:.2f}".format(c))
+
         # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:

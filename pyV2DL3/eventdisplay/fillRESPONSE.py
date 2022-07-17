@@ -37,7 +37,7 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 
-def check_parameter_range(par, irf_stored_par, par_name):
+def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
        0. checks if command line parameter force_extrapolation is given. If given,
           the extrapolation will happen when parameter is outside IRF range. If parameter is
@@ -52,10 +52,17 @@ def check_parameter_range(par, irf_stored_par, par_name):
             par_name, np.min(irf_stored_par), np.max(irf_stored_par)
         )
     )
-    clk = click.get_current_context()
-    tolerance = clk.params["fuzzy_boundary"]
+
+    if kwargs.get("use_click", True):
+        clk = click.get_current_context()
+        tolerance = clk.params["fuzzy_boundary"]
+        extrapolation = clk.params["force_extrapolation"]
+    else:
+        tolerance = kwargs.get("fuzzy_boundary", 0.0)
+        extrapolation = kwargs.get("force_extrapolation", False)
+
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
-        if clk.params["force_extrapolation"]:
+        if extrapolation:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
         elif tolerance > 0.0:
             if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance):
@@ -141,10 +148,11 @@ def fill_effective_area(
         zenith,
         theta_low,
         theta_high,
+        **kwargs
 ):
     """Effective areas"""
 
-    irf_interpolator.set_irf(irf_name)
+    irf_interpolator.set_irf(irf_name, **kwargs)
 
     ea_final = []
 
@@ -178,10 +186,11 @@ def fill_energy_migration(
         zenith,
         theta_low,
         theta_high,
+        **kwargs
 ):
     """Energy migration matrix"""
 
-    irf_interpolator.set_irf(irf_name)
+    irf_interpolator.set_irf(irf_name, **kwargs)
     ac_final = []
 
     for offset in camera_offsets:
@@ -217,11 +226,11 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-        irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high
+        irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
 ):
     """Direction dispersion (for full-enclosure IRFs)"""
 
-    irf_interpolator.set_irf("hAngularLogDiffEmc_2D")
+    irf_interpolator.set_irf("hAngularLogDiffEmc_2D", **kwargs)
 
     rpsf_final = []
     rpsf_test = []
@@ -304,7 +313,7 @@ def fill_direction_migration(
 
 
 def __fill_response__(
-        ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None
+        ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None, **kwargs
 ):
     if irf_to_store is None:
         irf_to_store = {}
@@ -315,7 +324,7 @@ def __fill_response__(
     irf_interpolator = IrfInterpolator(effective_area, azimuth)
 
     # Extract camera offsets available from the effective areas file.
-    fast_eff_area = uproot.open(effective_area)["fEffArea"]
+    fast_eff_area = uproot.open(effective_area)["fEffAreaH2F"]
     camera_offsets = np.unique(
         np.round(fast_eff_area["Woff"].array(library="np"), decimals=2)
     )
@@ -328,8 +337,8 @@ def __fill_response__(
 
     print_logging_info(irf_to_store, camera_offsets, pedvar, zenith)
 
-    zenith = check_parameter_range(zenith, zeniths_irf, "zenith")
-    pedvar = check_parameter_range(pedvar, pedvar_irf, "pedvar")
+    zenith = check_parameter_range(zenith, zeniths_irf, "zenith", **kwargs)
+    pedvar = check_parameter_range(pedvar, pedvar_irf, "pedvar", **kwargs)
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
@@ -347,6 +356,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
+            **kwargs
         )
 
         # Get RAD_MAX; cuts don't depend on energy/wobble
@@ -364,6 +374,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
+            **kwargs
         )
 
     elif irf_to_store["full-enclosure"]:
@@ -389,6 +400,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
+            **kwargs
         )
 
         # Energy dispersion (full-enclosure)
@@ -400,6 +412,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
+            **kwargs
         )
 
         # Direction dispersion (for full-enclosure IRFs)
@@ -410,6 +423,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
+            **kwargs
         )
 
     return response_dict

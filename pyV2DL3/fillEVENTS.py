@@ -3,7 +3,7 @@ import logging
 from astropy.io import fits
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
-import pyV2DL3.constant
+import pyV2DL3.constant as constant
 
 
 def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans_finder=False):
@@ -47,12 +47,12 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans
     hdu1 = addHDUClassKeyword(hdu1, class1="EVENTS")
 
     # Fill Header
-    hdu1.header.set("RADECSYS", pyV2DL3.constant.RADECSYS, "equatorial system type")
-    hdu1.header.set("EQUINOX", pyV2DL3.constant.EQUINOX, "base equinox")
+    hdu1.header.set("RADECSYS", constant.RADECSYS, "equatorial system type")
+    hdu1.header.set("EQUINOX", constant.EQUINOX, "base equinox")
     hdu1.header.set(
         "CREATOR",
         "pyV2DL3 v{}::{}".format(
-            pyV2DL3.constant.VERSION, datasource.get_source_name()
+            constant.VERSION, datasource.get_source_name()
         ),
     )
     hdu1.header.set("ORIGIN", "VERITAS Collaboration", "Data from VERITAS")
@@ -75,7 +75,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans
     hdu1.header.set("TSTOP   ", evt_dict["TSTOP"], "mission time of end of obs [s]")
     hdu1.header.set(
         "MJDREFI ",
-        pyV2DL3.constant.VTS_REFERENCE_MJD,
+        constant.VTS_REFERENCE_MJD,
         "int part of reference MJD [days]",
     )
     hdu1.header.set("MJDREFF ", 0.0, "fractional part of reference MJD [days]")
@@ -113,15 +113,15 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans
     hdu1.header.set("EUNIT   ", "TeV", "energy unit")
     hdu1.header.set(
         "GEOLON  ",
-        pyV2DL3.constant.VTS_REFERENCE_LON,
+        constant.VTS_REFERENCE_LON,
         "longitude of array center [deg]",
     )
     hdu1.header.set(
-        "GEOLAT  ", pyV2DL3.constant.VTS_REFERENCE_LAT, "latitude of array center [deg]"
+        "GEOLAT  ", constant.VTS_REFERENCE_LAT, "latitude of array center [deg]"
     )
     hdu1.header.set(
         "ALTITUDE",
-        pyV2DL3.constant.VTS_REFERENCE_HEIGHT,
+        constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
 
