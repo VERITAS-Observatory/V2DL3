@@ -125,6 +125,13 @@ def fillEVENTS(
         "altitude of array center [m]",
     )
 
+    if trans_finder:
+        hdu1.header.set(
+            "PED_VAR",
+            datasource.__pedvar__,
+            "average pedestal variance",
+        )
+
     try:
         hdu1.header.set(
             "QUALITY",
