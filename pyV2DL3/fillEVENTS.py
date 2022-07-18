@@ -6,7 +6,9 @@ from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant as constant
 
 
-def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans_finder=False):
+def fillEVENTS(
+    datasource, save_multiplicity=False, instrument_epoch=None, trans_finder=False
+):
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
 
@@ -28,10 +30,10 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans
         logging.debug("No BDT variables in event list")
 
     if trans_finder:
-        columns.append(fits.Column(name="ALT", format="1E", array=evt_dict['ALT']))
-        columns.append(fits.Column(name="AZ", format="1E", array=evt_dict['AZ']))
-        columns.append(fits.Column(name="Xoff", format="1E", array=evt_dict['Xoff']))
-        columns.append(fits.Column(name="Yoff", format="1E", array=evt_dict['Yoff']))
+        columns.append(fits.Column(name="ALT", format="1E", array=evt_dict["ALT"]))
+        columns.append(fits.Column(name="AZ", format="1E", array=evt_dict["AZ"]))
+        columns.append(fits.Column(name="Xoff", format="1E", array=evt_dict["Xoff"]))
+        columns.append(fits.Column(name="Yoff", format="1E", array=evt_dict["Yoff"]))
 
     # Number of triggered telescope if necessary
     if save_multiplicity:
@@ -51,9 +53,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, trans
     hdu1.header.set("EQUINOX", constant.EQUINOX, "base equinox")
     hdu1.header.set(
         "CREATOR",
-        "pyV2DL3 v{}::{}".format(
-            constant.VERSION, datasource.get_source_name()
-        ),
+        "pyV2DL3 v{}::{}".format(constant.VERSION, datasource.get_source_name()),
     )
     hdu1.header.set("ORIGIN", "VERITAS Collaboration", "Data from VERITAS")
     hdu1.header.set("TELESCOP", "VERITAS")
