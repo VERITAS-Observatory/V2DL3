@@ -68,7 +68,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
 value to boundary",
 )
-@click.option("--trans_finder", is_flag=True)
+@click.option(
+    "--trans_finder",
+    is_flag=True,
+    help="Flag to store extra parameters to events. Required to run deep leraning\
+ transient detection with trans_finder.",
+)
 def cli(
     file_pair,
     full_enclosure,
