@@ -10,6 +10,8 @@ from pyV2DL3.vegas.util import loadUserCuts
 class VegasDataSource(VtsDataSource):
     def __init__(self, evt_file,
                  event_classes,
+                 bypass_fov_cut=False,
+                 event_class_mode=False,
                  reco_type=1,
                  save_msw_msl=False,
                  user_cut_file=None,
@@ -25,6 +27,8 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(evt_file, True)
         self.__event_classes__ = event_classes
+        self.__event_class_mode = event_class_mode
+        self.__fov_cut__ = not bypass_fov_cut
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
         if user_cut_file is not None:
@@ -52,6 +56,8 @@ class VegasDataSource(VtsDataSource):
 
     def __fill_evt__(self):
         gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__event_classes__,
+                                                            event_class_mode=self.__event_class_mode__,
+                                                            fov_cut=self.__fov_cut__,
                                                             reco_type=self.__reco_type__,
                                                             save_msw_msl=self.__save_msw_msl__,
                                                             user_cuts_dict=self.__user_cuts__,

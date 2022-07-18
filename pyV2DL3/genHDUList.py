@@ -27,7 +27,9 @@ def genPrimaryHDU():
 
 
 def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
+                  bypass_fov_cut=False,
                   event_classes=None,
+                  event_class_mode=False,
                   reco_type=1,
                   save_msw_msl=False,
                   user_cut_file=None,
@@ -41,6 +43,8 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
             raise Exception("VegasDataSource uses EventClass for effective areas")
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, event_classes,
+                               bypass_fov_cut=False,
+                               event_class_mode=event_class_mode,
                                reco_type=reco_type,
                                save_msw_msl=save_msw_msl,
                                user_cut_file=user_cut_file,

@@ -42,7 +42,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     '--event_class_mode',
     '-ec',
     is_flag=True,
-    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID.",
+    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID. "
+        +"Event classes sort events to separate fits files based on EA cuts parameters. "
+        +"Uses only MSW intervals for now. See EventClass.py to extend."
 )
 @click.option(
     '--event_cuts_file',
@@ -58,6 +60,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default=1,
     type=click.INT,
     help="1: Standard (.S) - default, 2: ITM (.M3D)"
+)
+@click.option(
+    "--no_fov_cut",
+    "-nf",
+    is_flag=True,
+    help="Do not cut events based on the EA's FoVCut parameters"
 )
 @click.option(
     "--gen_index_file",
@@ -101,6 +109,7 @@ def cli(
     event_class_mode,
     event_cuts_file,
     reconstruction_type,
+    no_fov_cut,
     gen_index_file,
     save_multiplicity,
     save_msw_msl,
@@ -166,6 +175,7 @@ def cli(
     if len(file_pair) > 0:
         st5_str, event_classes = file_pair
         datasource = loadROOTFiles(st5_str, None, "VEGAS",
+                                   bypass_fov_cut=no_fov_upper,
                                    event_classes=event_classes,
                                    reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
@@ -219,6 +229,7 @@ def cli(
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, None, "VEGAS",
                                        event_classes=event_classes,
+                                       event_class_mode=event_class_mode,
                                        reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
                                        user_cut_file=event_cuts_file,

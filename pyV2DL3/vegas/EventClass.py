@@ -8,7 +8,7 @@ from pyV2DL3.vegas.load_vegas import VEGASStatus
 logger = logging.getLogger(__name__)
 
 """
-Construct an event class from an effective area cuts info
+Construct an event class from an effective area
 
 Event Classes are wrappers for VEGAS effective area files to efficiently
 read, store, and validate parameters for event cutting or sorting
@@ -38,14 +38,14 @@ class EventClass(object):
                         "FoVCutUpper",          "FoVCutLower",           # Field of view
                         ]
 
-        # Initialize corresponding class variables
+        # Initialize corresponding class variables and default values
         self.theta_square_upper = None
-        self.msw_lower = None
-        self.msw_upper = None
+        self.msw_lower = float('-inf')
+        self.msw_upper = float('inf')
         self.max_height_lower = None
         self.max_height_upper = None
-        self.fov_cut_lower = None
-        self.fov_cut_upper = None
+        self.fov_cut_lower = float('-inf')
+        self.fov_cut_upper = float('inf')
 
         # Now load the cuts params
         self.__load_cuts_info__(cut_searches)
@@ -120,16 +120,18 @@ class EventClass(object):
         for cuts in self.effective_area_IO.loadTheCutsInfo():
             ea_cut_dict = getCuts(cuts.fCutsFileText, cut_searches)
 
+        # FoVCuts are optional
+        if "FoVCutLower" in ea_cut_dict:
+            self.fov_cut_lower = float(ea_cut_dict["FoVCutLower"])
+        if "FoVCutUpper" in ea_cut_dict:
+            self.fov_cut_upper = float(ea_cut_dict["FoVCutUpper"])
+
         # MSW cuts are optional
         if "MeanScaledWidthLower" in ea_cut_dict:
             self.msw_lower = float(ea_cut_dict["MeanScaledWidthLower"])
-        else:
-            # Assign +/- inf so that comparisons will still work when filling events
-            self.msw_lower = float('-inf')
         if "MeanScaledWidthUpper" in ea_cut_dict:
             self.msw_upper = float(ea_cut_dict["MeanScaledWidthUpper"])
-        else:
-            self.msw_upper = float('inf')
+
         if (self.msw_lower >= self.msw_upper):
             raise Exception("MeanScaledWidthLower: " + str(
                 self.msw_lower) + " must be < MeanScaledWidthUpper: " + str(self.msw_upper))

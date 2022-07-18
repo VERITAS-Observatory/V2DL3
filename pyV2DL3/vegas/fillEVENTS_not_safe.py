@@ -19,7 +19,7 @@ windowSizeForNoise = 7
 
 
 def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
-                            reco_type=1, save_msw_msl=False, user_cuts_dict=None,):
+                            fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False, user_cuts_dict=None,):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -48,7 +48,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         # Dev exception
         raise Exception("event_classes was passed in as an empty List")
 
-    # These arrays are the same for every event group
+    # Average arrays are independent of event group
     avAlt = []
     avAz = []
     avRA = []
@@ -93,6 +93,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         else: raise Exception("Invalid reconstruction type!"
                               "\nSee --help for supported arguments")
 
+        # Include event in averages regardless of whether it gets cut
+        avAlt.append(reco.fArrayTrackingElevation_Deg)
+        avAz.append(reco.fArrayTrackingAzimuth_Deg)
+        avRA.append(reco.fArrayTrackingRA_J2000_Rad)
+        avDec.append(reco.fArrayTrackingDec_J2000_Rad)
+
         # Reconstructed shower direction
         event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
                     reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
@@ -104,42 +110,46 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
                              + " fell within a spatial exclusion region")
                 continue
 
-        fMSW = reco.fMSW
-        """Determine which event class (if any) the event falls into.
+        if event_class_mode:
+            fMSW = reco.fMSW
+            """Determine which event class (if any) the event falls into.
 
-        Simply loop through the event classes and break if this event meets all
-        of an event class' parameters
+            Simply loop through the event classes and break if this event meets all
+            of an event class' parameters
 
-        For now, we only do it based on the MSW intervals
-        """
-        event_class_idx = 0
-        for ec in event_classes:
-            if ec.msw_lower <= fMSW < ec.msw_upper:
-                break
-            event_class_idx += 1
+            For now, we only do it based on the MSW intervals
+            """
+            event_class_idx = 0
+            for ec in event_classes:
+                if ec.msw_lower <= fMSW < ec.msw_upper:
+                    break
+                event_class_idx += 1
 
-        # If this event falls into an event classes
-        if event_class_idx < num_event_groups:
-            event_groups[event_class_idx]["mswArr"].append(fMSW)
-            event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
-        # Else skip to next event
-        else:
-            logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                            + " MSW: " + str(fMSW) + " not within an event class' MSW range")
-            continue
-
-        # Check FoV if appropriate
-        if event_classes[event_class_idx].fov_cut_upper is not None:
-            fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
-            excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper)
-            if excluded:
+            # If this event falls into an event classes
+            if event_class_idx < num_event_groups:
+                event_groups[event_class_idx]["mswArr"].append(fMSW)
+                event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
+            # Else skip to next event
+            else:
                 logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                              + " separation: " + str(tel_sep) + " > fov_cut_upper: " + str(fov_cut_upper))
+                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
                 continue
 
         elif save_msw_msl:
             event_groups[event_class_idx]["mswArr"].append(reco.fMSW)
             event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
+
+        # Check FoV if appropriate
+        if fov_cut:
+            fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
+            fov_cut_lower = event_classes[event_class_idx].fov_cut_lower
+            if fov_cut_lower < 0 and fov_cut_upper >= 180:
+                excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper, fov_cut_lower)
+                if excluded:
+                    logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                                + " separation: " + str(tel_sep) + " not within FoVCut range: " 
+                                + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                    continue
 
         # seconds since first light
         time_relative_to_reference = (
@@ -154,11 +164,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         this_event_group["altArr"].append(np.rad2deg(reco.fDirectionElevation_Rad))
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
-
-        avAlt.append(reco.fArrayTrackingElevation_Deg)
-        avAz.append(reco.fArrayTrackingAzimuth_Deg)
-        avRA.append(reco.fArrayTrackingRA_J2000_Rad)
-        avDec.append(reco.fArrayTrackingDec_J2000_Rad)
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -256,12 +261,12 @@ Returns:
     Bool  --  True if event falls outside of the FoV (event needs excluded)
     float --  The computed separation from the FoV center
 """
-def check_FoV_exclusion(event_skycoord, reco, fov_cut_upper):
+def check_FoV_exclusion(event_skycoord, reco, fov_cut_upper, fov_cut_lower):
     pointing_position = SkyCoord(np.rad2deg(reco.fArrayTrackingRA_J2000_Rad), np.rad2deg(
             reco.fArrayTrackingDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
     
     tel_sep = pointing_position.separation(event_skycoord).degree
-    if  tel_sep > fov_cut_upper:
+    if  tel_sep > fov_cut_upper or tel_sep < fov_cut_lower:
         return True, tel_sep
 
     return False, tel_sep
