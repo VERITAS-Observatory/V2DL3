@@ -73,9 +73,8 @@ class VegasDataSource(VtsDataSource):
         response_dicts = []
         # Fill response for each event class
         for ec in self.__event_classes__:
-            ea = ec.effective_area_IO
             response_dicts.append(
-                __fillRESPONSE_not_safe__(ea, az, ze, nn, self.__irf_to_store__)
+                __fillRESPONSE_not_safe__(ec, az, ze, nn, self.__irf_to_store__)
             )
 
         self.__response__ = response_dicts
