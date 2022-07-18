@@ -6,9 +6,7 @@ from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant as constant
 
 
-def fillEVENTS(
-    datasource, save_multiplicity=False, instrument_epoch=None, trans_finder=False
-):
+def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
 
@@ -19,6 +17,10 @@ def fillEVENTS(
         fits.Column(name="RA", format="1E", array=evt_dict["RA"], unit="deg"),
         fits.Column(name="DEC", format="1E", array=evt_dict["DEC"], unit="deg"),
         fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV"),
+        fits.Column(name="ALT", format="1E", array=evt_dict["ALT"], unit="deg"),
+        fits.Column(name="AZ", format="1E", array=evt_dict["AZ"], unit="deg"),
+        fits.Column(name="Xoff", format="1E", array=evt_dict["Xoff"]),
+        fits.Column(name="Yoff", format="1E", array=evt_dict["Yoff"]),
     ]
     try:
         columns.append(fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"]))
@@ -28,12 +30,6 @@ def fillEVENTS(
         logging.debug("Found BDT variables in event list")
     except KeyError:
         logging.debug("No BDT variables in event list")
-
-    if trans_finder:
-        columns.append(fits.Column(name="ALT", format="1E", array=evt_dict["ALT"]))
-        columns.append(fits.Column(name="AZ", format="1E", array=evt_dict["AZ"]))
-        columns.append(fits.Column(name="Xoff", format="1E", array=evt_dict["Xoff"]))
-        columns.append(fits.Column(name="Yoff", format="1E", array=evt_dict["Yoff"]))
 
     # Number of triggered telescope if necessary
     if save_multiplicity:
@@ -124,13 +120,11 @@ def fillEVENTS(
         constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
-
-    if trans_finder:
-        hdu1.header.set(
-            "PED_VAR",
-            datasource.__pedvar__,
-            "average pedestal variance",
-        )
+    hdu1.header.set(
+        "PED_VAR",
+        datasource.__pedvar__,
+        "average pedestal variance",
+    )
 
     try:
         hdu1.header.set(

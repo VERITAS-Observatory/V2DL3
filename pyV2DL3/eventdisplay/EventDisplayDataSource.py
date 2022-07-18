@@ -26,12 +26,7 @@ class EventDisplayDataSource(VtsDataSource):
             # evt_filter option not used
             evt_filter = {}
 
-        try:
-            trans_finder = kwargs["trans_finder"]
-        except(KeyError, TypeError):
-            trans_finder = False
-
-        gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter, trans_finder)
+        gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
         self.__gti__ = gti
         self.__evt__ = events
         self.__azimuth__ = ea_config["azimuth"]
@@ -49,7 +44,9 @@ class EventDisplayDataSource(VtsDataSource):
                 " ze={1:.2f} deg,"
                 " pedvar={2:.1f}"
             ).format(
-                self.__azimuth__, self.__zenith__, self.__pedvar__,
+                self.__azimuth__,
+                self.__zenith__,
+                self.__pedvar__,
             )
         )
 
@@ -59,5 +56,6 @@ class EventDisplayDataSource(VtsDataSource):
             self.__azimuth__,
             self.__zenith__,
             self.__pedvar__,
-            self.__irf_to_store__, **kwargs
+            self.__irf_to_store__,
+            **kwargs
         )

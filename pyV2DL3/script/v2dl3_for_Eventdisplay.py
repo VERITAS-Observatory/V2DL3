@@ -68,12 +68,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
 value to boundary",
 )
-@click.option(
-    "--trans_finder",
-    is_flag=True,
-    help="Flag to store extra parameters to events. Required to run deep leraning\
- transient detection with trans_finder.",
-)
 def cli(
     file_pair,
     full_enclosure,
@@ -87,7 +81,6 @@ def cli(
     evt_filter,
     force_extrapolation,
     fuzzy_boundary,
-    trans_finder,
 ):
     """Tool for converting Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
@@ -117,12 +110,11 @@ def cli(
     anasum_str, ea_str = file_pair
     datasource = loadROOTFiles(anasum_str, ea_str, "ED")
     datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(evt_filter=evt_filter, trans_finder=trans_finder)
+    datasource.fill_data(evt_filter=evt_filter)
     hdulist = genHDUlist(
         datasource,
         save_multiplicity=save_multiplicity,
         instrument_epoch=instrument_epoch,
-        trans_finder=trans_finder,
     )
     fname_base = os.path.splitext(os.path.basename(output))[0]
     if filename_to_obsid:
