@@ -2,10 +2,7 @@ import logging
 
 
 def main():
-    logging.basicConfig(
-        format="%(levelname)s: %(message)s",
-        level=logging.INFO
-    )
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
     logging.info(
         """
             Run V2DL3 for VEGAS (.stage5) or EventDisplay (.anasum):
