@@ -27,7 +27,7 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(evt_file, True)
         self.__event_classes__ = event_classes
-        self.__event_class_mode = event_class_mode
+        self.__event_class_mode__ = event_class_mode
         self.__fov_cut__ = not bypass_fov_cut
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl

@@ -175,8 +175,9 @@ def cli(
     if len(file_pair) > 0:
         st5_str, event_classes = file_pair
         datasource = loadROOTFiles(st5_str, None, "VEGAS",
-                                   bypass_fov_cut=no_fov_upper,
+                                   bypass_fov_cut=no_fov_cut,
                                    event_classes=event_classes,
+                                   event_class_mode=event_class_mode,
                                    reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
                                    user_cut_file=event_cuts_file,
@@ -228,6 +229,7 @@ def cli(
             logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, None, "VEGAS",
+                                       bypass_fov_cut=no_fov_cut,
                                        event_classes=event_classes,
                                        event_class_mode=event_class_mode,
                                        reco_type=reconstruction_type,

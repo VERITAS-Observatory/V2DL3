@@ -43,7 +43,7 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
             raise Exception("VegasDataSource uses EventClass for effective areas")
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, event_classes,
-                               bypass_fov_cut=False,
+                               bypass_fov_cut=bypass_fov_cut,
                                event_class_mode=event_class_mode,
                                reco_type=reco_type,
                                save_msw_msl=save_msw_msl,

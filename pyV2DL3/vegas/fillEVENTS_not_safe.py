@@ -67,7 +67,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
     }
 
     # Arrays exclusive to event class mode
-    if event_classes is not None or save_msw_msl:
+    if event_class_mode or save_msw_msl:
         event_arrays["mswArr"] = []
         event_arrays["mslArr"] = []
 
@@ -79,8 +79,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
     spatial_exclusions = False
     # Load user cuts if provided
     if user_cuts_dict is not None:
-        if "spatial_exclusion" in user_cuts_dict:
-            spatial_exclusion_regions = user_cuts_dict["spatial_exclusion"]
+        if "spatial_exclusions" in user_cuts_dict:
+            spatial_exclusion_regions = user_cuts_dict["spatial_exclusions"]
             spatial_exclusions = True
 
 
@@ -110,6 +110,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
                              + " fell within a spatial exclusion region")
                 continue
 
+        event_class_idx = 0
         if event_class_mode:
             fMSW = reco.fMSW
             """Determine which event class (if any) the event falls into.
@@ -119,7 +120,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
 
             For now, we only do it based on the MSW intervals
             """
-            event_class_idx = 0
             for ec in event_classes:
                 if ec.msw_lower <= fMSW < ec.msw_upper:
                     break
@@ -143,7 +143,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         if fov_cut:
             fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
             fov_cut_lower = event_classes[event_class_idx].fov_cut_lower
-            if fov_cut_lower < 0 and fov_cut_upper >= 180:
+            if fov_cut_lower > 0 or fov_cut_upper <= 180:
                 excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)

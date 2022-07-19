@@ -88,7 +88,7 @@ def loadUserCuts(user_cut_file):
         srcsep = (i.split(',')[3])
         # Named tuples would be nice, but unnamed tuples are ~ 40% faster to access.
         # They will need to be accessed thousands of times per stage5 file.
-        exclusion_regions.append(srcra, srcdec, srcsep)
+        exclusion_regions.append((srcra, srcdec, srcsep))
     f.close()
 
     return {
