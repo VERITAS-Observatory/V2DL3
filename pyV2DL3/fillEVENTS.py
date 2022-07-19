@@ -6,6 +6,29 @@ from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant as constant
 
 
+def add_existing_column(columns, evt_dict, name, format, unit=None):
+    """
+    Test if key `name` exists in `evt_dict`. If `true` add a new column to columns inplace.
+
+    Parameters
+    ----------
+    columns: list
+    evt_dict: dict
+    name: str
+        Used as name for the new column and key in evt_dict.
+    format: str
+    unit: str or None
+
+    Returns
+    -------
+    """
+
+    if name in evt_dict:
+        columns.append(
+            fits.Column(name=name, format=format, array=evt_dict[name], unit=unit)
+        )
+
+
 def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
@@ -17,19 +40,15 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         fits.Column(name="RA", format="1E", array=evt_dict["RA"], unit="deg"),
         fits.Column(name="DEC", format="1E", array=evt_dict["DEC"], unit="deg"),
         fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV"),
-        fits.Column(name="ALT", format="1E", array=evt_dict["ALT"], unit="deg"),
-        fits.Column(name="AZ", format="1E", array=evt_dict["AZ"], unit="deg"),
-        fits.Column(name="Xoff", format="1E", array=evt_dict["Xoff"]),
-        fits.Column(name="Yoff", format="1E", array=evt_dict["Yoff"]),
     ]
-    try:
-        columns.append(fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"]))
-        columns.append(
-            fits.Column("BDT_SCORE", format="1E", array=evt_dict["BDT_SCORE"])
-        )
-        logging.debug("Found BDT variables in event list")
-    except KeyError:
-        logging.debug("No BDT variables in event list")
+
+    # Test if key exists in evt_dict. If yes, add these columns.
+    add_existing_column(columns, evt_dict, name="ALT", format="1E", unit="deg")
+    add_existing_column(columns, evt_dict, name="AZ", format="1E", unit="deg")
+    add_existing_column(columns, evt_dict, name="Xoff", format="1E")
+    add_existing_column(columns, evt_dict, name="Yoff", format="1E")
+    add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
+    add_existing_column(columns, evt_dict, name="BDT_SCORE", format="1E")
 
     # Number of triggered telescope if necessary
     if save_multiplicity:
@@ -120,11 +139,13 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
-    hdu1.header.set(
-        "PED_VAR",
-        datasource.__pedvar__,
-        "average pedestal variance",
-    )
+
+    if hasattr(datasource, "__pedvar__"):
+        hdu1.header.set(
+            "PED_VAR",
+            datasource.__pedvar__,
+            "average pedestal variance",
+        )
 
     try:
         hdu1.header.set(
