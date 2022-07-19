@@ -55,7 +55,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     add_existing_column(columns, evt_dict, name="MSL", format="1D")
     add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
     add_existing_column(columns, evt_dict, name="BDT_SCORE", format="1E")
-    
+
     # Number of triggered telescope if necessary
     if save_multiplicity:
         columns.append(
