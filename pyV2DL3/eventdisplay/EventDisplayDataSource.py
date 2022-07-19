@@ -44,7 +44,9 @@ class EventDisplayDataSource(VtsDataSource):
                 " ze={1:.2f} deg,"
                 " pedvar={2:.1f}"
             ).format(
-                self.__azimuth__, self.__zenith__, self.__pedvar__,
+                self.__azimuth__,
+                self.__zenith__,
+                self.__pedvar__,
             )
         )
 
@@ -54,5 +56,6 @@ class EventDisplayDataSource(VtsDataSource):
             self.__azimuth__,
             self.__zenith__,
             self.__pedvar__,
-            self.__irf_to_store__, **kwargs
+            self.__irf_to_store__,
+            **kwargs
         )
