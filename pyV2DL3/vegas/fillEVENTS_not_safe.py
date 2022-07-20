@@ -100,8 +100,9 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         avDec.append(reco.fArrayTrackingDec_J2000_Rad)
 
         # Reconstructed shower direction
-        event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
-                    reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+        if spatial_exclusions or fov_cut:
+            event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
+                        reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
 
         # Check spatial exclusion regions if provided
         if spatial_exclusions:
@@ -250,12 +251,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
 
 
 """
-Check event against the provided spatial exclusion regions as tuples (ra, dec, sep)
+Check event against the provided FoV upper and lower bounds
 
 Arguments:
     event_skycoord  --  Reconstructed shower direction as an astropy.SkyCoord
     reco            --  The reco attribute of the selectedEventsTree (e.g reco or ev.ITM)
-    fov_cut_upper   --  The FoV upper limit in degrees.
+    fov_cut_upper   --  The FoV upper limit in degrees
 
 Returns: 
     Bool  --  True if event falls outside of the FoV (event needs excluded)

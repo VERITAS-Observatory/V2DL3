@@ -8,7 +8,7 @@ from pyV2DL3.vegas.load_vegas import VEGASStatus
 logger = logging.getLogger(__name__)
 
 """
-Construct an event class from an effective area
+Construct an event class from an effective area file
 
 Event Classes are wrappers for VEGAS effective area files to efficiently
 read, store, and validate parameters for event cutting or sorting
@@ -55,7 +55,7 @@ class EventClass(object):
 
 
     """
-    Build az, zen, noise, and offset indexes for this EA.
+    Build az, zen, noise, and offset indexes for this EA file.
     """
     def __build_index__(self):
         manager = self.manager
@@ -113,7 +113,7 @@ class EventClass(object):
 
 
     """
-    Loads and stores the effective area's cuts parameters values
+    Loads and stores the effective area file's cuts parameters values
     """
     def __load_cuts_info__(self, cut_searches):
         # This dict will only contain keys from the found cuts.

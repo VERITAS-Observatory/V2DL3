@@ -20,7 +20,7 @@ class VegasDataSource(VtsDataSource):
 
         # Developer exceptions to ensure this was constructed with EventClass(es)
         if event_classes is None:
-            raise Exception("VegasDataSource uses EventClasses for effective areas")
+            raise Exception("VegasDataSource uses EventClasses for effective area files")
 
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()

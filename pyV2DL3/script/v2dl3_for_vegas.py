@@ -65,7 +65,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--no_fov_cut",
     "-nf",
     is_flag=True,
-    help="Do not cut events based on the EA's FoVCut parameters"
+    help="Disable automatic cutting of events based on the EA's FoVCut parameters"
 )
 @click.option(
     "--gen_index_file",
