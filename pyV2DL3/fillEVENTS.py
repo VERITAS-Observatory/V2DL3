@@ -29,9 +29,13 @@ def add_existing_column(columns, evt_dict, name, format, unit=None):
         )
 
 
-def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
+def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
+
+    if event_class_idx is not None:
+        add_evclass = True if len(evt_dict) > 1 else False
+        evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
     columns = [
@@ -47,6 +51,8 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     add_existing_column(columns, evt_dict, name="AZ", format="1E", unit="deg")
     add_existing_column(columns, evt_dict, name="Xoff", format="1E")
     add_existing_column(columns, evt_dict, name="Yoff", format="1E")
+    add_existing_column(columns, evt_dict, name="MSW", format="1D")
+    add_existing_column(columns, evt_dict, name="MSL", format="1D")
     add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
     add_existing_column(columns, evt_dict, name="BDT_SCORE", format="1E")
 
@@ -139,6 +145,8 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
+    if event_class_idx is not None and add_evclass:
+        hdu1.header.set("EV_CLASS", event_class_idx, "Event class number")
 
     if hasattr(datasource, "__pedvar__"):
         hdu1.header.set(

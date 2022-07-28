@@ -3,6 +3,7 @@ import os
 
 import click
 
+from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 from pyV2DL3.vegas.EventClass import EventClass
 
 
@@ -64,6 +65,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Save telescope multiplicity into event list",
 )
 @click.option(
+    "--save_msw_msl",
+    is_flag=True,
+    help="Append MSW and MSL columns to event tables."
+    "This is done automatically if using MSW-based event classes."
+)
+@click.option(
     "--filename_to_obsid",
     "-I",
     is_flag=True,
@@ -86,6 +93,7 @@ def cli(
     event_class_mode,
     gen_index_file,
     save_multiplicity,
+    save_msw_msl,
     filename_to_obsid,
     full_enclosure,
     point_like,
@@ -144,9 +152,12 @@ def cli(
         full_enclosure = False
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
+    # File pair mode
     if len(file_pair) > 0:
         st5_str, ea_str = file_pair
-        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS")
+        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+                                   save_msw_msl=save_msw_msl,
+                                   )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
@@ -158,8 +169,8 @@ def cli(
             )
             hdulist[1].header["OBS_ID"] = fname_base
         hdulist.writeto(output, overwrite=True)
+    # Runlist mode
     else:
-        from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
         from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
         from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
         from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
@@ -202,26 +213,98 @@ def cli(
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
                                        event_classes=event_classes,
+                                       save_msw_msl=save_msw_msl,
                                        )
 
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
                 datasource.fill_data()
-            hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
-            if filename_to_obsid:
-                logging.info(
-                    f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
-                )
-                hdulist[1].header["OBS_ID"] = fname_base
-            hdulist.writeto(f"{output}/{fname_base}.fits", overwrite=True)
-            flist.append(f"{output}/{fname_base}.fits")
-            # Generate hdu obs index file
+
+            # Prepare output paths
+            output_path = os.path.join(output, fname_base)
+            # This is length 1 when not using event class mode
+            num_event_groups = len(datasource.get_evt_data())
+            if num_event_groups < 1:
+                raise Exception("No event data found")
+            for i in range(0, num_event_groups):
+                # Make event class subdirectories if there is more than one event group in the VegasDataSource
+                if num_event_groups > 1:
+                    output_path = make_eclass_path(output, fname_base, i)
+
+                # Write out the fits files
+                hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
+                if filename_to_obsid:
+                    logging.info(
+                        f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
+                    )
+                    hdulist[1].header["OBS_ID"] = fname_base
+                output_path += ".fits"
+                hdulist.writeto(output_path, overwrite=True)
+                flist.append(output_path)
+
         if gen_index_file:
+            gen_index_files(flist, output, eclass_count=num_event_groups)
+
+
+"""
+Generates the index files for a list of files.
+
+Arguments:
+    flist         --  List of .fits filepaths
+    output        --  Destination to write the generated index files.
+    eclass_count  --  Number of event classes for this run
+"""
+
+
+def gen_index_files(flist, output, eclass_count=1):
+    # Generate master index files
+    logging.info(
+        f"Generating index files {output}/obs-index.fits.gz "
+        f"and {output}/hdu-index.fits.gz"
+    )
+    create_obs_hdu_index_file(flist, output)
+
+    # Generate index files per event class
+    if eclass_count > 1:
+        for i in range(0, eclass_count):
+            eclass_flist = []
+            eclass_output_dir = os.path.join(output, "ec" + str(i))
+            for fname in os.listdir(eclass_output_dir):
+                eclass_flist.append(os.path.join(eclass_output_dir, fname))
             logging.info(
-                f"Generating index files {output}/obs-index.fits.gz "
-                f"and {output}/hdu-index.fits.gz"
+                f"Generating index files {eclass_output_dir}/obs-index.fits.gz "
+                f"and {eclass_output_dir}/hdu-index.fits.gz"
             )
-            create_obs_hdu_index_file(flist, output)
+            create_obs_hdu_index_file(eclass_flist, eclass_output_dir)
+
+
+"""
+Sorts output files to subdirectories and appends "_ec#" to their filename
+according to event class.
+
+Arguments:
+    output       --  Output directory
+    fname_base   --  Name of the fits file (without '.fits')
+    eclass_idx   --  The event class # that this file belongs to
+
+Returns:
+    New output path (excluding '.fits') as a string
+"""
+
+
+def make_eclass_path(output, fname_base, eclass_idx):
+    output_path = os.path.join(output, "ec" + str(eclass_idx))
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    stage_idx = fname_base.find(".")
+    # Splice an '_ec#' identifier into the filename just before the first '.'
+    if(stage_idx > -1):
+        eclass_fname = fname_base[:stage_idx] + "_ec" + str(eclass_idx) + fname_base[stage_idx:]
+    # If no '.' found, append to end
+    else:
+        eclass_fname = fname_base + "_ec" + str(eclass_idx)
+
+    return os.path.join(output_path, eclass_fname)
 
 
 if __name__ == "__main__":

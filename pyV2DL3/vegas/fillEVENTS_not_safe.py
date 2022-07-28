@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 from astropy.time import Time
 import numpy as np
@@ -15,9 +16,7 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO):
-    evt_dict = {}
-
+def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -39,35 +38,94 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    # Start filling events
+    if event_classes is None:
+        # We use a single event group when not in event class mode
+        num_event_groups = 1
+    else:
+        # Set num_event_classes so we dont call len(event_classes)
+        # thousands of times when filling events.
+        num_event_groups = len(event_classes)
+        if num_event_groups < 1:
+            # Dev exception
+            raise Exception("event_classes was passed in as an empty List")
+
+    # These arrays are the same for every event group
     avAlt = []
     avAz = []
     avRA = []
     avDec = []
 
-    evNumArr = []
-    timeArr = []
-    raArr = []
-    decArr = []
-    azArr = []
-    altArr = []
-    energyArr = []
-    nTelArr = []
+    # These arrays are unique to each event group
+    event_arrays = {
+        "evNumArr": [],
+        "timeArr": [],
+        "raArr": [],
+        "decArr": [],
+        "azArr": [],
+        "altArr": [],
+        "energyArr": [],
+        "nTelArr": [],
+    }
+
+    # Arrays exclusive to event class mode
+    if event_classes is not None or save_msw_msl:
+        event_arrays["mswArr"] = []
+        event_arrays["mslArr"] = []
+
+    # Deep copy the dictionary for each event class
+    event_groups = [event_arrays]
+    for i in range(num_event_groups - 1):
+        event_groups.append(deepcopy(event_arrays))
+
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
+        # When not using event class mode, this will stay 0
+        event_class_idx = 0
+
+        if event_classes is not None:
+            fMSW = ev.S.fMSW
+            """Determine which event class (if any) the event falls into.
+
+            Simply loop through the event classes and break if this event meets all
+            of an event class' parameters
+
+            For now, we only do it based on the MSW intervals
+            """
+            event_class_idx = 0
+            # Loop through event classes to check if this event satisfies the parameters
+            for ec in event_classes:
+                if ec.msw_lower <= fMSW < ec.msw_upper:
+                    break
+                event_class_idx += 1
+
+            # If this event falls into an event classes
+            if event_class_idx < num_event_groups:
+                event_groups[event_class_idx]["mswArr"].append(fMSW)
+                event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
+            # Else skip to next event
+            else:
+                logger.debug("Event excluded: " + str(ev.S.fArrayEventNum)
+                             + " MSW: " + str(fMSW))
+                continue
+
+        elif save_msw_msl:
+            event_groups[event_class_idx]["mswArr"].append(ev.S.fMSW)
+            event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
+
         # seconds since first light
         time_relative_to_reference = (
             float(ev.S.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
         )
-        evNumArr.append(ev.S.fArrayEventNum)
-        timeArr.append(time_relative_to_reference)
-        raArr.append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
-        decArr.append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
-        azArr.append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
-        altArr.append(np.rad2deg(ev.S.fDirectionElevation_Rad))
-        energyArr.append(ev.S.fEnergy_GeV / 1000.0)
-        nTelArr.append(ev.S.fImages)
+        this_event_group = event_groups[event_class_idx]
+        this_event_group["evNumArr"].append(ev.S.fArrayEventNum)
+        this_event_group["timeArr"].append(time_relative_to_reference)
+        this_event_group["raArr"].append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
+        this_event_group["decArr"].append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
+        this_event_group["azArr"].append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
+        this_event_group["altArr"].append(np.rad2deg(ev.S.fDirectionElevation_Rad))
+        this_event_group["energyArr"].append(ev.S.fEnergy_GeV / 1000.0)
+        this_event_group["nTelArr"].append(ev.S.fImages)
 
         avAlt.append(ev.S.fArrayTrackingElevation_Deg)
         avAz.append(ev.S.fArrayTrackingAzimuth_Deg)
@@ -83,15 +141,6 @@ def __fillEVENTS_not_safe__(vegasFileIO):
 
     avRA = np.rad2deg(np.mean(avRA))
     avDec = np.rad2deg(np.mean(avDec))
-    # Filling Event List
-    evt_dict["EVENT_ID"] = evNumArr
-    evt_dict["TIME"] = timeArr
-    evt_dict["RA"] = raArr
-    evt_dict["DEC"] = decArr
-    evt_dict["ALT"] = altArr
-    evt_dict["AZ"] = azArr
-    evt_dict["ENERGY"] = energyArr
-    evt_dict["EVENT_TYPE"] = nTelArr
 
     # Get Time Cuts and build GTI start and stop time array
     # and calculate live time
@@ -101,28 +150,50 @@ def __fillEVENTS_not_safe__(vegasFileIO):
     goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))
     real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
 
-    # Filling Header info
-    evt_dict["OBS_ID"] = runHeader.getRunNumber()
-    evt_dict["DATE-OBS"] = startTime.getString().split()[0]
-    evt_dict["TIME-OBS"] = startTime.getString().split()[1]
-    evt_dict["DATE-END"] = endTime.getString().split()[0]
-    evt_dict["TIME-END"] = endTime.getString().split()[1]
-    evt_dict["TSTART"] = startTime_s
-    evt_dict["TSTOP"] = endTime_s
-    evt_dict["ONTIME"] = endTime_s - startTime_s
-    evt_dict["LIVETIME"] = (
-        runHeader.getLiveTimeFrac(True) * real_live_time
-    )  # True to suppress error warnings
-    evt_dict["DEADC"] = evt_dict["LIVETIME"] / evt_dict["ONTIME"]
-    evt_dict["OBJECT"] = runHeader.getSourceId()
-    evt_dict["RA_PNT"] = avRA
-    evt_dict["DEC_PNT"] = avDec
-    evt_dict["ALT_PNT"] = avAlt
-    evt_dict["AZ_PNT"] = avAz
-    evt_dict["RA_OBJ"] = np.rad2deg(runHeader.getSourceRA())
-    evt_dict["DEC_OBJ"] = np.rad2deg(runHeader.getSourceDec())
-    evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
-    evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
+    # Construct an array to hold the event dict(s) to be returned:
+    returned_dicts = []
+    for i in range(num_event_groups):
+        returned_dicts.append({})
+
+    # Filling Event List(s)
+    for index in range(num_event_groups):
+        # Fill each event class's FITS format from its corresponding event arrays
+        evt_dict = returned_dicts[index]
+        arr_dict = event_groups[index]
+        evt_dict["EVENT_ID"] = arr_dict["evNumArr"]
+        evt_dict["TIME"] = arr_dict["timeArr"]
+        evt_dict["RA"] = arr_dict["raArr"]
+        evt_dict["DEC"] = arr_dict["decArr"]
+        evt_dict["ALT"] = arr_dict["altArr"]
+        evt_dict["AZ"] = arr_dict["azArr"]
+        evt_dict["ENERGY"] = arr_dict["energyArr"]
+        evt_dict["EVENT_TYPE"] = arr_dict["nTelArr"]
+        if "mswArr" in arr_dict:
+            evt_dict["MSW"] = arr_dict["mswArr"]
+        if "mslArr" in arr_dict:
+            evt_dict["MSL"] = arr_dict["mslArr"]
+        # Filling Header info
+        evt_dict["OBS_ID"] = runHeader.getRunNumber()
+        evt_dict["DATE-OBS"] = startTime.getString().split()[0]
+        evt_dict["TIME-OBS"] = startTime.getString().split()[1]
+        evt_dict["DATE-END"] = endTime.getString().split()[0]
+        evt_dict["TIME-END"] = endTime.getString().split()[1]
+        evt_dict["TSTART"] = startTime_s
+        evt_dict["TSTOP"] = endTime_s
+        evt_dict["ONTIME"] = endTime_s - startTime_s
+        evt_dict["LIVETIME"] = (
+            runHeader.getLiveTimeFrac(True) * real_live_time
+        )  # True to suppress error warnings
+        evt_dict["DEADC"] = evt_dict["LIVETIME"] / evt_dict["ONTIME"]
+        evt_dict["OBJECT"] = runHeader.getSourceId()
+        evt_dict["RA_PNT"] = avRA
+        evt_dict["DEC_PNT"] = avDec
+        evt_dict["ALT_PNT"] = avAlt
+        evt_dict["AZ_PNT"] = avAz
+        evt_dict["RA_OBJ"] = np.rad2deg(runHeader.getSourceRA())
+        evt_dict["DEC_OBJ"] = np.rad2deg(runHeader.getSourceDec())
+        evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
+        evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
 
     avNoise = 0
     nTels = 0
@@ -141,5 +212,5 @@ def __fillEVENTS_not_safe__(vegasFileIO):
             "TSTOP": endTime_s,
         },
         {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
-        evt_dict,
+        returned_dicts,
     )
