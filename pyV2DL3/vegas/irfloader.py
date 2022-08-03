@@ -332,6 +332,8 @@ class IRFLoader:
                         psf_king_index["Azimuth"].append(line_arr[3])
             # Cast the strings to floats and sort ascending
             for key in psf_king_index:
+                if not psf_king_index[key][0].isnumeric():
+                    psf_king_index[key].pop(0)
                 psf_king_index[key] = [float(ele) for ele in psf_king_index[key]]
                 psf_king_index[key].sort()
             # Log results to debug mode
