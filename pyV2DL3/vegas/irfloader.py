@@ -544,37 +544,51 @@ class IRFLoader:
         # If using PSF king. Not interpolated at the moment.
         if self.__psf_king__:
             # Already used our king azimuth values earlier
-            if az - az_low > az_high - az:
+            #if az - az_low > az_high - az:
+            #    az_psf = az_high
+            #else:
+            #    az_psf = az_low
+            # Ze
+            az_index = self.__psf_king_index__["Azimuth"]
+            az_low = az_index[0]
+            az_high = az_index[-1]
+            for low, high in zip(az_index[:-1], az_index[1:]):
+                if (az >= low) and (az < high):
+                    az_low = low
+                    az_high = high
+                    break
+            if abs(az - az_low) > abs(az_high - az):
                 az_psf = az_high
             else:
                 az_psf = az_low
-            # Ze
+            #if (az_low < 0) or (az_high < 0):
+            #    raise Exception("king az out of range")
             ze_index = self.__psf_king_index__["Zenith"]
-            ze_low = -1
-            ze_high = -1
+            ze_low = ze_index[0]
+            ze_high = ze_index[-1]
             for low, high in zip(ze_index[:-1], ze_index[1:]):
                 if (ze >= low) and (ze < high):
                     ze_low = low
                     ze_high = high
                     break
-            if ze - ze_low > ze_high - ze:
+            if abs(ze - ze_low) > abs(ze_high - ze):
                 zen_psf = ze_high
             else:
                 zen_psf = ze_low
-            if (ze_low < 0) or (ze_high < 0):
-                raise Exception("king ze out of range")
+            #if (ze_low < 0) or (ze_high < 0):
+             #   raise Exception("king ze out of range")
             # Noise
             noise_index = self.__psf_king_index__["Noise"]
-            noise_low = -1
-            noise_high = -1
+            noise_low = noise_index[0]
+            noise_high = noise_index[-1]
             for low, high in zip(noise_index[:-1], noise_index[1:]):
                 if (noise >= low) and (noise < high):
                     noise_low = low
                     noise_high = high
                     break
-            if (noise_low < 0) or (noise_high < 0):
-                raise Exception("king noise out of range")
-            if noise - noise_low > noise_high - noise:
+            #if (noise_low < 0) or (noise_high < 0):
+            #    raise Exception("king noise out of range")
+            if abs(noise - noise_low) > abs(noise_high - noise):
                 noise_psf = noise_high
             else:
                 noise_psf = noise_low
