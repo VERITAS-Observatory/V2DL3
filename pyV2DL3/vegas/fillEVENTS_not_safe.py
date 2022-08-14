@@ -41,12 +41,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    # Set num_event_classes so we dont call len(effective_area_files)
+    # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
     num_event_groups = len(effective_area_files)
     if num_event_groups < 1:
         # Dev exception
-        raise Exception("event_classes was passed in as an empty List")
+        raise Exception("effective_area_files was passed in as an empty List")
 
     # Average arrays are independent of event group
     avAlt = []
@@ -96,8 +96,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             fMSW = reco.fMSW
             """Determine which event class (if any) the event falls into.
 
-            Simply loop through the event classes and break if this event meets all
-            of an event class' parameters
+            Simply loop through the effective area files and break if this event meets all
+            of one's cuts parameters
 
             For now, we only do it based on the MSW intervals
             """
