@@ -44,7 +44,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     is_flag=True,
     help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID. "
         +"Event classes sort events to separate fits files based on EA cuts parameters. "
-        +"Uses only MSW intervals for now. See EventClass.py to extend."
+        +"Uses only MSW intervals for now. See EffectiveAreaFile.py to extend."
 )
 @click.option(
     "--reconstruction_type",
