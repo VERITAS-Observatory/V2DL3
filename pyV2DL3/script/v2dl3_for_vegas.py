@@ -47,13 +47,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
         +"Uses only MSW intervals for now. See EventClass.py to extend."
 )
 @click.option(
-    '--event_cuts_file',
-    '-c',
-    nargs=1,
-    type=click.Path(exists=True),
-    help='File defining spatial exclusion regions to cut'
-)
-@click.option(
     "--reconstruction_type",
     "-r",
     nargs=1,
@@ -107,7 +100,6 @@ def cli(
     file_pair,
     runlist,
     event_class_mode,
-    event_cuts_file,
     reconstruction_type,
     no_fov_cut,
     gen_index_file,
@@ -180,7 +172,6 @@ def cli(
                                    event_class_mode=event_class_mode,
                                    reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
-                                   user_cut_file=event_cuts_file,
                                    )
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
@@ -234,7 +225,6 @@ def cli(
                                        event_class_mode=event_class_mode,
                                        reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
-                                       user_cut_file=event_cuts_file,
                                        )
 
             datasource.set_irfs_to_store(irfs_to_store)

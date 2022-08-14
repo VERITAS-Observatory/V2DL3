@@ -32,7 +32,6 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
                   event_class_mode=False,
                   reco_type=1,
                   save_msw_msl=False,
-                  user_cut_file=None,
                   ):
 
     if effective_area_file is None and event_classes is None:
@@ -47,7 +46,6 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
                                event_class_mode=event_class_mode,
                                reco_type=reco_type,
                                save_msw_msl=save_msw_msl,
-                               user_cut_file=user_cut_file,
                                )
 
     if file_type != "ED":

@@ -19,7 +19,7 @@ windowSizeForNoise = 7
 
 
 def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
-                            fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False, user_cuts_dict=None,):
+                            fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -76,14 +76,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
     for i in range(num_event_groups - 1):
         event_groups.append(deepcopy(event_arrays))
 
-    spatial_exclusions = False
-    # Load user cuts if provided
-    if user_cuts_dict is not None:
-        if "spatial_exclusions" in user_cuts_dict:
-            spatial_exclusion_regions = user_cuts_dict["spatial_exclusions"]
-            spatial_exclusions = True
-
-
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
@@ -98,18 +90,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         avAz.append(reco.fArrayTrackingAzimuth_Deg)
         avRA.append(reco.fArrayTrackingRA_J2000_Rad)
         avDec.append(reco.fArrayTrackingDec_J2000_Rad)
-
-        # Reconstructed shower direction
-        if spatial_exclusions or fov_cut:
-            event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
-                        reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
-
-        # Check spatial exclusion regions if provided
-        if spatial_exclusions:
-            if check_spatial_exclusion(event_skycoord, spatial_exclusion_regions):
-                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                             + " fell within a spatial exclusion region")
-                continue
 
         event_class_idx = 0
         if event_class_mode:
@@ -144,8 +124,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
         if fov_cut:
             fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
             fov_cut_lower = event_classes[event_class_idx].fov_cut_lower
-            if fov_cut_lower > 0 or fov_cut_upper <= 180:
-                excluded, tel_sep = check_FoV_exclusion(event_skycoord, reco, fov_cut_upper, fov_cut_lower)
+            if fov_cut_lower > 0 or fov_cut_upper <= 180:                
+                excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)
                                 + " separation: " + str(tel_sep) + " not within FoVCut range: " 
@@ -262,36 +242,18 @@ Returns:
     Bool  --  True if event falls outside of the FoV (event needs excluded)
     float --  The computed separation from the FoV center
 """
-def check_FoV_exclusion(event_skycoord, reco, fov_cut_upper, fov_cut_lower):
+
+
+def check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower):
+    event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
+                        reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
+    
     pointing_position = SkyCoord(np.rad2deg(reco.fArrayTrackingRA_J2000_Rad), np.rad2deg(
             reco.fArrayTrackingDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
     
     tel_sep = pointing_position.separation(event_skycoord).degree
+
     if  tel_sep > fov_cut_upper or tel_sep < fov_cut_lower:
         return True, tel_sep
 
     return False, tel_sep
-
-
-"""
-Check event against the provided spatial exclusion regions as tuples (ra, dec, sep)
-
-Arguments:
-    event_skycoord  --  reconstructed shower direction as an astropy.SkyCoord
-
-Returns: 
-    Bool  --  True if event falls within an exclusion region (event needs excluded) 
-"""
-def check_spatial_exclusion(event_skycoord, exclusion_regions):
-    for src_ra, src_dec, src_radius in exclusion_regions:
-        # Source position
-        src_skycoord = SkyCoord(src_ra, src_dec, frame='icrs',
-                        unit=(units.deg, units.deg))
-
-        sep = src_skycoord.separation(event_skycoord).degree
-        src_radius = float(src_radius)
-        # If one event falls in an exclusion region, skip the other exclusion regions
-        if (sep < src_radius):
-            return True
-
-    return False
