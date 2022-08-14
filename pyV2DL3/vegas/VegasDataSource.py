@@ -8,7 +8,7 @@ from pyV2DL3.VtsDataSource import VtsDataSource
 
 class VegasDataSource(VtsDataSource):
     def __init__(self, evt_file,
-                 event_classes,
+                 ea_files,
                  bypass_fov_cut=False,
                  event_class_mode=False,
                  reco_type=1,
@@ -16,15 +16,11 @@ class VegasDataSource(VtsDataSource):
                  ):
         super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
-        # Developer exceptions to ensure this was constructed with EventClass(es)
-        if event_classes is None:
-            raise Exception("VegasDataSource uses EventClasses for effective area files")
-
         # Loading VEGAS if not already done so
         self.vegas_status = VEGASStatus()
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(evt_file, True)
-        self.__event_classes__ = event_classes
+        self.__ea_files__ = ea_files
         self.__event_class_mode__ = event_class_mode
         self.__fov_cut__ = not bypass_fov_cut
         self.__reco_type__ = reco_type
@@ -46,9 +42,8 @@ class VegasDataSource(VtsDataSource):
         if str(type(self.__evt_file__)) != cpy_nonestring and not isinstance(self.__evt_file__, str):
             self.__evt_file__.closeTheRootFile()
 
-
     def __fill_evt__(self):
-        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__event_classes__,
+        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__ea_files__,
                                                             event_class_mode=self.__event_class_mode__,
                                                             fov_cut=self.__fov_cut__,
                                                             reco_type=self.__reco_type__,
@@ -70,7 +65,7 @@ class VegasDataSource(VtsDataSource):
         nn = self.__noise__
         response_dicts = []
         # Fill response for each event class
-        for ec in self.__event_classes__:
+        for ec in self.__ea_files__:
             response_dicts.append(
                 __fillRESPONSE_not_safe__(ec, az, ze, nn, self.__irf_to_store__)
             )

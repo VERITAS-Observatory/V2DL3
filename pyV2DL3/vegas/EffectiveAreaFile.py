@@ -20,11 +20,11 @@ https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#Event_Classes
 """
 
 
-class EventClass(object):
-    def __init__(self, effective_area):
+class EffectiveAreaFile(object):
+    def __init__(self, effective_area_file):
         self.__vegas__ = VEGASStatus()
         self.__vegas__.loadVEGAS()
-        self.effective_area_IO = ROOT.VARootIO(effective_area, True)
+        self.effective_area_IO = ROOT.VARootIO(effective_area_file, True)
         self.effective_area_IO.loadTheRootFile()
         self.manager = ROOT.VAEffectiveAreaManager()
         self.manager.setUseReconstructedEnergy(False)
@@ -33,9 +33,9 @@ class EventClass(object):
         # Initialize the cuts parameter names to search for
         cut_searches = [
                         "ThetaSquareUpper",
-                        "MeanScaledWidthLower", "MeanScaledWidthUpper",  # MSW
-                        "MaxHeightLower",       "MaxHeightUpper",        # Max height
-                        "FoVCutUpper",          "FoVCutLower",           # Field of view
+                        "MeanScaledWidthLower",  "MeanScaledWidthUpper",  # MSW
+                        "MaxHeightLower",        "MaxHeightUpper",        # Max height
+                        "FoVCutUpper",           "FoVCutLower",           # Field of view
                         ]
 
         # Initialize corresponding class variables and default values
@@ -55,7 +55,7 @@ class EventClass(object):
 
 
     """
-    Build az, zen, noise, and offset indexes for this EA file.
+    Build az, zen, noise, and offset indexes for this file.
     """
     def __build_index__(self):
         manager = self.manager

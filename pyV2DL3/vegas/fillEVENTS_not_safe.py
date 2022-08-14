@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
+def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                             fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
@@ -41,9 +41,9 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    # Set num_event_classes so we dont call len(event_classes)
+    # Set num_event_classes so we dont call len(effective_area_files)
     # thousands of times when filling events.
-    num_event_groups = len(event_classes)
+    num_event_groups = len(effective_area_files)
     if num_event_groups < 1:
         # Dev exception
         raise Exception("event_classes was passed in as an empty List")
@@ -101,7 +101,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
 
             For now, we only do it based on the MSW intervals
             """
-            for ec in event_classes:
+            for ec in effective_area_files:
                 if ec.msw_lower <= fMSW < ec.msw_upper:
                     break
                 event_class_idx += 1
@@ -122,8 +122,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes,
 
         # Check FoV if appropriate
         if fov_cut:
-            fov_cut_upper = event_classes[event_class_idx].fov_cut_upper
-            fov_cut_lower = event_classes[event_class_idx].fov_cut_lower
+            fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
+            fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
             if fov_cut_lower > 0 or fov_cut_upper <= 180:                
                 excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
                 if excluded:

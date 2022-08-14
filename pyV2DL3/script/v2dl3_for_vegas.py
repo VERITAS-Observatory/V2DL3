@@ -4,7 +4,7 @@ import os
 import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
-from pyV2DL3.vegas.EventClass import EventClass
+from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 
 
 def runlist_to_file_pair(rl_dict):
@@ -12,13 +12,13 @@ def runlist_to_file_pair(rl_dict):
     st5s = rl_dict["RUNLIST"]
     file_pair = []
     for k in st5s.keys():
-        event_classes = []
+        ea_files = []
         for ea in eas[k]:
-            event_classes.append(EventClass(ea))
-        if len(event_classes) == 0:
+            ea_files.append(EffectiveAreaFile(ea))
+        if len(ea_files) == 0:
             raise Exception("No EA filenames defined for runlist tag: " + k)
         for f in st5s[k]:
-            file_pair.append((f, event_classes))
+            file_pair.append((f, ea_files))
 
     return file_pair
 
@@ -58,7 +58,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--no_fov_cut",
     "-nf",
     is_flag=True,
-    help="Disable automatic cutting of events based on the EA's FoVCut parameters"
+    help="Disable automatic event cuts according to the EA file's FoVCut parameters"
 )
 @click.option(
     "--gen_index_file",
@@ -165,10 +165,10 @@ def cli(
 
     # File pair mode
     if len(file_pair) > 0:
-        st5_str, event_classes = file_pair
+        st5_str, ea_files = file_pair
         datasource = loadROOTFiles(st5_str, None, "VEGAS",
                                    bypass_fov_cut=no_fov_cut,
-                                   event_classes=event_classes,
+                                   ea_files=ea_files,
                                    event_class_mode=event_class_mode,
                                    reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
@@ -215,13 +215,13 @@ def cli(
 
         file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
-        for st5_str, event_classes in file_pairs:
+        for st5_str, ea_files in file_pairs:
             logging.info(f"Processing file: {st5_str}")
-            logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
+            logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
             datasource = loadROOTFiles(st5_str, None, "VEGAS",
                                        bypass_fov_cut=no_fov_cut,
-                                       event_classes=event_classes,
+                                       ea_files=ea_files,
                                        event_class_mode=event_class_mode,
                                        reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
@@ -234,12 +234,12 @@ def cli(
             # Prepare output paths
             output_path = os.path.join(output, fname_base)
             # This is length 1 when not using event class mode
-            num_event_class = len(datasource.get_evt_data())
-            if num_event_class < 1:
+            num_event_groups = len(datasource.get_evt_data())
+            if num_event_groups < 1:
                 raise Exception("No event data found")
-            for i in range(0, num_event_class):
+            for i in range(0, num_event_groups):
                 # Make event class subdirectories if there is more than one event group in the VegasDataSource
-                if num_event_class > 1:
+                if num_event_groups > 1:
                     output_path = make_eclass_path(output, fname_base, i)
 
                 # Write out the fits files
@@ -254,7 +254,7 @@ def cli(
                 flist.append(output_path)
 
         if gen_index_file:
-            gen_index_files(flist, output, eclass_count=num_event_class)
+            gen_index_files(flist, output, eclass_count=num_event_groups)
 
 
 """

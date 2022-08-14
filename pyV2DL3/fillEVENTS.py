@@ -12,6 +12,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     evt_dict = datasource.get_evt_data()
 
     if event_class_idx is not None:
+        # Add 'EV_CLASS' header key if there is more than one event group
         add_evclass = True if len(evt_dict) > 1 else False
         evt_dict = evt_dict[event_class_idx]
 
