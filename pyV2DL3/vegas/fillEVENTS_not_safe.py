@@ -80,12 +80,13 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
 
     for ev in selectedEventsTree:
         # Event reconstruction method
-        if reco_type == 1: 
+        if reco_type == 1:
             reco = ev.S
-        elif reco_type == 2: 
+        elif reco_type == 2:
             reco = ev.M3D
-        else: raise Exception("Invalid reconstruction type!"
-                              "\nSee --help for supported arguments")
+        else:
+            raise Exception("Invalid reconstruction type!"
+                            "\nSee --help for supported arguments")
 
         # Include event in averages regardless of whether it gets cut
         avAlt.append(reco.fArrayTrackingElevation_Deg)
@@ -130,7 +131,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                 excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                 + " separation: " + str(tel_sep) + " not within FoVCut range: " 
+                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
                                  + str(fov_cut_lower) + "-" + str(fov_cut_upper))
                     continue
 
