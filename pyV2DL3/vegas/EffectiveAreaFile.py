@@ -32,11 +32,11 @@ class EffectiveAreaFile(object):
 
         # Initialize the cuts parameter names to search for
         cut_searches = [
-                        "ThetaSquareUpper",
-                        "MeanScaledWidthLower",  "MeanScaledWidthUpper",  # MSW
-                        "MaxHeightLower",        "MaxHeightUpper",        # Max height
-                        "FoVCutUpper",           "FoVCutLower",           # Field of view
-                        ]
+            "ThetaSquareUpper",
+            "MeanScaledWidthLower", "MeanScaledWidthUpper",
+            "MaxHeightLower", "MaxHeightUpper",
+            "FoVCutUpper", "FoVCutLower",
+        ]
 
         # Initialize corresponding class variables and default values
         self.theta_square_upper = None
@@ -52,7 +52,6 @@ class EffectiveAreaFile(object):
 
         # Build indexes for IRFs
         self.axis_dict, self.index_dict = self.__build_index__()
-
 
     """
     Build az, zen, noise, and offset indexes for this file.
@@ -94,7 +93,6 @@ class EffectiveAreaFile(object):
                 raise Exception("{} Axis need to have more than two values".format(k))
         return axis_dict, index_dict
 
-
     def get_safe_energy(self, az, ze, noise):
         manager = self.manager
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
@@ -110,7 +108,6 @@ class EffectiveAreaFile(object):
         # Is it the right way ? what does the offset here provide ?
         manager.getSafeEnergyRange(effectiveAreaParameters, 0.5, minEnergy, maxEnergy)
         return minEnergy.value / 1000.0, maxEnergy.value / 1000.0
-
 
     """
     Loads and stores the effective area file's cuts parameters values

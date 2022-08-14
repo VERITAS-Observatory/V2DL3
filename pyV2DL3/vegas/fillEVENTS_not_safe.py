@@ -80,8 +80,10 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
 
     for ev in selectedEventsTree:
         # Event reconstruction method
-        if reco_type == 1: reco = ev.S
-        elif reco_type == 2: reco = ev.M3D
+        if reco_type == 1: 
+            reco = ev.S
+        elif reco_type == 2: 
+            reco = ev.M3D
         else: raise Exception("Invalid reconstruction type!"
                               "\nSee --help for supported arguments")
 
@@ -124,12 +126,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         if fov_cut:
             fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
             fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
-            if fov_cut_lower > 0 or fov_cut_upper <= 180:                
+            if fov_cut_lower > 0 or fov_cut_upper <= 180:
                 excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                + " separation: " + str(tel_sep) + " not within FoVCut range: " 
-                                + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                                 + " separation: " + str(tel_sep) + " not within FoVCut range: " 
+                                 + str(fov_cut_lower) + "-" + str(fov_cut_upper))
                     continue
 
         # seconds since first light
@@ -235,25 +237,31 @@ Check event against the provided FoV upper and lower bounds
 
 Arguments:
     event_skycoord  --  Reconstructed shower direction as an astropy.SkyCoord
-    reco            --  The reco attribute of the selectedEventsTree (e.g reco or ev.ITM)
+    reco            --  The event reconstruction (e.g ev.S or ev.ITM)
     fov_cut_upper   --  The FoV upper limit in degrees
 
-Returns: 
+Returns:
     Bool  --  True if event falls outside of the FoV (event needs excluded)
     float --  The computed separation from the FoV center
 """
 
 
 def check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower):
-    event_skycoord = SkyCoord(np.rad2deg(reco.fDirectionRA_J2000_Rad), np.rad2deg(
-                        reco.fDirectionDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
-    
-    pointing_position = SkyCoord(np.rad2deg(reco.fArrayTrackingRA_J2000_Rad), np.rad2deg(
-            reco.fArrayTrackingDec_J2000_Rad), frame='icrs', unit=(units.deg, units.deg))
-    
+    event_skycoord = SkyCoord(
+        np.rad2deg(reco.fDirectionRA_J2000_Rad),
+        np.rad2deg(reco.fDirectionDec_J2000_Rad),
+        frame='icrs', unit=(units.deg, units.deg)
+    )
+
+    pointing_position = SkyCoord(
+        np.rad2deg(reco.fArrayTrackingRA_J2000_Rad),
+        np.rad2deg(reco.fArrayTrackingDec_J2000_Rad),
+        frame='icrs', unit=(units.deg, units.deg)
+    )
+
     tel_sep = pointing_position.separation(event_skycoord).degree
 
-    if  tel_sep > fov_cut_upper or tel_sep < fov_cut_lower:
+    if tel_sep > fov_cut_upper or tel_sep < fov_cut_lower:
         return True, tel_sep
 
     return False, tel_sep
