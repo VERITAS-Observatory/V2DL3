@@ -169,7 +169,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         hdu1.header.set(
             "NSBLEVEL",
             evt_dict["NSBLEVEL"],
-            "Measure for NSB level given as the mean of the mean pedestal variation for all events",
+            "NSB level (mean of pedestal variations)",
         )
     except KeyError:
         logging.debug("Keyword NSBLEVEL not set in the EVENTS header")
