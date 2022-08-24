@@ -165,4 +165,9 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         logging.debug("Keyword QUALITY not set in the EVENTS header")
         logging.debug("For EventdisplayAnalysis: use version >=v486")
 
+    hdu1.header.set(
+        "NSBLEVEL",
+        evt_dict["NSBLEVEL"],
+        "Measure for NSB level",
+    )
     return hdu1
