@@ -54,9 +54,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--force_extrapolation",
-    nargs=1,
-    type=click.BOOL,
-    default=False,
+    is_flag=True,
     help="IRF is extrapolated when parameter is found to be outside IRF range",
 )
 @click.option(
