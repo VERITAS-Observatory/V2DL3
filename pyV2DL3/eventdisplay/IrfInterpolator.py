@@ -60,15 +60,9 @@ class IrfInterpolator:
         # interpolating on a dimension with size = 1.
         # Make sure that there are no size 1 dimensions.
         # Do the same with the axes:
-        irf_data = duplicate_dimensions(irf_data)
         # Also the coordinates of the axes need to be in increasing order.
         zenith_axis = None
         for i, axis in enumerate(irf_axes):
-            if len(axis) == 1:
-                irf_axes[axis] = np.concatenate(
-                    (irf_axes[axis].flatten(), irf_axes[axis].flatten() + 0.01), axis=None
-                )
-
             if axis == 'zeniths':
                 irf_axes['zeniths'] = np.cos(np.radians(irf_axes['zeniths']))[::-1]
                 zenith_axis = i
@@ -79,6 +73,7 @@ class IrfInterpolator:
 
         self.irf_data = np.flip(irf_data, axis=zenith_axis)
         self.irf_axes = list(irf_axes.values())
+
         logging.debug(str(("IRF axes:", irf_axes)))
 
         if kwargs.get("use_click", True):

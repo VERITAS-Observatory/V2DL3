@@ -132,7 +132,7 @@ def find_camera_offsets(camera_offsets):
         logger.debug(
             "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
         )
-        return [0.0, 10.0], [0.0, 10.0]
+        return [camera_offsets], [camera_offsets]
 
     # Note in the camera offset _low and _high may refer
     # to the simulated "points", and
