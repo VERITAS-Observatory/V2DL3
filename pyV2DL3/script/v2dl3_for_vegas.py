@@ -298,7 +298,7 @@ def make_eclass_path(output, fname_base, eclass_idx):
         os.makedirs(output_path)
     stage_idx = fname_base.find(".")
     # Splice an '_ec#' identifier into the filename just before the first '.'
-    if(stage_idx > -1):
+    if (stage_idx > -1):
         eclass_fname = fname_base[:stage_idx] + "_ec" + str(eclass_idx) + fname_base[stage_idx:]
     # If no '.' found, append to end
     else:

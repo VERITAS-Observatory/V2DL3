@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import os.path
 from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
-from pyV2DL3.eventdisplay.util import duplicate_dimensions
 from pyV2DL3.eventdisplay.util import WrongIrf
 from scipy.interpolate import RegularGridInterpolator
 
