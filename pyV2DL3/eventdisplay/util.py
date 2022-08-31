@@ -35,7 +35,9 @@ def duplicate_dimension(data, axis):
     """Duplicate a single axis, assuming it's length is 1."""
     current_shape = np.shape(data)
     corrected_shape = [2 if i == axis else k for i, k in enumerate(current_shape)]
-    logging.info(current_shape, corrected_shape)
+    logging.info(
+        "current shape: {}, corrected shape: {}".format(current_shape, corrected_shape)
+    )
     tiles = [2 if k == 1 else 1 for k in current_shape]
     return np.tile(data, tiles)
 
