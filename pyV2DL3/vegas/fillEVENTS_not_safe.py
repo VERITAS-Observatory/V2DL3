@@ -109,6 +109,19 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                     break
                 event_class_idx += 1
 
+          # Check FoV if appropriate
+          if fov_cut:
+              fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
+              fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
+              if fov_cut_lower > 0 or fov_cut_upper <= 180:
+                  excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
+                  if excluded:
+                      logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                                   + " separation: " + str(tel_sep) + " not within FoVCut range: "
+                                   + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                      continue
+
+          if event_class_mode:
             # If this event falls into an event classes
             if event_class_idx < num_event_groups:
                 event_groups[event_class_idx]["mswArr"].append(fMSW)
@@ -122,18 +135,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         elif save_msw_msl:
             event_groups[event_class_idx]["mswArr"].append(reco.fMSW)
             event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
-
-        # Check FoV if appropriate
-        if fov_cut:
-            fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
-            fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
-            if fov_cut_lower > 0 or fov_cut_upper <= 180:
-                excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
-                if excluded:
-                    logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
-                                 + str(fov_cut_lower) + "-" + str(fov_cut_upper))
-                    continue
 
         # seconds since first light
         time_relative_to_reference = (
