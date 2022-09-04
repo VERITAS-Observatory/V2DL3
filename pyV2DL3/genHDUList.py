@@ -26,27 +26,16 @@ def genPrimaryHDU():
     return hdu0
 
 
-def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
-                  bypass_fov_cut=False,
-                  ea_files=None,
-                  event_class_mode=False,
-                  reco_type=1,
-                  save_msw_msl=False,
-                  ):
-
-    if effective_area_file is None and ea_files is None:
+def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS", **kwargs):
+    if effective_area_file is None:
         raise Exception("Running V2DL3 without effective area file(s) is currently unsupported.")
 
     if file_type == "VEGAS":
-        if ea_files is None:
+        if effective_area_file is None:
             raise Exception("VegasDataSource uses EffectiveAreaFile for effective areas")
+
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
-        return VegasDataSource(data_file, ea_files,
-                               bypass_fov_cut=bypass_fov_cut,
-                               event_class_mode=event_class_mode,
-                               reco_type=reco_type,
-                               save_msw_msl=save_msw_msl,
-                               )
+        return VegasDataSource(data_file, effective_area_file, **kwargs)
 
     if file_type != "ED":
         raise Exception("File type not supported: {}".format(file_type))
