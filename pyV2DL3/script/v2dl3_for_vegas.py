@@ -7,24 +7,7 @@ from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 
 
-def runlist_to_file_pair(rl_dict):
-    eas = rl_dict["EA"]
-    st5s = rl_dict["RUNLIST"]
-    file_pair = []
-    for k in st5s.keys():
-        ea_files = []
-        for ea in eas[k]:
-            ea_files.append(EffectiveAreaFile(ea))
-        if len(ea_files) == 0:
-            raise Exception("No EA filenames defined for runlist tag: " + k)
-        for f in st5s[k]:
-            file_pair.append((f, ea_files))
-
-    return file_pair
-
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option(
@@ -39,12 +22,19 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--runlist", "-l", nargs=1, type=click.Path(exists=True), help="Stage6 runlist"
 )
 @click.option(
-    '--event_class_mode',
-    '-ec',
+    "--event_class_mode",
+    "-ec",
     is_flag=True,
-    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID. "
-         + "Event classes sort events to separate fits files based on EA cuts parameters. "
-         + "Uses only MSW intervals for now. See EffectiveAreaFile.py to extend."
+    help="Use EA file(s) of the same runlist ID to define event class(es) for that runlist ID. "
+         + "Event classes sort events to separate fits files based on EA file cuts parameters. "
+         + "See README_vegas.md for more information."
+)
+@click.option(
+    "--psf_king",
+    "-k",
+    nargs=1,
+    type=click.Path(exists=True),
+    help="Provide a file of King PSF parameter values. See README_vegas.md for more information"
 )
 @click.option(
     "--reconstruction_type",
@@ -100,6 +90,7 @@ def cli(
     file_pair,
     runlist,
     event_class_mode,
+    psf_king,
     reconstruction_type,
     no_fov_cut,
     gen_index_file,
@@ -130,6 +121,7 @@ def cli(
     if len(file_pair) == 0 and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
+
     if len(file_pair) > 0:
         if runlist is not None:
             click.echo(cli.get_help(click.Context(cli)))
@@ -139,6 +131,12 @@ def cli(
             click.echo(cli.get_help(click.Context(cli)))
             click.secho("Event class mode requires runlist", fg="yellow")
             raise click.Abort()
+
+    if psf_king is not None and not full_enclosure:
+        click.echo(cli.get_help(click.Context(cli)))
+        click.secho(
+            "PSF king function should be used for full-enclosure analysis", fg="yellow")
+        raise click.Abort()
 
     if debug:
         logging.basicConfig(
@@ -163,16 +161,23 @@ def cli(
         full_enclosure = False
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
+    # These will be passed to VegasDataSource
+    datasource_kwargs = {
+        "bypass_fov_cut": no_fov_cut,
+        "event_class_mode": event_class_mode,
+        "reco_type": reconstruction_type,
+        "save_msw_msl": save_msw_msl,
+    }
+
+    if psf_king is not None:
+        psf_king_params = load_psf_king_parameters(psf_king)
+        datasource_kwargs["psf_king_params"] = psf_king_params
+        irfs_to_store["psf-king"] = True
+
     # File pair mode
     if len(file_pair) > 0:
-        st5_str, ea_files = file_pair
-        datasource = loadROOTFiles(st5_str, None, "VEGAS",
-                                   bypass_fov_cut=no_fov_cut,
-                                   ea_files=ea_files,
-                                   event_class_mode=event_class_mode,
-                                   reco_type=reconstruction_type,
-                                   save_msw_msl=save_msw_msl,
-                                   )
+        st5_str, ea_file = file_pair
+        datasource = loadROOTFiles(st5_str, ea_file, "VEGAS", **datasource_kwargs)
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
@@ -215,21 +220,23 @@ def cli(
 
         file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
+        failed_list = {}
         for st5_str, ea_files in file_pairs:
             logging.info(f"Processing file: {st5_str}")
             logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            datasource = loadROOTFiles(st5_str, None, "VEGAS",
-                                       bypass_fov_cut=no_fov_cut,
-                                       ea_files=ea_files,
-                                       event_class_mode=event_class_mode,
-                                       reco_type=reconstruction_type,
-                                       save_msw_msl=save_msw_msl,
-                                       )
-
+            datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
-                datasource.fill_data()
+                try:
+                    datasource.fill_data()
+                except Exception as e:
+                    logging.info("Exception encountered in " + st5_str + ":")
+                    logging.info(e)
+                    # We don't want one run's problem to stop the entire batch
+                    logging.info("Skipping " + st5_str)
+                    failed_list[st5_str] = e
+                    continue
 
             # Prepare output paths
             output_path = os.path.join(output, fname_base)
@@ -253,8 +260,14 @@ def cli(
                 hdulist.writeto(output_path, overwrite=True)
                 flist.append(output_path)
 
-        if gen_index_file:
+        if gen_index_file and len(flist) > 0:
             gen_index_files(flist, output, eclass_count=num_event_groups)
+        
+        logging.info("Processing complete.")
+        if len(failed_list) > 0:
+            logging.info("V2DL3 was unable to process the following files:")
+            for key in failed_list:
+                logging.info(key + ": " + str(failed_list[key]))
 
 
 """
@@ -290,6 +303,61 @@ def gen_index_files(flist, output, eclass_count=1):
 
 
 """
+"Load King PSF parameter values from file. 
+
+See README_vegas.md for more information"
+
+Arguments:
+    psf_king_file  --  Path to King PSF parameters file
+
+Returns:
+    New output path (excluding '.fits') as a string
+"""
+
+
+def load_psf_king_parameters(psf_king_file):
+    psf_king_params = []
+    psf_king_index = {}
+    index_keys = ["Zenith", "AbsoluteOffset", "Noise", "Azimuth"]
+    # Initialize dict from keys
+    for key in index_keys:
+        psf_king_index[key] = []
+
+    with open(psf_king_file, "r") as king_file:
+        # Check first line for optional index
+        first_line = king_file.readline().split()
+
+        if first_line[0].isnumeric():
+            king_file.seek(0)
+
+        for line in king_file:
+            # Save parameters line
+            line_values = [float(ele) for ele in line.split()]
+            psf_king_params.append(line_values)
+
+            # Check whether index needs updating
+            if line_values[0] not in psf_king_index["Zenith"]:
+                psf_king_index["Zenith"].append(line_values[0])
+            if line_values[1] not in psf_king_index["AbsoluteOffset"]:
+                psf_king_index["AbsoluteOffset"].append(line_values[1])
+            if line_values[2] not in psf_king_index["Noise"]:
+                psf_king_index["Noise"].append(line_values[2])
+            if line_values[3] not in psf_king_index["Azimuth"]:
+                psf_king_index["Azimuth"].append(line_values[3])
+
+    # Sort indexes ascending
+    for key in psf_king_index:
+        psf_king_index[key].sort()
+    
+    # Log results
+    logging.info("PSF king bins loaded:")
+    for key in psf_king_index:
+        logging.info(key + ": " + str(psf_king_index[key]))
+
+    return {"values": psf_king_params, "index": psf_king_index}
+
+
+"""
 Sorts output files to subdirectories and appends "_ec#" to their filename
 according to event class.
 
@@ -316,6 +384,33 @@ def make_eclass_path(output, fname_base, eclass_idx):
         eclass_fname = fname_base + "_ec" + str(eclass_idx)
 
     return os.path.join(output_path, eclass_fname)
+
+
+"""
+Creates `file_pair` tuples of runs and effective area files.
+
+Arguments:
+    rl_dict  --  runlist dict made by parseRunlistStrs()
+
+Returns:
+    List of tuples (stage5 filename, EffectiveAreaFile)
+"""
+
+
+def runlist_to_file_pair(rl_dict):
+    eas = rl_dict["EA"]
+    st5s = rl_dict["RUNLIST"]
+    file_pair = []
+    for k in st5s.keys():
+        ea_files = []
+        for ea in eas[k]:
+            ea_files.append(EffectiveAreaFile(ea))
+        if len(ea_files) == 0:
+            raise Exception("No EA filenames defined for runlist tag: " + k)
+        for f in st5s[k]:
+            file_pair.append((f, ea_files))
+
+    return file_pair
 
 
 if __name__ == "__main__":
