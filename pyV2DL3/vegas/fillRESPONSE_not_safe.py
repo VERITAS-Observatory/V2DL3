@@ -7,10 +7,13 @@ from pyV2DL3.vegas.irfloader import getIRF
 logger = logging.getLogger(__name__)
 
 
-def __fillRESPONSE_not_safe__(effective_area_file, azimuth, zenith, noise, irf_to_store):
+def __fillRESPONSE_not_safe__(
+    effective_area_file, azimuth, zenith, noise, irf_to_store, psf_king_params=None
+):
     response_dict = {}
     ea_final_data, ebias_final_data, abias_final_data = getIRF(
-        azimuth, zenith, noise, effective_area_file, irf_to_store["point-like"]
+        azimuth, zenith, noise, effective_area_file, irf_to_store["point-like"], 
+        psf_king_params=psf_king_params
     )
     minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise)
     response_dict["LO_THRES"] = minEnergy

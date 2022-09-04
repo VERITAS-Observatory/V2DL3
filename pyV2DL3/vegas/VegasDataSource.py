@@ -7,10 +7,10 @@ from pyV2DL3.VtsDataSource import VtsDataSource
 
 
 class VegasDataSource(VtsDataSource):
-    def __init__(self, evt_file,
-                 ea_files,
+    def __init__(self, evt_file, ea_files,
                  bypass_fov_cut=False,
                  event_class_mode=False,
+                 psf_king_params=None,
                  reco_type=1,
                  save_msw_msl=False,
                  ):
@@ -20,9 +20,12 @@ class VegasDataSource(VtsDataSource):
         self.vegas_status = VEGASStatus()
         self.vegas_status.loadVEGAS()
         self.__evt_file__ = ROOT.VARootIO(evt_file, True)
+        if not isinstance(ea_files, list):
+            ea_files = [ea_files]
         self.__ea_files__ = ea_files
         self.__event_class_mode__ = event_class_mode
         self.__fov_cut__ = not bypass_fov_cut
+        self.__psf_king_params__ = psf_king_params
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
 
@@ -67,7 +70,8 @@ class VegasDataSource(VtsDataSource):
         # Fill response for each event class
         for ec in self.__ea_files__:
             response_dicts.append(
-                __fillRESPONSE_not_safe__(ec, az, ze, nn, self.__irf_to_store__)
+                __fillRESPONSE_not_safe__(ec, az, ze, nn, self.__irf_to_store__,
+                                          psf_king_params=self.__psf_king_params__)
             )
 
         self.__response__ = response_dicts
