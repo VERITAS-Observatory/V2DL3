@@ -36,4 +36,5 @@ CONDADIRNAME=$(dirname "$CONDA_EXE")
 source $CONDADIRNAME/../etc/profile.d/conda.sh
 conda activate $ENV
 
+echo $COMMAND
 $COMMAND

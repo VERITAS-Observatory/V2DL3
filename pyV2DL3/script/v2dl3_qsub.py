@@ -44,7 +44,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def cli(v2dl3_script, conda_env, conda_exe, rootsys, output_dir, add_option):
     with open(v2dl3_script, "r") as script:
         commands = [
-            line for line in script.read().splitlines() if line.startswith("v2dl3")
+            line
+            for line in script.read().splitlines()
+            if line.startswith("v2dl3-eventdisplay")
         ]
 
     if not commands:
