@@ -34,9 +34,9 @@ jobs:
         run: |
           echo Add other actions to build,
           echo test, and deploy your project.
-          ls
+          ls ../
         
-      - name: Try running Docker
-        run: |
-          docker pull ubuntu:latest
-          docker run ubuntu:latest /bin/bash -c "ls /"
+#       - name: Try running Docker
+#         run: |
+#           docker pull ubuntu:latest
+#           docker run ubuntu:latest /bin/bash -c "ls /"
