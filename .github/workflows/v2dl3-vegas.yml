@@ -34,9 +34,8 @@ jobs:
         run: |
           echo Add other actions to build,
           echo test, and deploy your project.
-          ls $GITHUB_WORKSPACE
         
-#       - name: Try running Docker
-#         run: |
-#           docker pull ubuntu:latest
-#           docker run ubuntu:latest /bin/bash -c "ls /"
+      - name: Try running Docker
+        run: |
+          docker pull ubuntu:latest
+          docker run -v $GITHUB_WORKSPACE:/git_runner ubuntu:latest /bin/bash -c "cd /git_runner; ls"
