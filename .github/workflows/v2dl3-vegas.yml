@@ -35,7 +35,7 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
           ls ../
-          echo $GITHUB_WORKSPACE
+          ls $GITHUB_WORKSPACE
         
 #       - name: Try running Docker
 #         run: |
