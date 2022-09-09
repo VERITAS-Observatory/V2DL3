@@ -38,4 +38,4 @@ jobs:
       - name: Try running Docker
         run: |
           docker pull ubuntu:latest
-          docker run -v $GITHUB_WORKSPACE:/git_runner ubuntu:latest /bin/bash -c "cd /git_runner; ls"
+          docker run -v $GITHUB_WORKSPACE:/git_runner ubuntu:latest /bin/bash -c "cd /git_runner; ls; git switch psf-king; git status"
