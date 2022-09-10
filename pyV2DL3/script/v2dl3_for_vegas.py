@@ -4,7 +4,6 @@ import os
 import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
-from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -398,6 +397,9 @@ Returns:
 
 
 def runlist_to_file_pair(rl_dict):
+    # This object imports ROOT, so it should imported after click's CLI is allowed to run
+    from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
+
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
     file_pair = []
