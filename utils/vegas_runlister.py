@@ -26,11 +26,13 @@ parser.add_argument('-e', '--ea_file', action='append', type=str, help=
     "Adds the provided EA file to the runlist.")
 parser.add_argument('--relative', action='store_true', help=
     "Add the files' relative paths (default is absolute paths)")
+parser.add_argument('--no_prompt', action='store_true', help=
+    "Answer yes to all confirmation prompts")
 
 args = parser.parse_args()
 
 # At least 1 stage5 input is required
-if args.run is None and args.run_dir is None:
+if args.run_file is None and args.run_dir is None:
     raise Exception("No stage5 input arguments provided")
 
 
@@ -83,18 +85,19 @@ def root_files_from_dirs(dirs, relative=False):
 
 # Collect stage5 run filepaths
 stage5_paths = []
-if args.run is not None:
-    stage5_paths += root_files_from_paths(args.run, relative=args.relative)
+if args.run_file is not None:
+    stage5_paths += root_files_from_paths(args.run_file, relative=args.relative)
 
 if args.run_dir is not None:
     stage5_paths += root_files_from_dirs(args.run_dir, relative=args.relative)
 
 # Warn user and prompt confirmation if no EAs are provided
 if args.ea_dir is None and args.ea_file is None:
-    response = input("No effective area files provided as arguments. Enter 'y' to make runlist without EA files.\n")
-    if response != "y" and response != "'y'":
-        exit(0)
-    print("Continuing without effective area files...")
+    if not args.no_prompt:
+        response = input("No effective area files provided as arguments. Enter 'y' to make runlist without EA files.\n")
+        if response != "y" and response != "'y'":
+            exit(0)
+        print("Continuing without effective area files...")
 
 # Collect effective area filepaths
 ea_paths = []
@@ -106,9 +109,10 @@ if args.ea_dir is not None:
 
 # Check runlist overwrite
 if os.path.exists(args.output):
-    response = input(str(args.output) + " already exists. Enter 'y' to overwrite.\n")
-    if response != "y" and response != "'y'":
-        exit(0)
+     if not args.no_prompt:
+        response = input(str(args.output) + " already exists. Enter 'y' to overwrite.\n")
+        if response != "y" and response != "'y'":
+            exit(0)
 
 # Write runlist
 with open(args.output, 'w') as runlist:

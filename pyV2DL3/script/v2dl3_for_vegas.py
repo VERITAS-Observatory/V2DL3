@@ -116,10 +116,10 @@ def cli(
 
     Note: One one mode can be used at a time.
     """
-    if len(file_pair) == 0 and runlist is None:
+    if file_pair is None and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
-    if len(file_pair) > 0:
+    if file_pair is not None:
         if runlist is not None:
             click.echo(cli.get_help(click.Context(cli)))
             click.secho("Only one file source can be used.", fg="yellow")
@@ -153,7 +153,7 @@ def cli(
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
     # File pair mode
-    if len(file_pair) > 0:
+    if file_pair is not None:
         st5_str, ea_str = file_pair
         datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
                                    save_msw_msl=save_msw_msl,
