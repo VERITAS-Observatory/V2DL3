@@ -6,22 +6,23 @@ from pathlib import Path
 parser = argparse.ArgumentParser(
     description = """
     Create a runlist for v2dl3-vegas.
+
+    - The runlist will group all files under the same runlist ID. Make multiple runlists for multiple stage5/EA groupings.
     - Input arguments may be called multiple times to add multiple directories or files.
     - All files will be added as absolute paths unless you provide the `--relative` flag.
-    - The runlist will group all files under the same runlist ID. Make multiple runlists for multiple stage5/EA groupings.
     """,
         formatter_class=argparse.RawTextHelpFormatter)
 
 parser.add_argument('output', type=str, help=
     "Resulting runlist filepath. Enter just the filename to output to working directory.")
-parser.add_argument('-rdir', '--run_dir', type=str, action='append', help=
+parser.add_argument('-rd', '--run_dir', type=str, action='append', help=
     "Directory of stage5 runs. Adds the path of every .root file in the directory to the runlist.")
-parser.add_argument('-r', '--run', type=str, action='append', help=
+parser.add_argument('-r', '--run_file', type=str, action='append', help=
     "Add the provided stage5 run file to the runlist")
-parser.add_argument('-edir', '--ea_dir', action='append', type=str, help=
+parser.add_argument('-ed', '--ea_dir', action='append', type=str, help=
     "Directory of effective area files. Adds the path of every .root file in the directory to the runlist.\n" 
-    "NOTE: multiple EAs in a runlist ID is for event class mode.")
-parser.add_argument('-ea', '--ea_file', action='append', type=str, help=
+    "NOTE: multiple EAs in a single runlist ID is for event class mode.")
+parser.add_argument('-e', '--ea_file', action='append', type=str, help=
     "Adds the provided EA file to the runlist.")
 parser.add_argument('--relative', action='store_true', help=
     "Add the files' relative paths (default is absolute paths)")
