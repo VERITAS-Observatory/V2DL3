@@ -4,6 +4,14 @@ name: v2dl3-vegas-CI
 
 # Controls when the workflow will run
 on:
+  push:
+    branches: [ "main" ]
+    paths:
+      # Everything with 'vegas' somewhere in its path (e.g pyV2DL3/vegas, v2dl3_for_vegas.py, environment-vegas.yml)
+      - '**vegas**'
+      # Every python file in the 'pyV2DL3' directory (does not include subdirectories)
+      - 'pyV2DL3/*.py'
+      - 'setup.py'
   # Triggers the workflow on push or pull request events but only for the "main" branch
   pull_request:
     branches: [ "main" ]
