@@ -41,4 +41,5 @@ jobs:
         
       - name: Try running Docker
         run: |
+          apt-get install astropy-utils
           fitsdiff -h
