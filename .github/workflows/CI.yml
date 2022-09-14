@@ -1,7 +1,17 @@
 ---
 name: CI
 
-on: [pull_request]
+on:
+  pull-request:
+    paths-ignore:
+      - 'utils/**vegas**'
+      - 'pyV2DL3/**vegas**'
+      - '.github/**vegas**'
+      # v2dl3-vegas pip install file
+      - 'setup.py'
+      - 'environment-vegas.yml'
+      - 'README.md'
+      - 'CITATION.cff'
 
 jobs:
   tests:

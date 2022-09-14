@@ -3,6 +3,7 @@
 # This script should be called from $GITHUB_WORKSPACE (actions/checkout@v3) mounted within a Docker
 # image which has been built from the recipe in this directory.
 
+# Provide argument "OUTDIR" for output location
 
 # These have been hardcoded into the Docker image after building for now because they cannot be made public.
 # The runlists are dynamically made, so any stage5/EA files may be given as inputs instead.
@@ -15,7 +16,7 @@ EA_EVCLASS_1='/v2dl3-inputs/eas/ea_tSq129600_MSW0p8to1p1.root'
 EA_EVCLASS_2='/v2dl3-inputs/eas/ea_tSq129600_MSW1p1to1p3.root'
 
 
-# Can override the inputs in as script arguments instead. Useful for downloading inputs to the git runner before mounting to Docker.
+# Can override the inputs above as named arguments instead. Useful for downloading inputs to the git runner before mounting to Docker.
 for ARGUMENT in "$@"
 do
    KEY=$(echo $ARGUMENT | cut -f1 -d=)
@@ -60,6 +61,8 @@ function run_tests()
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_2 --no_prompt
     v2dl3-vegas $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
 
+    # Coming in King PSF update....
+
     # echo "-------------------------------"
     # echo "Full-enclosure 1 - Min flags"
     # echo "-------------------------------"
@@ -86,9 +89,9 @@ function run_tests()
     v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
 }
 
-run_tests new
+run_tests $OUTDIR
 
-echo "Installing v2dl3-vegas main branch..."
-git config --global --add safe.directory /V2DL3 &&\
-git checkout -t origin/main && pip install . &&\
-run_tests control
+# echo "Installing v2dl3-vegas main branch..."
+# git config --global --add safe.directory /V2DL3 &&\
+# git checkout -t origin/main && pip install . &&\
+# run_tests control
