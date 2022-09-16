@@ -1,0 +1,8 @@
+root/.*
+V2DL3/.*
+V2DL3/VEGAS
+V2DL3/ED
+V2DL3/Plots
+V2DL3/notebooks
+V2DL3/*txt
+VEGAS*.tar.gz
