@@ -1,18 +1,18 @@
-name: v2dl3-vegas-CI
+name: v2dl3-vegas CI
 
 # Controls when the workflow will run
 on:
   pull_request :
-    branches: [ "main" ]
-    paths:
-      - 'utils/**vegas**'
-      - 'pyV2DL3/**vegas**'
-      - '.github/**vegas**'
-      # Every python file in the 'pyV2DL3' directory (does not include subdirectories)
-      - 'pyV2DL3/*.py'
-      # pip install file. The conda one is neither used in testing nor necessary for the user.
-      - 'setup.py'
-
+    paths-ignore:
+      - 'tests/**'
+      - 'utils/v2dl3-vegas-docker/**'
+      - 'utils/download_ED_test_data.sh'
+      - '.github/v2dl3ED.yml'
+      - '.git*'
+      - 'CITATION.cff'
+      - 'environment*.yml'
+      - 'LICENSE'
+      - 'README.md'
 
 jobs:
   v2dl3-vegas:
