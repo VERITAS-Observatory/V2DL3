@@ -43,13 +43,6 @@ jobs:
           flake8 --count --max-complexity=25 --ignore=E203,W503 \
                  --max-line-length=127 --statistics .
 
-      - name: pytest
-        shell: bash -leo pipefail {0}
-        env:
-        run: |
-          pip install pytest
-          pytest .
-
       - name: Pull docker image
         run: |
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
