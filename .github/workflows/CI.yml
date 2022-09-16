@@ -3,7 +3,7 @@ name: CI
 
 on:
   pull_request:
-    paths_ignore:
+    paths-ignore:
       - 'utils/**vegas**'
       - 'pyV2DL3/**vegas**'
       - '.github/**vegas**'

@@ -5,8 +5,8 @@
 
 # Provide argument "OUTDIR" for output location
 
-# These have been hardcoded into the Docker image after building for now because they cannot be made public.
-# The runlists are dynamically made, so any stage5/EA files may be given as inputs instead.
+# Inputs have been baked into the Docker image after building for now because they cannot be made public.
+# The runlists are dynamically made, so any stage5 dir and EA files may be given as inputs instead.
 STAGE5_DIR='/v2dl3-inputs/stage5'
 EA_POINTLIKE_1='/v2dl3-inputs/eas/ea_tSq_0p01.root'
 EA_POINTLIKE_2='/v2dl3-inputs/eas/ea_tSq_0p005.root'
@@ -38,14 +38,14 @@ export LANG=C.UTF-8
 . /software/ROOT_build/bin/thisroot.sh
 
 set -e
-echo "Installing v2dl3-vegas with changes..."
+
+echo "Installing v2dl3-vegas..."
 pip install . 
-set +e
 
 # ---------- TEST RUNS -----------
 function run_tests() 
 {
-    # First func arg is base output dir
+    # Func arg is base output dir
     OUTDIR=$1
     EXTRA_FLAGS="-m --save_msw_msl"
 
@@ -66,13 +66,13 @@ function run_tests()
     # echo "-------------------------------"
     # echo "Full-enclosure 1 - Min flags"
     # echo "-------------------------------"
-    #python utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
+    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
     #v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
 
     # echo "-------------------------------"
     # echo "Full-enclosure 2 - Extra flags"
     # echo "-------------------------------"
-    #python utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
+    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
     #v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
 
     echo "-------------------------------"    
@@ -90,8 +90,3 @@ function run_tests()
 }
 
 run_tests $OUTDIR
-
-# echo "Installing v2dl3-vegas main branch..."
-# git config --global --add safe.directory /V2DL3 &&\
-# git checkout -t origin/main && pip install . &&\
-# run_tests control
