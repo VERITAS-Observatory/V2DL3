@@ -7,7 +7,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "astropy",
-        "click>=8.0",
+        "click",
         "numpy",
         "pkgconfig",
         "pyyaml",

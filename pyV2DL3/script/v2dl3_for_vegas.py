@@ -116,6 +116,13 @@ def cli(
 
     Note: One one mode can be used at a time.
     """
+
+    # Before click 8+, options with narg >= 2 returned len 0 tuples when not chosen.
+    # Both should be supported as many existing setups for VEGAS are unable to upgrade to click 8+
+    if file_pair is not None:
+        if len(file_pair) == 0:
+            file_pair = None
+
     if file_pair is None and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
