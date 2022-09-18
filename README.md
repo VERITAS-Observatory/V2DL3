@@ -63,6 +63,12 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 v2dl3-vegas -l ./runlist.txt  ./test
 ```
 
+Runlists may be generated via a utility script.
+
+```
+python utils/vegas_runlister.py --help
+```
+
 ---
 
 # V2DL3 for EventDisplay

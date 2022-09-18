@@ -23,6 +23,7 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
       DOCKER_IMAGE: veritasacc/vegas:v2dl3-CI
+      DOCKER_WORKSPACE: V2DL3-CI
       # New 'test' outputs
       NEW_DIR: ./new-fits
       # 'Control' outputs from main branch
@@ -54,8 +55,8 @@ jobs:
         run: |
           cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
           cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
-          docker run -p 80:80 -v $GITHUB_WORKSPACE:/V2DL3 $DOCKER_IMAGE /bin/bash -c "\
-          cd V2DL3 \
+          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
+          cd $DOCKER_WORKSPACE \
           && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
           "
           cp -r $NEW_DIR ../$NEW_DIR
@@ -69,8 +70,8 @@ jobs:
       - name: Install main branch and generate control outputs
         run: |
           cp ../vegas_docker_test_runs_static.sh utils/vegas_docker_test_runs_static.sh
-          docker run -p 80:80 -v $GITHUB_WORKSPACE:/V2DL3 $DOCKER_IMAGE /bin/bash -c "\
-          cd V2DL3 \
+          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
+          cd $DOCKER_WORKSPACE \
           && bash utils/vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
           "
           cp -r $CONTROL_DIR ../$CONTROL_DIR

@@ -1,15 +1,15 @@
 The contents of this directory are modified and streamlined from the VEGAS docker shifter, optimized for v2dl3-vegas CI testing. It is also suitable as a means to run v2dl3-vegas yourself without the heavy prerequesite software setup.
 
-I recommend that you run gammapy in a separate enviornment that allows for the latest versions of gammapy and python.
+It is recommended to install gammapy somewhere else which allows for the latest versions of gammapy and python.
 
 # Recipes
 
   `Dockerfile_vegas_v2dl3_x64`
     - Ubuntu 18.04
     - ROOT 6.13.08
-    - VEGAS version chosen as by user (script arg)
     - VBF 0.3.4
     - VDB 4.3.2
+    - VEGAS version chosen by user (script arg)
     - latest V2DL3 main branch installed to base enviornment
 
   `Dockerfile_vegas_v2dl3_arm64`
@@ -42,7 +42,7 @@ branchName [String] The commit of VEGAS to be built in the image. Can be specifi
 
   -h, --help            show this help message and exit
 
-  --recipe              Dockerfile to use for building. Default is `Dockerfile_vegas_cicd`
+  --recipe              Dockerfile to use for building. Default is `Dockerfile_vegas_v2dl3_x64`
 
   --numproc NUMPROC     [Int] Number of processors to use in cmake build
 

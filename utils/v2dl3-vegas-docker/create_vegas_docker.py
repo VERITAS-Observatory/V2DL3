@@ -13,39 +13,51 @@ from argparse import RawTextHelpFormatter
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+
 # parse arguments
 parser = argparse.ArgumentParser(
     description="""Create and push a VEGAS docker image.
 
-Files will be copied and the docker file will be built in your current directory.  The docker image will be exported and saved in .tar.gz form.
+Files will be copied and the docker file will be built in your current directory.
+The docker image will be exported and saved in .tar.gz form.
 
-You will need to either copy the VDB and VBF tar files into the current directory, or you will be prompted for a password for these files.
+You will need to either copy the VDB and VBF tar files into the current directory,
+or you will be prompted for a password for these files.
 
-This script assumes that you have ssh keys setup for the VERITAS github and an access token for shifter hub (if required, see http://www.nersc.gov/users/software/using-shifter-and-docker/using-shifter-at-nersc/#private_registry for details).""",
-        formatter_class=RawTextHelpFormatter)
+This script assumes that you have ssh keys setup for the VERITAS github.""",
+    formatter_class=RawTextHelpFormatter)
 
-parser.add_argument('commit', type=str,
+parser.add_argument(
+    'commit', type=str,
     help='''[String] The commit of VEGAS to be built in the image. Can be specified by tag (preferred), branch, or hash.''')
-parser.add_argument('--recipe', type=str, default='Dockerfile_vegas_cicd')
-parser.add_argument('--numproc', type=int, default=4, help="[Int] Number of processors to use in cmake build")
-parser.add_argument('--suppress_build_image', action='store_true',
+parser.add_argument(
+    '--recipe', type=str, default='Dockerfile_vegas_v2dl3_x64',
+    help='''Dockerfile to use for building. Default is `Dockerfile_vegas_v2dl3_x64`''')
+parser.add_argument(
+    '--numproc', type=int, default=4,
+    help="[Int] Number of processors to use in cmake build")
+parser.add_argument(
+    '--suppress_build_image', action='store_true',
     help="Suppress building of the docker image.")
-parser.add_argument('--export_tgz', action='store_true',
+parser.add_argument(
+    '--export_tgz', action='store_true',
     help="Export image to .tar.gz.")
-parser.add_argument('--tag', type=str,
+parser.add_argument(
+    '--tag', type=str,
     help='''[String] Specify the tag to give the docker image.  If not specified, the commit name will be used''')
-parser.add_argument('--builddir', default=os.getcwd(),
+parser.add_argument(
+    '--builddir', default=os.getcwd(),
     help='''[String] The directory in which to copy files and build image  (default is current directory)''')
 
 args = parser.parse_args()
 
-print ("Building with {0:d} processors in cmake".format(args.numproc))
+print("Building with {0:d} processors in cmake".format(args.numproc))
 
 # for accessing VERITAS source code
 veruser = 'veritas'
 vw = None
 
-### retrieve VDB/VBF tars ###
+# retrieve VDB/VBF tars
 for tar in ["VBF-0.3.4.tar.gz", "VDB-4.3.2.tar.gz"]:
     if not os.path.isfile(tar):
         if not vw:
@@ -59,36 +71,38 @@ for tar in ["VBF-0.3.4.tar.gz", "VDB-4.3.2.tar.gz"]:
                ("http://romulus.ucsc.edu/downloads/{0:s}".format(tar))]
 
         # create subprocess, direct output to vars
-        pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pipe = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = pipe.communicate()
         pipe.wait()
 
-        print ('out: ')
+        print('out: ')
         print(out)
         print('err: ')
         print(err)
     else:
-        print ("archive file {0:s} already exists".format(tar))
+        print("archive file {0:s} already exists".format(tar))
 
 # download ROOT
-rootTGZ="root_v6.13.08.source.tar.gz"
-rootPath="https://root.cern.ch/download/"
+rootTGZ = "root_v6.13.08.source.tar.gz"
+rootPath = "https://root.cern.ch/download/"
 
 if not os.path.isfile(rootTGZ):
-# process takes string or list of args
+    # process takes string or list of args
     cmd = ['wget',
            ("{0:s}/{1:s}".format(rootPath, rootTGZ))]
 
     # create subprocess, direct output to vars
-    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
     out, err = pipe.communicate()
     pipe.wait()
-    print ('out: ')
+    print('out: ')
     print(out)
     print('err: ')
     print(err)
 else:
-    print ("archive file {0:s} already exists".format(rootTGZ))
+    print("archive file {0:s} already exists".format(rootTGZ))
 
 # git clone VEGAS
 if not os.path.isdir('vegas'):
@@ -111,8 +125,8 @@ cmd = ['git', '-C', 'vegas', 'checkout', args.commit]
 pipe = subprocess.Popen(cmd, stderr=subprocess.PIPE)
 err = pipe.communicate()[0]
 if err:
-    print ("there were errors!:")
-    print (err)
+    print("there were errors!:")
+    print(err)
 
 # produce Dockerfile for build
 Dockerfile = 'Dockerfile'
@@ -120,11 +134,12 @@ Dockerfile = 'Dockerfile'
 dirname = os.path.dirname(__file__)
 base_dockerfile = os.path.join(dirname, args.recipe)
 
-with open(Dockerfile,'w') as new_file:
+with open(Dockerfile, 'w') as new_file:
     with open(base_dockerfile) as old_file:
         for line in old_file:
             if line.startswith("RUN cmake --build . -- -j8"):
-                new_file.write("RUN cmake --build . -- -j{0:d}\n".format(args.numproc))
+                new_file.write(
+                    "RUN cmake --build . -- -j{0:d}\n".format(args.numproc))
             else:
                 new_file.write(line)
 
@@ -134,7 +149,7 @@ if os.path.isfile(dockerignore):
     copyfile(dockerignore, ".dockerignore")
 
 
-### build docker image ###
+# build docker image
 commit_name = args.commit.replace('/', '__')
 if not args.tag:
     tag = commit_name
@@ -142,8 +157,8 @@ else:
     tag = args.tag
 
 fulltag = ("vegas:{0:s}".format(tag))
-print ("Tag name is {0:s}".format(tag))
-print ("Full tag is {0:s}".format(fulltag))
+print("Tag name is {0:s}".format(tag))
+print("Full tag is {0:s}".format(fulltag))
 
 
 # check for Docker file
@@ -153,27 +168,28 @@ if not os.path.isfile('Dockerfile'):
     sys.exit(1)
 
 if not args.suppress_build_image:
-    ## first we need to make sure that there isnt a tag of the same name
-    cmd = ['docker',  'images', '-q', ("{0:s}".format(fulltag))]
+    # first we need to make sure that there isnt a tag of the same name
+    cmd = ['docker', 'images', '-q', ("{0:s}".format(fulltag))]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     imageID = proc.communicate()[0]
-    
+
     if len(imageID) > 0:
-        choice = input(("An image name {0:s} exists. Overwrite? [y/n] : ".format(fulltag)))
+        choice = input(
+            ("An image name {0:s} exists. Overwrite? [y/n] : ".format(fulltag)))
         if choice.lower() == 'y':
-            cmd = ['docker',  'rmi', ("{0:s}".format(fulltag))]
+            cmd = ['docker', 'rmi', ("{0:s}".format(fulltag))]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             ret = proc.communicate()
             if proc.returncode != 0:
                 print("failure to delete docker image!!")
                 sys.exit(1)
         else:
-            print ("Since image of name {0:s} already exists".format(fulltag))
-            print ("and you dont want to overwrite it we are exiting.")
+            print("Since image of name {0:s} already exists".format(fulltag))
+            print("and you dont want to overwrite it we are exiting.")
             sys.exit(1)
 
-    ### build docker image ###
-    cmd = ['docker', 'build', '-t',  ('{0:s}'.format(fulltag)), args.builddir]
+    # build docker image
+    cmd = ['docker', 'build', '-t', ('{0:s}'.format(fulltag)), args.builddir]
     proc = subprocess.Popen(cmd)
     proc.wait()
     out, err = proc.communicate()
@@ -182,21 +198,22 @@ if not args.suppress_build_image:
         sys.exit(1)
 
 if args.export_tgz:
-    cmd = ['docker', 'save', '-o', ('VEGAS-{0:s}.tar'.format(tag)), ('{0:s}'.format(fulltag))]
+    cmd = ['docker', 'save', '-o',
+           ('VEGAS-{0:s}.tar'.format(tag)), ('{0:s}'.format(fulltag))]
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     err = proc.communicate()
     proc.wait()
     if proc.returncode != 0:
-        print (err)
+        print(err)
         eprint("Save to tar failed!")
 
-    cmd = ['gzip', '-f',  ('VEGAS-{0:s}.tar'.format(tag))]
+    cmd = ['gzip', '-f', ('VEGAS-{0:s}.tar'.format(tag))]
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     err = proc.communicate()
     proc.wait()
     if proc.returncode != 0:
-        print (err)
+        print(err)
         eprint("GZip of tar failed!")
-    cmd = ['chmod', 'g+x',  ('VEGAS-{0:s}.tar.gz'.format(tag))]
+    cmd = ['chmod', 'g+x', ('VEGAS-{0:s}.tar.gz'.format(tag))]
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     err = proc.communicate()
