@@ -3,19 +3,19 @@ The contents of this directory are modified and streamlined from the VEGAS docke
 It is recommended to install gammapy somewhere else which allows for the latest versions of gammapy and python.
 
 #### Dockerfile_vegas_v2dl3_x64
-  Ubuntu 18.04
-  ROOT 6.13.08
-  VBF 0.3.4
-  VDB 4.3.2
-  VEGAS version chosen by user (script arg)
-  latest V2DL3 main branch installed to base enviornment
+- Ubuntu 18.04
+- ROOT 6.13.08
+- VBF 0.3.4
+- VDB 4.3.2
+- VEGAS version chosen by user (script arg)
+- latest V2DL3 main branch installed to base enviornment
 
 #### Dockerfile_vegas_v2dl3_arm64
-  Same as above but for ARM architecture
+- Same as above but for ARM architecture
 
 #### Dockerfile_vegas_ci
-  Image used by v2dl3-vegas.yml CI workflow
-  Does not install V2DL3 (is installed by the workflow)
+- Image used by v2dl3-vegas.yml CI workflow
+- Does not install V2DL3 (is installed by the workflow)
 
 # Instructions for Building
 
