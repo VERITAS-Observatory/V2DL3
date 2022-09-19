@@ -2,6 +2,8 @@ The contents of this directory are modified and streamlined from the VEGAS docke
 
 It is recommended to install gammapy somewhere else which allows for the latest versions of gammapy and python.
 
+# Recipes
+
 #### Dockerfile_vegas_v2dl3_x64
 - Ubuntu 18.04
 - ROOT 6.13.08
