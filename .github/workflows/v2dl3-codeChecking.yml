@@ -1,5 +1,5 @@
 ---
-name: v2dl3-Eventdisplay-CI
+name: v2dl3-codeChecking
 
 on:
   pull_request:
