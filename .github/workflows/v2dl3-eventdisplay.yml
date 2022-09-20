@@ -22,12 +22,12 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -47,11 +47,6 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate v2dl3ED
-          conda install flake8
-          flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
-                   --show-source --statistics .
-          flake8 --count --max-complexity=25 --ignore=E203,W503 \
-                 --max-line-length=127 --statistics .
 
       - name: pytest
         shell: bash -leo pipefail {0}

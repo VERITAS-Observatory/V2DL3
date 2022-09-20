@@ -1,0 +1,54 @@
+---
+name: v2dl3-Eventdisplay-CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'utils/**vegas**'
+      - 'utils/compare_fits_dirs.sh'
+      - '.github/v2dl3-vegas.yml'
+      - '.git*'
+      - 'CITATION.cff'
+      - 'environment-vegas.yml'
+      - 'LICENSE'
+      - 'README.md'
+      - 'setup.py'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install conda dependencies
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
+          conda env create -n v2dl3ED -f environment-eventdisplay.yml
+          conda activate v2dl3ED
+          conda info
+
+      - name: flake8
+        shell: bash -leo pipefail {0}
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate v2dl3ED
+          conda install flake8
+          flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
+                   --show-source --statistics .
+          flake8 --count --max-complexity=25 --ignore=E203,W503 \
+                 --max-line-length=127 --statistics .
