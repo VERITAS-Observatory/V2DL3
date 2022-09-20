@@ -42,12 +42,6 @@ jobs:
           conda activate v2dl3ED
           conda info
 
-      - name: flake8
-        shell: bash -leo pipefail {0}
-        run: |
-          source $CONDA/etc/profile.d/conda.sh
-          conda activate v2dl3ED
-
       - name: pytest
         shell: bash -leo pipefail {0}
         env:

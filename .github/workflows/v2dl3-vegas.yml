@@ -36,15 +36,6 @@ jobs:
       - name: Checkout new branch
         uses: actions/checkout@v3
 
-      - name: flake8 formatting
-        shell: bash -leo pipefail {0}
-        run: |
-          pip install flake8
-          flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
-                   --show-source --statistics .
-          flake8 --count --max-complexity=25 --ignore=E203,W503 \
-                 --max-line-length=127 --statistics .
-
       - name: Pull docker image
         run: |
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
