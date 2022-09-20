@@ -5,7 +5,7 @@ from pyV2DL3.vegas.util import getCuts
 logger = logging.getLogger(__name__)
 
 """
-Construct an event class from an effective area cuts info
+Construct an event class from an effective area cuts info.
 
 To extend event classes to include your parameters, start by adding them
 here in order to access them when filling events and IRFs.
