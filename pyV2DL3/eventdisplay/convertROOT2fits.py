@@ -25,7 +25,7 @@ def convertROOT2fits(files, eff, **kwargs):
     force_extrapolation = kwargs.get("force_extrapolation", False)
     fuzzy_boundary = kwargs.get("fuzzy_boundary", 0.0)
 
-    if not(full_enclosure) and not(point_like):
+    if not (full_enclosure) and not (point_like):
         point_like = True
         full_enclosure = False
 

@@ -116,10 +116,17 @@ def cli(
 
     Note: One one mode can be used at a time.
     """
-    if len(file_pair) == 0 and runlist is None:
+
+    # Before click 8+, options with narg >= 2 returned len 0 tuples when not chosen.
+    # Both should be supported as many existing setups for VEGAS are unable to upgrade to click 8+
+    if file_pair is not None:
+        if len(file_pair) == 0:
+            file_pair = None
+
+    if file_pair is None and runlist is None:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
-    if len(file_pair) > 0:
+    if file_pair is not None:
         if runlist is not None:
             click.echo(cli.get_help(click.Context(cli)))
             click.secho("Only one file source can be used.", fg="yellow")
@@ -153,7 +160,7 @@ def cli(
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
     # File pair mode
-    if len(file_pair) > 0:
+    if file_pair is not None:
         st5_str, ea_str = file_pair
         datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
                                    save_msw_msl=save_msw_msl,
@@ -298,7 +305,7 @@ def make_eclass_path(output, fname_base, eclass_idx):
         os.makedirs(output_path)
     stage_idx = fname_base.find(".")
     # Splice an '_ec#' identifier into the filename just before the first '.'
-    if(stage_idx > -1):
+    if (stage_idx > -1):
         eclass_fname = fname_base[:stage_idx] + "_ec" + str(eclass_idx) + fname_base[stage_idx:]
     # If no '.' found, append to end
     else:

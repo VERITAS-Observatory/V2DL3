@@ -1,0 +1,81 @@
+---
+name: v2dl3-vegas-CI
+
+# Controls when the workflow will run
+on:
+  pull_request :
+    paths-ignore:
+      - 'tests/**'
+      - 'utils/v2dl3-vegas-docker/**'
+      - 'utils/download_ED_test_data.sh'
+      - '.github/v2dl3ED.yml'
+      - '.git*'
+      - 'CITATION.cff'
+      - 'environment*.yml'
+      - 'LICENSE'
+      - 'README.md'
+
+jobs:
+  v2dl3-vegas:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Environment vars for the runner
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_IMAGE: veritasacc/vegas:v2dl3-CI
+      DOCKER_WORKSPACE: V2DL3-CI
+      # New 'test' outputs
+      NEW_DIR: ./new-fits
+      # 'Control' outputs from main branch
+      CONTROL_DIR: ./control-fits
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout new branch
+        uses: actions/checkout@v3
+
+      - name: Pull docker image
+        run: |
+          docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
+          docker pull $DOCKER_IMAGE
+
+      # Runs "utils/vegas_docker_test.runs.sh" within the docker image.
+      # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
+      - name: Install new branch and generate .fits outputs
+        run: |
+          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
+          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
+          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
+          cd $DOCKER_WORKSPACE \
+          && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
+          "
+          cp -r $NEW_DIR ../$NEW_DIR
+          sudo rm -rf $GITHUB_WORKSPACE/*
+
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Install main branch and generate control outputs
+        run: |
+          cp ../vegas_docker_test_runs_static.sh vegas_docker_test_runs_static.sh
+          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
+          cd $DOCKER_WORKSPACE \
+          && bash vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
+          "
+          cp -r $CONTROL_DIR ../$CONTROL_DIR
+
+      - name: Install fitsdiff
+        run: |
+          sudo apt-get install -qq astropy-utils
+
+      # A failure on this test simply means that at least one fits from the test batteries
+      # was different between the new branch and the main branch.
+      #
+      # Check the github workflow output to account for any intended differences.
+      - name: Compare fits outputs
+        run: |
+          bash ../compare_fits_dirs.sh ../$NEW_DIR ../$CONTROL_DIR
