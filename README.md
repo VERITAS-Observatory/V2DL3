@@ -16,8 +16,9 @@ For contributors: please note the section for developers below.
 ---
 # V2DL3 for VEGAS
 
-* vegas version >= 2.5.7
-* requirements are listed in the ```environment-vegas.yml``` file.
+* VEGAS version >= 2.5.7
+* Requirements are listed in the ```environment-vegas.yml``` file.
+* Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequesite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
 
 ## Installation
 
@@ -35,6 +36,9 @@ Install now pyV2DL3:
 ```
 pip install .
 ```
+
+### Docker recipe
+To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-docker/README.md*
 
 ## The commandline tool v2dl3 with VEGAS
 
@@ -57,6 +61,12 @@ You can also provide a stage6 runlist to the command line tool. In this case the
 
 ```
 v2dl3-vegas -l ./runlist.txt  ./test
+```
+
+Runlists may be generated via a utility script.
+
+```
+python utils/vegas_runlister.py --help
 ```
 
 ---

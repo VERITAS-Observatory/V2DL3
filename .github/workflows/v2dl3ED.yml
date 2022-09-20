@@ -1,7 +1,18 @@
 ---
-name: CI
+name: v2dl3ED CI
 
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - 'utils/**vegas**'
+      - 'utils/compare_fits_dirs.sh'
+      - '.github/v2dl3-vegas.yml'
+      - '.git*'
+      - 'CITATION.cff'
+      - 'environment-vegas.yml'
+      - 'LICENSE'
+      - 'README.md'
+      - 'setup.py'
 
 jobs:
   tests:
@@ -53,7 +64,7 @@ jobs:
 
       - name: download test data
         run: |
-          ./download_data_for_tests.sh
+          ./utils/download_ED_test_data.sh
 
       - name: V2Dl3-Eventdisplay
         shell: bash -leo pipefail {0}
