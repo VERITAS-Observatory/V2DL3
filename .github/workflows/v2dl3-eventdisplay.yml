@@ -53,7 +53,7 @@ jobs:
 
       - name: download test data
         run: |
-          ./utils/download_ED_test_data.sh
+          ./utils/download_Eventdisplay_test_data.sh
 
       - name: V2Dl3-Eventdisplay
         shell: bash -leo pipefail {0}
