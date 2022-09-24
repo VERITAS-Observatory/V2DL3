@@ -1,0 +1,144 @@
+### Dockerfile for building an ubuntu image with VEGAS build
+
+# Use Ubuntu base image
+FROM arm64v8/ubuntu:18.04
+
+# environment variables
+ENV BOOST_V 1.64.0
+ENV ROOT_V 6.13.08
+ENV TZ=America \
+    DEBIAN_FRONTEND=noninteractive
+
+# Make a software directory
+RUN mkdir software
+
+# Add files from outside - ADD automatically tars files
+ADD VBF-0.3.4.tar.gz /software/
+ADD VDB-4.3.2.tar.gz /software/
+ADD root_v${ROOT_V}.source.tar.gz /software/
+
+# Install ROOT prerequisites using apt-get
+RUN apt-get -y update
+
+# ROOT packages
+RUN apt-get -y --fix-missing install autotools-dev autoconf autoconf-archive automake binutils \
+ca-certificates cmake curl dpkg-dev g++-7 gcc-7 git \ 
+libcfitsio-dev libgsl-dev libjpeg-dev libmysqlclient-dev libpng-dev \ 
+libssl-dev libx11-dev libxext-dev libxft-dev libxpm-dev \
+locales make pkg-config python3-dev python3-pip python3-numpy wget
+
+RUN sed -i 's/http:\/\/us./http:\/\//g' /etc/apt/sources.list
+
+RUN apt-get clean
+
+RUN pip3 install --upgrade pip
+
+# Do the remaining work in the software directory
+WORKDIR /software
+RUN mkdir tarballs ROOT_build install
+
+# Install ROOT
+WORKDIR ROOT_build
+RUN cmake -Dgsl_shared=YES -Droofit=YES ../root-${ROOT_V}/
+RUN cmake --build . -- -j8
+RUN cmake --build . --target install
+
+# Initialize ROOT environment variables
+ENV ROOTSYS "/software/ROOT_build"
+ENV PATH "${PATH}:${ROOTSYS}/bin"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${ROOTSYS}/lib"
+RUN echo ${ROOTSYS}; echo ${PATH}; echo ${LD_LIBRARY_PATH}
+
+# Download and install VEGAS dependencies
+
+# BOOST
+WORKDIR /software
+RUN wget --directory-prefix=tarballs https://sourceforge.net/projects/boost/files/boost/${BOOST_V}/boost_1_64_0.tar.gz
+RUN tar -zxf tarballs/boost_1_64_0.tar.gz
+
+# VBF
+WORKDIR /software/VBF-0.3.4
+RUN ./configure CXXFLAGS="-g -O2 -std=c++98" --prefix=/software/install --build=aarch64-unknown-linux-gnu
+RUN make && make install
+
+# VDB
+#RUN tar -zxvf tarballs/VDB-4.3.2.tar.gz
+WORKDIR /software/VDB-4.3.2
+RUN ./configure CXXFLAGS="-g -O2 -std=c++98" --prefix=/software/install --with-boost-incdir=/software/boost_1_64_0 --build=aarch64-unknown-linux-gnu
+RUN make && make install
+
+# Update paths again
+ENV PATH "${PATH}:/software/install/bin"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:/software/install/lib"
+ENV PKG_CONFIG_PATH /software/VBF-0.3.4:/software/VDB-4.3.2
+
+# Link the boost include directory into the vegas source tree
+RUN ln -s /software/boost_1_64_0/boost /usr/local/include/
+
+# libnova
+RUN apt-get install -y libnova-dev
+ENV LIBNOVA /usr
+
+# copy vegas directory, which was cloned in python script
+RUN mkdir /software/vegas-build /software/vegas-install
+# Check the tag - checkout done in python script
+
+# Build VEGAS
+COPY vegas/ /software/vegas
+WORKDIR /software/vegas-build
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(which gcc-7) -DCMAKE_CXX_COMPILER=$(which g++-7) -DCMAKE_INSTALL_PREFIX=/software/vegas-install /software/vegas
+RUN cmake --build . -- -j8
+RUN cmake --build . --target install
+
+# Set environment variables
+WORKDIR /software/vegas-install
+RUN mv vegas* vegas
+ENV VEGAS /software/vegas-install/vegas
+ENV LD_LIBRARY_PATH=$VEGAS/lib/:${LD_LIBRARY_PATH}
+ENV PATH "${PATH}:${VEGAS}/bin"
+ENV ROOT_INCLUDE_PATH $(cat ${VEGAS}/vegas_header_locations):${ROOT_INCLUDE_PATH}
+
+# compile ROOT macros
+WORKDIR $VEGAS/include
+RUN cd macros && root -l -b -q
+RUN cd showerReconstruction2/macros && root -l -b -q
+RUN cd resultsExtractor/macros && root -l -b -q
+
+# remove VERITAS source files
+RUN find /software/VBF-0.3.4/ -name "*.cpp" -exec rm {} \; && find /software/VBF-0.3.4/ -name "*.h" -exec rm {} \;
+RUN find /software/VDB-4.3.2/ -name "*.cpp" -exec rm {} \; && find /software/VDB-4.3.2/ -name "*.h" -exec rm {} \;
+RUN rm -rf /software/vegas-source/
+
+# V2DL3
+WORKDIR /software
+# Using our demo branch for now
+RUN git clone https://github.com/VERITAS-Observatory/V2DL3.git
+WORKDIR /software/V2DL3
+RUN pip install .
+
+# command
+CMD /bin/bash
+
+# Make directories to be used as external mount points so that the VEGAS
+# executables can read and write data. Since we probably want to bind-mount
+# host volumes, the -v flag to docker run must be used rather than the VOLUME
+# directive in this Dockerfile.
+# Note on OSX the host mount points must be somewhere under /Users
+WORKDIR /
+RUN mkdir external_data external_output scratch veritas
+
+# Expose the MySQL port
+EXPOSE 3306
+
+# Add necessary exports
+RUN echo 'export LC_ALL=C.UTF-8' >> ~/.bashrc
+RUN echo 'export LANG=C.UTF-8' >> ~/.bashrc
+RUN echo '. /software/ROOT_build/bin/thisroot.sh' >> ~/.bashrc
+
+# cleanup
+WORKDIR /
+RUN apt-get purge
+RUN apt-get clean autoclean
+RUN apt-get autoremove -y
+RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
+RUN rm -rf /software/tarballs/

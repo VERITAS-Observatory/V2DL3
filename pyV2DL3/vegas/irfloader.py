@@ -228,7 +228,7 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
                 irf_dict["ABias_Dict"] = abias_dict
                 irf_data.append(irf_dict)
                 # Load values
-    # Initilaize Data container
+    # Initialize Data container
     ea_edim = 0
     elow = []
     ehigh = []

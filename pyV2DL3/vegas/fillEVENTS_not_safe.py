@@ -109,6 +109,13 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                     break
                 event_class_idx += 1
 
+            # If this event falls outside of any event class
+            if event_class_idx >= num_event_groups:
+                # Skip to next event
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
+                continue
+
         # Check FoV if appropriate
         if fov_cut:
             fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
@@ -117,22 +124,11 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                 excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                    + " separation: " + str(tel_sep) + " not within FoVCut range: "
-                                    + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
+                                 + str(fov_cut_lower) + "-" + str(fov_cut_upper))
                     continue
 
-        if event_class_mode:
-            # If this event falls into an event classes
-            if event_class_idx < num_event_groups:
-                event_groups[event_class_idx]["mswArr"].append(fMSW)
-                event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
-            # Else skip to next event
-            else:
-                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
-                continue
-
-        elif save_msw_msl:
+        if event_class_mode or save_msw_msl:
             event_groups[event_class_idx]["mswArr"].append(reco.fMSW)
             event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
 

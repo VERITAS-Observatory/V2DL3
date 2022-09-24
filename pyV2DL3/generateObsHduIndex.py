@@ -122,6 +122,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "DEC_OBJ",
         "DATE-OBS",
         "DATE-END",
+        "NSBLEVEL",
     )
     dtype = (
         ">i8",
@@ -142,6 +143,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
         ">f4",
         "S20",
         "S20",
+        ">f4",
     )
     _tableunits = {}
     _tabledata = {n: [] for n in names}
