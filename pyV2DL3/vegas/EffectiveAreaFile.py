@@ -99,13 +99,13 @@ class EffectiveAreaFile(object):
         effectiveAreaParameters.fAzimuth = az
         effectiveAreaParameters.fZenith = ze
         effectiveAreaParameters.fNoise = noise
-
+        # Should this be hardcoded? https://github.com/VERITAS-Observatory/V2DL3/issues/156
         effectiveAreaParameters.fOffset = 0.5
         effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
             effectiveAreaParameters
         )
         minEnergy, maxEnergy = c_float(), c_float()
-        # Is it the right way ? what does the offset here provide ?
+
         manager.getSafeEnergyRange(effectiveAreaParameters, 0.5, minEnergy, maxEnergy)
         return minEnergy.value / 1000.0, maxEnergy.value / 1000.0
 
