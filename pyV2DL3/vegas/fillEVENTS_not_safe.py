@@ -108,7 +108,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
                 if ec.msw_lower <= fMSW < ec.msw_upper:
                     break
                 event_class_idx += 1
-            
+
             # If this event falls outside of any event class
             if event_class_idx >= num_event_groups:
                 # Skip to next event
