@@ -92,6 +92,10 @@ def __fillEVENTS__(edFileIO, select=None):
         altArr = DL3EventTree["El"][mask]
         energyArr = DL3EventTree["Energy"][mask]
         nTelArr = DL3EventTree["NImages"][mask]
+        Xoff = DL3EventTree["Xoff"][mask]
+        Yoff = DL3EventTree["Yoff"][mask]
+        MeanPedvar = DL3EventTree["MeanPedvar"][mask]
+
         try:
             # Test if anasum file was created using the all events option.
             # In this case write out the additional output.
@@ -121,6 +125,7 @@ def __fillEVENTS__(edFileIO, select=None):
             )
         )
         avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
+        avPedvar = np.mean(MeanPedvar)
 
         # Filling Event List
         evt_dict["EVENT_ID"] = evNumArr
@@ -157,6 +162,9 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
+        evt_dict["Xoff"] = Xoff
+        evt_dict["Yoff"] = Yoff
+        evt_dict["NSBLEVEL"] = avPedvar
 
         # Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
         try:
