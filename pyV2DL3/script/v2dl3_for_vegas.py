@@ -175,6 +175,7 @@ def cli(
     }
 
     if psf_king is not None:
+        from pyV2DL3.vegas.util import load_psf_king_parameters
         psf_king_params = load_psf_king_parameters(psf_king)
         datasource_kwargs["psf_king_params"] = psf_king_params
         irfs_to_store["psf-king"] = True
@@ -278,7 +279,7 @@ def cli(
 """
 Generates the index files for a list of files.
 
-Arguments:
+Parameters:
     flist         --  List of .fits filepaths
     output        --  Destination to write the generated index files.
     eclass_count  --  Number of event classes for this batch
@@ -308,65 +309,10 @@ def gen_index_files(flist, output, eclass_count=1):
 
 
 """
-"Load King PSF parameter values from file. 
-
-See README_vegas.md for more information"
-
-Arguments:
-    psf_king_file  --  Path to King PSF parameters file
-
-Returns:
-    New output path (excluding '.fits') as a string
-"""
-
-
-def load_psf_king_parameters(psf_king_file):
-    psf_king_params = []
-    psf_king_index = {}
-    index_keys = ["Zenith", "AbsoluteOffset", "Noise", "Azimuth"]
-    # Initialize dict from keys
-    for key in index_keys:
-        psf_king_index[key] = []
-
-    with open(psf_king_file, "r") as king_file:
-        # Check first line for optional index
-        first_line = king_file.readline().split()
-
-        if first_line[0].isnumeric():
-            king_file.seek(0)
-
-        for line in king_file:
-            # Save parameters line
-            line_values = [float(ele) for ele in line.split()]
-            psf_king_params.append(line_values)
-
-            # Check whether index needs updating
-            if line_values[0] not in psf_king_index["Zenith"]:
-                psf_king_index["Zenith"].append(line_values[0])
-            if line_values[1] not in psf_king_index["AbsoluteOffset"]:
-                psf_king_index["AbsoluteOffset"].append(line_values[1])
-            if line_values[2] not in psf_king_index["Noise"]:
-                psf_king_index["Noise"].append(line_values[2])
-            if line_values[3] not in psf_king_index["Azimuth"]:
-                psf_king_index["Azimuth"].append(line_values[3])
-
-    # Sort indexes ascending
-    for key in psf_king_index:
-        psf_king_index[key].sort()
-    
-    # Log results
-    logging.info("PSF king bins loaded:")
-    for key in psf_king_index:
-        logging.info(key + ": " + str(psf_king_index[key]))
-
-    return {"values": psf_king_params, "index": psf_king_index}
-
-
-"""
 Sorts output files to subdirectories and appends "_ec#" to their filename
 according to event class.
 
-Arguments:
+Parameters:
     output       --  Output directory
     fname_base   --  Name of the fits file (without '.fits')
     eclass_idx   --  The event class # that this file belongs to
@@ -394,7 +340,7 @@ def make_eclass_path(output, fname_base, eclass_idx):
 """
 Creates `file_pair` tuples of runs and effective area files.
 
-Arguments:
+Parameters:
     rl_dict  --  runlist dict made by parseRunlistStrs()
 
 Returns:

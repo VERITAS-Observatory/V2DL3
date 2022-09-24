@@ -233,7 +233,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
 """
 Check event against the provided FoV upper and lower bounds
 
-Arguments:
+Parameters:
     event_skycoord  --  Reconstructed shower direction as an astropy.SkyCoord
     reco            --  The event reconstruction (e.g ev.S or ev.ITM)
     fov_cut_upper   --  The FoV upper limit in degrees
