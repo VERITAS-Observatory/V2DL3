@@ -19,7 +19,6 @@ For contributors: please note the section for developers below.
 * VEGAS version >= 2.5.7
 * Requirements are listed in the ```environment-vegas.yml``` file.
 * Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequesite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
-* See README_vegas.md for more information on v2dl3-vegas features such as ITM reconstruction, full-enclosure, and event classes.
 
 ## Installation
 
@@ -44,6 +43,8 @@ To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-doc
 ## The commandline tool v2dl3 with VEGAS
 
 Run `v2dl3-vegas --help` to see all options.
+
+See *README_vegas.md* for more information on newer v2dl3-vegas features such as ITM reconstruction, full-enclosure, and event classes.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
