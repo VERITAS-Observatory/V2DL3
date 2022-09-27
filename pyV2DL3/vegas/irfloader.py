@@ -487,17 +487,17 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
 
     # Search the king params for a line to match our arguments
     for param_values in psf_king_params["values"]:
-        # `if` statements are lazily evaluated in Python, so this is efficient.
+        # `if` statements are lazily evaluated in Python
         if (param_values[0] == zen_psf
-            and param_values[2] == noise_psf
-            and param_values[3] == az_psf
-            and param_values[4] == msw_lower
-            and param_values[5] == msw_upper):
+                and param_values[2] == noise_psf
+                and param_values[3] == az_psf
+                and param_values[4] == msw_lower
+                and param_values[5] == msw_upper):
             # Add the line to its corresponding offset array in offset_arrs
             for offset in offset_index:
                 if param_values[1] == offset:
                     offset_arrs[str(offset)].append(param_values)
-           
+
     for key in offset_arrs:
         offset_arr = np.array(offset_arrs[key])
         if len(offset_arr) == 0:
