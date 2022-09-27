@@ -199,9 +199,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     axis_dict = event_class.axis_dict
     manager = event_class.manager
-    # ??????????
-    # if psf_king_params is not None:
-    #     az_index = psf_king_params["index"]["Azimuth"]
+
     # Find closest two values for az, ze and noise axis
     az_low, az_high, ze_low, ze_high, noise_low, noise_high = get_axes_edges(
         az, axis_dict["Azimuth"], ze, axis_dict["Zenith"], noise, axis_dict["Noise"]
@@ -328,7 +326,7 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     # ABias
     abias_final_data = None
     if psf_king_params is not None:
-        abias_king_dict = get_psf_king(az, ze, noise, event_class, psf_king_params)
+        abias_king_dict = get_king_psf_params(az, ze, noise, event_class, psf_king_params)
 
         elow = abias_king_dict['ELow']
         ehigh = abias_king_dict['EHigh']
@@ -463,11 +461,13 @@ Fill PSF table from King PSF parameters
 """
 
 
-def get_psf_king(az, ze, noise, event_class, psf_king_params):
+def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     msw_lower = event_class.msw_lower
     msw_upper = event_class.msw_upper
     if msw_lower == float('-inf') or msw_upper == float('inf'):
-        raise Exception("psf_king currently requires msw range to be defined in your EA cuts")
+        raise Exception(
+            "--psf_king currently requires MSW cuts to be defined in your EA file. ",
+            "King parameters are defined for particular MSW ranges")
 
     psf_king_index = psf_king_params["index"]
     az_psf, zen_psf, noise_psf = get_psf_axes_values(

@@ -224,7 +224,7 @@ def cli(
             )
             raise click.Abort()
 
-        file_pairs = runlist_to_file_pair(rl_dict)
+        file_pairs = runlist_to_file_pairs(rl_dict)
         flist = []
         failed_list = {}
         for st5_str, ea_files in file_pairs:
@@ -348,23 +348,21 @@ Returns:
 """
 
 
-def runlist_to_file_pair(rl_dict):
+def runlist_to_file_pairs(rl_dict):
     # This object imports ROOT, so it should imported after click's CLI is allowed to run
     from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
-    file_pair = []
-    for k in st5s.keys():
-        ea_files = []
-        for ea in eas[k]:
-            ea_files.append(EffectiveAreaFile(ea))
-        if len(ea_files) == 0:
-            raise Exception("No EA filenames defined for runlist tag: " + k)
-        for f in st5s[k]:
-            file_pair.append((f, ea_files))
 
-    return file_pair
+    for runlist_id in st5s.keys():
+        if len(eas[runlist_id]) < 1:
+            raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
+
+        ea_files = [EffectiveAreaFile(ea) for ea in eas[runlist_id]]
+        file_pairs = [(st5_file, ea_files) for st5_file in st5s[runlist_id]]
+
+    return file_pairs
 
 
 if __name__ == "__main__":
