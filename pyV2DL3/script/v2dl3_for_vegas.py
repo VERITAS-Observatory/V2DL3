@@ -4,29 +4,22 @@ import os
 import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
-from pyV2DL3.vegas.EventClass import EventClass
+from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 
 
-# In event_class_mode, The user can provide multiple EAs per tag to define the event classes for that group.
-def runlist_to_file_pair(rl_dict, event_class_mode=False):
+def runlist_to_file_pair(rl_dict):
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
     file_pair = []
-    # If using multiple EAs for event classes
-    if event_class_mode:
-        for k in st5s.keys():
-            event_classes = []
-            for ea in eas[k]:
-                event_classes.append(EventClass(ea))
-            if len(event_classes) == 0:
-                raise Exception("No EA filenames defined for runlist tag: " + k)
-            for f in st5s[k]:
-                file_pair.append((f, event_classes))
-    else:
-        for k in st5s.keys():
-            ea = eas[k][0]
-            for f in st5s[k]:
-                file_pair.append((f, ea))
+    for k in st5s.keys():
+        ea_files = []
+        for ea in eas[k]:
+            ea_files.append(EffectiveAreaFile(ea))
+        if len(ea_files) == 0:
+            raise Exception("No EA filenames defined for runlist tag: " + k)
+        for f in st5s[k]:
+            file_pair.append((f, ea_files))
+
     return file_pair
 
 
@@ -49,7 +42,23 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     '--event_class_mode',
     '-ec',
     is_flag=True,
-    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID.",
+    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID. "
+         + "Event classes sort events to separate fits files based on EA cuts parameters. "
+         + "Uses only MSW intervals for now. See EffectiveAreaFile.py to extend."
+)
+@click.option(
+    "--reconstruction_type",
+    "-r",
+    nargs=1,
+    default=1,
+    type=click.INT,
+    help="1: Standard (.S) - default, 2: ITM (.M3D)"
+)
+@click.option(
+    "--no_fov_cut",
+    "-nf",
+    is_flag=True,
+    help="Disable automatic event cuts according to the EA file's FoVCut parameters"
 )
 @click.option(
     "--gen_index_file",
@@ -91,6 +100,8 @@ def cli(
     file_pair,
     runlist,
     event_class_mode,
+    reconstruction_type,
+    no_fov_cut,
     gen_index_file,
     save_multiplicity,
     save_msw_msl,
@@ -161,10 +172,15 @@ def cli(
 
     # File pair mode
     if file_pair is not None:
-        st5_str, ea_str = file_pair
-        datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
+        st5_str, ea_files = file_pair
+        datasource = loadROOTFiles(st5_str, None, "VEGAS",
+                                   bypass_fov_cut=no_fov_cut,
+                                   ea_files=ea_files,
+                                   event_class_mode=event_class_mode,
+                                   reco_type=reconstruction_type,
                                    save_msw_msl=save_msw_msl,
                                    )
+
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
@@ -205,21 +221,17 @@ def cli(
             )
             raise click.Abort()
 
-        file_pairs = runlist_to_file_pair(rl_dict, event_class_mode=event_class_mode)
+        file_pairs = runlist_to_file_pair(rl_dict)
         flist = []
-        for st5_str, ea_str in file_pairs:
+        for st5_str, ea_files in file_pairs:
             logging.info(f"Processing file: {st5_str}")
-            event_classes = None
-            # Reassign vars if using event classes
-            if event_class_mode:
-                event_classes = ea_str
-                ea_str = None
-                logging.debug(f"Stage5 file:{st5_str}, Event classes:{event_classes}")
-            else:
-                logging.debug(f"Stage5 file:{st5_str}, EA file:{ea_str}")
+            logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            datasource = loadROOTFiles(st5_str, ea_str, "VEGAS",
-                                       event_classes=event_classes,
+            datasource = loadROOTFiles(st5_str, None, "VEGAS",
+                                       bypass_fov_cut=no_fov_cut,
+                                       ea_files=ea_files,
+                                       event_class_mode=event_class_mode,
+                                       reco_type=reconstruction_type,
                                        save_msw_msl=save_msw_msl,
                                        )
 
@@ -259,7 +271,7 @@ Generates the index files for a list of files.
 Arguments:
     flist         --  List of .fits filepaths
     output        --  Destination to write the generated index files.
-    eclass_count  --  Number of event classes for this run
+    eclass_count  --  Number of event classes for this batch
 """
 
 

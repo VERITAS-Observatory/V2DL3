@@ -43,8 +43,11 @@ Use the `in` operator on the returned dictionary to see if the cut was found.
 Do note that the cut values are saved as strings.
 
 Arguments:
-    config_str_ori  -- fCutsFileText
-    cut_searches    -- List of the desired parameter names as strings
+    config_str_ori  --  fCutsFileText
+    cut_searches    --  List of the desired parameter names as strings
+
+Returns:
+    Dict containing found param names as strings, and their values as strings.
 """
 
 

@@ -27,17 +27,24 @@ def genPrimaryHDU():
 
 
 def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
-                  event_classes=None,
+                  bypass_fov_cut=False,
+                  ea_files=None,
+                  event_class_mode=False,
+                  reco_type=1,
                   save_msw_msl=False,
                   ):
 
-    if effective_area_file is None and event_classes is None:
+    if effective_area_file is None and ea_files is None:
         raise Exception("Running V2DL3 without effective area file(s) is currently unsupported.")
 
     if file_type == "VEGAS":
+        if ea_files is None:
+            raise Exception("VegasDataSource uses EffectiveAreaFile for effective areas")
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
-        return VegasDataSource(data_file, effective_area_file,
-                               event_classes=event_classes,
+        return VegasDataSource(data_file, ea_files,
+                               bypass_fov_cut=bypass_fov_cut,
+                               event_class_mode=event_class_mode,
+                               reco_type=reco_type,
                                save_msw_msl=save_msw_msl,
                                )
 
@@ -63,5 +70,5 @@ def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None, event
         ),
         fillGTI(datasource),
     ]
-    hdus.extend(fillRESPONSE(datasource, instrument_epoch, event_class_idx=event_class_idx))
+    hdus.extend(fillRESPONSE(datasource, instrument_epoch, event_class_index=event_class_idx))
     return fits.HDUList(hdus)

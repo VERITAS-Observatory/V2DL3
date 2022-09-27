@@ -2,6 +2,8 @@ import logging
 from copy import deepcopy
 
 from astropy.time import Time
+from astropy.coordinates import SkyCoord
+import astropy.units as units
 import numpy as np
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
@@ -16,7 +18,8 @@ logger = logging.getLogger(__name__)
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False):
+def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
+                            fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False):
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -38,18 +41,14 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    if event_classes is None:
-        # We use a single event group when not in event class mode
-        num_event_groups = 1
-    else:
-        # Set num_event_classes so we dont call len(event_classes)
-        # thousands of times when filling events.
-        num_event_groups = len(event_classes)
-        if num_event_groups < 1:
-            # Dev exception
-            raise Exception("event_classes was passed in as an empty List")
+    # Set num_event_groups so we dont call len(effective_area_files)
+    # thousands of times when filling events.
+    num_event_groups = len(effective_area_files)
+    if num_event_groups < 1:
+        # Dev exception
+        raise Exception("effective_area_files was passed in as an empty List")
 
-    # These arrays are the same for every event group
+    # Average arrays are independent of event group
     avAlt = []
     avAz = []
     avRA = []
@@ -68,7 +67,7 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     }
 
     # Arrays exclusive to event class mode
-    if event_classes is not None or save_msw_msl:
+    if event_class_mode or save_msw_msl:
         event_arrays["mswArr"] = []
         event_arrays["mslArr"] = []
 
@@ -80,57 +79,72 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
     logger.debug("Start filling events ...")
 
     for ev in selectedEventsTree:
-        # When not using event class mode, this will stay 0
-        event_class_idx = 0
+        # Event reconstruction method
+        if reco_type == 1:
+            reco = ev.S
+        elif reco_type == 2:
+            reco = ev.M3D
+        else:
+            raise Exception("Invalid reconstruction type!"
+                            "\nSee --help for supported arguments")
 
-        if event_classes is not None:
-            fMSW = ev.S.fMSW
+        # Include event in averages regardless of whether it gets cut
+        avAlt.append(reco.fArrayTrackingElevation_Deg)
+        avAz.append(reco.fArrayTrackingAzimuth_Deg)
+        avRA.append(reco.fArrayTrackingRA_J2000_Rad)
+        avDec.append(reco.fArrayTrackingDec_J2000_Rad)
+
+        event_class_idx = 0
+        if event_class_mode:
+            fMSW = reco.fMSW
             """Determine which event class (if any) the event falls into.
 
-            Simply loop through the event classes and break if this event meets all
-            of an event class' parameters
+            Simply loop through the effective area files and break if this event meets all
+            of one's cuts parameters
 
             For now, we only do it based on the MSW intervals
             """
-            event_class_idx = 0
-            # Loop through event classes to check if this event satisfies the parameters
-            for ec in event_classes:
+            for ec in effective_area_files:
                 if ec.msw_lower <= fMSW < ec.msw_upper:
                     break
                 event_class_idx += 1
 
-            # If this event falls into an event classes
-            if event_class_idx < num_event_groups:
-                event_groups[event_class_idx]["mswArr"].append(fMSW)
-                event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
-            # Else skip to next event
-            else:
-                logger.debug("Event excluded: " + str(ev.S.fArrayEventNum)
-                             + " MSW: " + str(fMSW))
+            # If this event falls outside of any event class
+            if event_class_idx >= num_event_groups:
+                # Skip to next event
+                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
                 continue
 
-        elif save_msw_msl:
-            event_groups[event_class_idx]["mswArr"].append(ev.S.fMSW)
-            event_groups[event_class_idx]["mslArr"].append(ev.S.fMSL)
+        # Check FoV if appropriate
+        if fov_cut:
+            fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
+            fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
+            if fov_cut_lower > 0 or fov_cut_upper <= 180:
+                excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
+                if excluded:
+                    logger.debug("Event excluded: " + str(reco.fArrayEventNum)
+                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
+                                 + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                    continue
+
+        if event_class_mode or save_msw_msl:
+            event_groups[event_class_idx]["mswArr"].append(reco.fMSW)
+            event_groups[event_class_idx]["mslArr"].append(reco.fMSL)
 
         # seconds since first light
         time_relative_to_reference = (
-            float(ev.S.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
+            float(reco.fTime.getDayNS()) / 1e9 + seconds_from_reference_t0
         )
         this_event_group = event_groups[event_class_idx]
-        this_event_group["evNumArr"].append(ev.S.fArrayEventNum)
+        this_event_group["evNumArr"].append(reco.fArrayEventNum)
         this_event_group["timeArr"].append(time_relative_to_reference)
-        this_event_group["raArr"].append(np.rad2deg(ev.S.fDirectionRA_J2000_Rad))
-        this_event_group["decArr"].append(np.rad2deg(ev.S.fDirectionDec_J2000_Rad))
-        this_event_group["azArr"].append(np.rad2deg(ev.S.fDirectionAzimuth_Rad))
-        this_event_group["altArr"].append(np.rad2deg(ev.S.fDirectionElevation_Rad))
-        this_event_group["energyArr"].append(ev.S.fEnergy_GeV / 1000.0)
-        this_event_group["nTelArr"].append(ev.S.fImages)
-
-        avAlt.append(ev.S.fArrayTrackingElevation_Deg)
-        avAz.append(ev.S.fArrayTrackingAzimuth_Deg)
-        avRA.append(ev.S.fArrayTrackingRA_J2000_Rad)
-        avDec.append(ev.S.fArrayTrackingDec_J2000_Rad)
+        this_event_group["raArr"].append(np.rad2deg(reco.fDirectionRA_J2000_Rad))
+        this_event_group["decArr"].append(np.rad2deg(reco.fDirectionDec_J2000_Rad))
+        this_event_group["azArr"].append(np.rad2deg(reco.fDirectionAzimuth_Rad))
+        this_event_group["altArr"].append(np.rad2deg(reco.fDirectionElevation_Rad))
+        this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
+        this_event_group["nTelArr"].append(reco.fImages)
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -214,3 +228,38 @@ def __fillEVENTS_not_safe__(vegasFileIO, event_classes=None, save_msw_msl=False)
         {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
         returned_dicts,
     )
+
+
+"""
+Check event against the provided FoV upper and lower bounds
+
+Arguments:
+    event_skycoord  --  Reconstructed shower direction as an astropy.SkyCoord
+    reco            --  The event reconstruction (e.g ev.S or ev.ITM)
+    fov_cut_upper   --  The FoV upper limit in degrees
+
+Returns:
+    Bool  --  True if event falls outside of the FoV (event needs excluded)
+    float --  The computed separation from the FoV center
+"""
+
+
+def check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower):
+    event_skycoord = SkyCoord(
+        np.rad2deg(reco.fDirectionRA_J2000_Rad),
+        np.rad2deg(reco.fDirectionDec_J2000_Rad),
+        frame='icrs', unit=(units.deg, units.deg)
+    )
+
+    pointing_position = SkyCoord(
+        np.rad2deg(reco.fArrayTrackingRA_J2000_Rad),
+        np.rad2deg(reco.fArrayTrackingDec_J2000_Rad),
+        frame='icrs', unit=(units.deg, units.deg)
+    )
+
+    tel_sep = pointing_position.separation(event_skycoord).degree
+
+    if tel_sep > fov_cut_upper or tel_sep < fov_cut_lower:
+        return True, tel_sep
+
+    return False, tel_sep
