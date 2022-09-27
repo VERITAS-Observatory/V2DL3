@@ -334,10 +334,10 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
         thetahigh = abias_king_dict['ThetaHigh']
         psf_gamma = abias_king_dict['Gamma']
         psf_sigma = abias_king_dict['Sigma']
-        
+
         abias_final_data = np.array(
             [(elow, ehigh, thetalow, thetahigh, psf_gamma, psf_sigma)],
-            dtype = [
+            dtype=[
                 ('ENERG_LO', '>f4', np.shape(elow)),
                 ('ENERG_HI', '>f4', np.shape(ehigh)),
                 ('THETA_LO', '>f4', np.shape(thetalow)),
@@ -471,8 +471,8 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
 
     psf_king_index = psf_king_params["index"]
     az_psf, zen_psf, noise_psf = get_psf_axes_values(
-        az, psf_king_index["Azimuth"], 
-        ze, psf_king_index["Zenith"], 
+        az, psf_king_index["Azimuth"],
+        ze, psf_king_index["Zenith"],
         noise, psf_king_index["Noise"]
     )
 
@@ -489,15 +489,15 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     for param_values in psf_king_params["values"]:
         # `if` statements are lazily evaluated in Python, so this is efficient.
         if (param_values[0] == zen_psf
-        and param_values[2] == noise_psf
-        and param_values[3] == az_psf
-        and param_values[4] == msw_lower
-        and param_values[5] == msw_upper):
+            and param_values[2] == noise_psf
+            and param_values[3] == az_psf
+            and param_values[4] == msw_lower
+            and param_values[5] == msw_upper):
             # Add the line to its corresponding offset array in offset_arrs
             for offset in offset_index:
                 if param_values[1] == offset:
                     offset_arrs[str(offset)].append(param_values)
-                    
+           
     for key in offset_arrs:
         offset_arr = np.array(offset_arrs[key])
         if len(offset_arr) == 0:
@@ -513,7 +513,7 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     energy_high = first_offset_arr[:, 7]
     energy_low_bins = np.power(10, energy_low)
     energy_high_bins = np.power(10, energy_high)
-    
+
     # Assign loaded values for return
     abias_king_dict['ELow'] = np.array(energy_low_bins)
     abias_king_dict['EHigh'] = np.array(energy_high_bins)

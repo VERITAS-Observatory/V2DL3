@@ -8,6 +8,7 @@ from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--file_pair",
@@ -197,34 +198,7 @@ def cli(
         hdulist.writeto(output, overwrite=True)
     # Runlist mode
     else:
-        from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
-        from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
-        from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
-        from pyV2DL3.vegas.parseSt6RunList import validateRunlist
-
-        with open(runlist) as f:
-            lines = f.readlines()
-        try:
-            rl_dict = parseRunlistStrs(lines)
-        except RunlistParsingError as e:
-            click.secho(str(e), fg="red")
-            raise click.Abort()
-        try:
-            validateRunlist(rl_dict, event_class_mode=event_class_mode)
-        except RunlistValidationError as e:
-            click.secho(str(e), fg="red")
-            raise click.Abort()
-        if not os.path.exists(output):
-            os.makedirs(output)
-        elif os.path.isfile(output):
-            click.secho(
-                f"{output} already exists as a file. "
-                "<output> needs to be a directory for runlist mode.",
-                fg="yellow",
-            )
-            raise click.Abort()
-
-        file_pairs = runlist_to_file_pairs(rl_dict)
+        file_pairs = runlist_to_file_pairs(runlist, event_class_mode, output)
         flist = []
         failed_list = {}
         for st5_str, ea_files in file_pairs:
@@ -268,7 +242,7 @@ def cli(
 
         if gen_index_file and len(flist) > 0:
             gen_index_files(flist, output, eclass_count=num_event_groups)
-        
+
         logging.info("Processing complete.")
         if len(failed_list) > 0:
             logging.info("V2DL3 was unable to process the following files:")
@@ -348,7 +322,34 @@ Returns:
 """
 
 
-def runlist_to_file_pairs(rl_dict):
+def runlist_to_file_pairs(runlist, event_class_mode, output):
+    from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
+    from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
+    from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
+    from pyV2DL3.vegas.parseSt6RunList import validateRunlist
+
+    with open(runlist) as f:
+        lines = f.readlines()
+    try:
+        rl_dict = parseRunlistStrs(lines)
+    except RunlistParsingError as e:
+        click.secho(str(e), fg="red")
+        raise click.Abort()
+    try:
+        validateRunlist(rl_dict, event_class_mode=event_class_mode)
+    except RunlistValidationError as e:
+        click.secho(str(e), fg="red")
+        raise click.Abort()
+    if not os.path.exists(output):
+        os.makedirs(output)
+    elif os.path.isfile(output):
+        click.secho(
+            f"{output} already exists as a file. "
+            "<output> needs to be a directory for runlist mode.",
+            fg="yellow",
+        )
+        raise click.Abort()
+
     # This object imports ROOT, so it should imported after click's CLI is allowed to run
     from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
 

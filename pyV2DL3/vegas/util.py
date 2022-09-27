@@ -152,7 +152,7 @@ def getGTArray(startTime_s, endTime_s, cuts):
 
 
 """
-"Load King PSF parameter values from file. 
+"Load King PSF parameter values from file.
 
 See README_vegas.md for more information"
 
