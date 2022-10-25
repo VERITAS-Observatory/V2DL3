@@ -162,7 +162,12 @@ def gen_obs_index(filelist, index_file_dir="./"):
                     dl3_hdu[1].header.comments["ALT_PNT"]
                 )
             else:
-                value.append(dl3_hdu[1].header[key])
+                try:
+                    value.append(dl3_hdu[1].header[key])
+                except KeyError:
+                    logging.warning("Keyword " + key + " not found when building obs. index file")
+                    continue
+
                 _tableunits[key] = get_unit_string_from_comment(
                     dl3_hdu[1].header.comments[key]
                 )
