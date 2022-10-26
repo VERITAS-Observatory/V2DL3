@@ -147,6 +147,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
     )
     _tableunits = {}
     _tabledata = {n: [] for n in names}
+    missing_keys = set()
     # loop through the files
     for _file in filelist:
         # fits files.
@@ -166,11 +167,18 @@ def gen_obs_index(filelist, index_file_dir="./"):
                     value.append(dl3_hdu[1].header[key])
                 except KeyError:
                     logging.warning("Keyword " + key + " not found when building obs. index file")
+                    missing_keys.add(key)
                     continue
 
                 _tableunits[key] = get_unit_string_from_comment(
                     dl3_hdu[1].header.comments[key]
                 )
+
+    for key in missing_keys:
+        key_idx = names.index(key)
+        del names[key_idx]
+        del dtype[key_idx]
+        del _tabledata[key]
 
     obs_table = Table(_tabledata, names=names, dtype=dtype)
 
