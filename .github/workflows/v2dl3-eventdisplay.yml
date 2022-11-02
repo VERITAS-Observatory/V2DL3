@@ -38,8 +38,8 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda env create -n v2dl3ED -f environment-eventdisplay.yml
-          conda activate v2dl3ED
+          conda env create -n v2dl3Eventdisplay -f environment-eventdisplay.yml
+          conda activate v2dl3Eventdisplay
           conda info
 
       - name: pytest
@@ -48,7 +48,7 @@ jobs:
           PYTHONPATH: .
         run: |
           source $CONDA/etc/profile.d/conda.sh
-          conda activate v2dl3ED
+          conda activate v2dl3Eventdisplay
           pytest .
 
       - name: download test data
@@ -61,7 +61,7 @@ jobs:
           PYTHONPATH: .
         run: |
           source $CONDA/etc/profile.d/conda.sh
-          conda activate v2dl3ED
+          conda activate v2dl3Eventdisplay
           # point-like tests
           python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
                -f ./64080.anasum.root \
