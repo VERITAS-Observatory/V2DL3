@@ -83,10 +83,10 @@ Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/u
 conda env create -f environment-eventdisplay.yml
 ```
 
-Activate the environment ```v2dl3ED``` and set `PYTHONPATH`:
+Activate the environment ```v2dl3Eventdisplay``` and set `PYTHONPATH`:
 
 ```
-conda activate v2dl3ED
+conda activate v2dl3Eventdisplay
 export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
