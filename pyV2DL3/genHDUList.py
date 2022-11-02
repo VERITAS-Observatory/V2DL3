@@ -48,7 +48,7 @@ def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS",
                                save_msw_msl=save_msw_msl,
                                )
 
-    if file_type != "ED":
+    if file_type != "Eventdisplay":
         raise Exception("File type not supported: {}".format(file_type))
 
     if effective_area_file is None:

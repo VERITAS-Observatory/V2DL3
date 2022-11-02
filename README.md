@@ -83,10 +83,10 @@ Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/u
 conda env create -f environment-eventdisplay.yml
 ```
 
-Activate the environment ```v2dl3ED``` and set `PYTHONPATH`:
+Activate the environment ```v2dl3Eventdisplay``` and set `PYTHONPATH`:
 
 ```
-conda activate v2dl3ED
+conda activate v2dl3Eventdisplay
 export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
@@ -149,7 +149,7 @@ Use the [python logging system](https://docs.python.org/3/howto/logging.html) in
 
 ##### Multi file processing
 
-To convert many runs at once with different Effective Area files there is a anasum script [ANALYSIS.anasum_parallel_from_runlist.sh](https://github.com/VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/blob/main/scripts/ANALYSIS.anasum_parallel_from_runlist.sh), that can be used to create a ``` v2dl3_for_runlist_from_EDxxxx-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the point-like case. Here, xxxx is the Eventdisply version (for eg. v487).
+To convert many runs at once with different Effective Area files there is a anasum script [ANALYSIS.anasum_parallel_from_runlist.sh](https://github.com/VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/blob/main/scripts/ANALYSIS.anasum_parallel_from_runlist.sh), that can be used to create a ``` v2dl3_for_runlist_from_EDxxxx-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the point-like case. Here, xxxx is the Eventdisplay version (for eg. v487).
 
 Then in your bash run 
 ```

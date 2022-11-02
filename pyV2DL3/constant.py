@@ -1,4 +1,4 @@
-# Global setting for both VEGAS and ED
+# Global setting for both VEGAS and Eventdisplay
 
 VERSION = "0.2"
 

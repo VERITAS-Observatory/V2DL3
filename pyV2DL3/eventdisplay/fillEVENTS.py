@@ -166,7 +166,7 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["Yoff"] = Yoff
         evt_dict["NSBLEVEL"] = avPedvar
 
-        # Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
+        # Read evndispLog which is stored as TMacro in anasum root file (Eventdisplay >= 486)
         try:
             evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member(
                 "fLines"
@@ -174,7 +174,7 @@ def __fillEVENTS__(edFileIO, select=None):
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
         except KeyError:
             logging.exception("Eventdisplay logfile not found in anasum root file")
-            logging.exception("Please make sure to use ED >= 486")
+            logging.exception("Please make sure to use Eventdisplay >= 486")
 
         avPedvar = runSummary["pedvarsOn"][0]
 

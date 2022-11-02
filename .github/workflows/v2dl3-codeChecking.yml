@@ -38,15 +38,15 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda env create -n v2dl3ED -f environment-eventdisplay.yml
-          conda activate v2dl3ED
+          conda env create -n v2dl3Eventdisplay -f environment-eventdisplay.yml
+          conda activate v2dl3Eventdisplay
           conda info
 
       - name: flake8
         shell: bash -leo pipefail {0}
         run: |
           source $CONDA/etc/profile.d/conda.sh
-          conda activate v2dl3ED
+          conda activate v2dl3Eventdisplay
           conda install flake8
           flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
                    --show-source --statistics .

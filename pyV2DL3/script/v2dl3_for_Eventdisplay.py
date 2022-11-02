@@ -106,7 +106,7 @@ def cli(
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
     anasum_str, ea_str = file_pair
-    datasource = loadROOTFiles(anasum_str, ea_str, "ED")
+    datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
     datasource.fill_data(evt_filter=evt_filter)
     hdulist = genHDUlist(

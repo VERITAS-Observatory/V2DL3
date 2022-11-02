@@ -13,7 +13,7 @@ def main():
                 v2dl3-vegas --help
 
 
-            For ED flags:
+            For Eventdisplay flags:
 
                 pyV2DL3/script/v2dl3_for_Eventdisplay.py --help
 
