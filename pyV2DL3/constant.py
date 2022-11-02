@@ -1,6 +1,6 @@
 # Global setting for both VEGAS and Eventdisplay
 
-VERSION = "0.2"
+VERSION = "0.4-beta"
 
 # Feb 1 2005
 VTS_REFERENCE_MJD = 53402.0
