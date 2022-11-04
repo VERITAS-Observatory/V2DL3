@@ -125,6 +125,7 @@ def cli(
         )
         hdulist[1].header["OBS_ID"] = fname_base
     hdulist.writeto(output, overwrite=True)
+    logging.info(f"FITS output written to {output}")
 
 
 if __name__ == "__main__":
