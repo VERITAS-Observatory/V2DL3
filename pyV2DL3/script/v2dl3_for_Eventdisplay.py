@@ -85,17 +85,15 @@ def cli(
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
 
-    runnum = os.path.basename(output).split(".")[0]
-
     if debug:
         logging.basicConfig(
-            format="%(levelname)s:v2dl3:run{}: %(message)s".format(runnum),
+            format="%(levelname)s:v2dl3: %(message)s",
             level=logging.DEBUG,
             filename=logfile,
         )
     else:
         logging.basicConfig(
-            format="%(levelname)s:v2dl3:run{}: %(message)s".format(runnum),
+            format="%(levelname)s:v2dl3: %(message)s",
             level=logging.INFO,
             filename=logfile,
         )
