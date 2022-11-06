@@ -67,9 +67,13 @@ def fill_bintablehdu(
     return hdu
 
 
-def fillRESPONSE(datasource, instrument_epoch=None):
+def fillRESPONSE(datasource, instrument_epoch=None, event_class_index=None):
     response_dict = datasource.get_response_data()
     evt_dict = datasource.get_evt_data()
+
+    if event_class_index is not None:
+        response_dict = response_dict[event_class_index]
+        evt_dict = evt_dict[event_class_index]
 
     epoch_str = "VERITAS"
     if instrument_epoch:

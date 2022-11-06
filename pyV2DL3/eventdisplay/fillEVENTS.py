@@ -8,6 +8,7 @@ from pyV2DL3.constant import VTS_REFERENCE_HEIGHT
 from pyV2DL3.constant import VTS_REFERENCE_LAT
 from pyV2DL3.constant import VTS_REFERENCE_LON
 from pyV2DL3.constant import VTS_REFERENCE_MJD
+
 from pyV2DL3.eventdisplay.util import getGTI
 from pyV2DL3.eventdisplay.util import getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
@@ -25,6 +26,7 @@ def __fillEVENTS__(edFileIO, select=None):
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
         runNumber = runSummary["runOn"][0]
+        logging.info("Run number: {}".format(runNumber))
         telConfig = file["run_{}/stereo/telconfig".format(runNumber)].arrays(
             library="np"
         )
@@ -90,6 +92,10 @@ def __fillEVENTS__(edFileIO, select=None):
         altArr = DL3EventTree["El"][mask]
         energyArr = DL3EventTree["Energy"][mask]
         nTelArr = DL3EventTree["NImages"][mask]
+        Xoff = DL3EventTree["Xoff"][mask]
+        Yoff = DL3EventTree["Yoff"][mask]
+        MeanPedvar = DL3EventTree["MeanPedvar"][mask]
+
         try:
             # Test if anasum file was created using the all events option.
             # In this case write out the additional output.
@@ -119,6 +125,7 @@ def __fillEVENTS__(edFileIO, select=None):
             )
         )
         avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
+        avPedvar = np.mean(MeanPedvar)
 
         # Filling Event List
         evt_dict["EVENT_ID"] = evNumArr
@@ -155,8 +162,11 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
+        evt_dict["Xoff"] = Xoff
+        evt_dict["Yoff"] = Yoff
+        evt_dict["NSBLEVEL"] = avPedvar
 
-        # Read evndispLog which is stored as TMacro in anasum root file (ED >= 486)
+        # Read evndispLog which is stored as TMacro in anasum root file (Eventdisplay >= 486)
         try:
             evndisplog_data = file["run_{}/stereo/evndispLog".format(runNumber)].member(
                 "fLines"
@@ -164,7 +174,7 @@ def __fillEVENTS__(edFileIO, select=None):
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
         except KeyError:
             logging.exception("Eventdisplay logfile not found in anasum root file")
-            logging.exception("Please make sure to use ED >= 486")
+            logging.exception("Please make sure to use Eventdisplay >= 486")
 
         avPedvar = runSummary["pedvarsOn"][0]
 

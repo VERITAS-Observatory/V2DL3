@@ -3,13 +3,40 @@ import logging
 from astropy.io import fits
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
-import pyV2DL3.constant
+import pyV2DL3.constant as constant
 
 
-def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
+def add_existing_column(columns, evt_dict, name, format, unit=None):
+    """
+    Test if key `name` exists in `evt_dict`. If `true` add a new column to columns inplace.
 
+    Parameters
+    ----------
+    columns: list
+    evt_dict: dict
+    name: str
+        Used as name for the new column and key in evt_dict.
+    format: str
+    unit: str or None
+
+    Returns
+    -------
+    """
+
+    if name in evt_dict:
+        columns.append(
+            fits.Column(name=name, format=format, array=evt_dict[name], unit=unit)
+        )
+
+
+def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
     logging.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
+
+    if event_class_idx is not None:
+        # Add 'EV_CLASS' header key if there is more than one event group
+        add_evclass = True if len(evt_dict) > 1 else False
+        evt_dict = evt_dict[event_class_idx]
 
     # Columns to be saved
     columns = [
@@ -19,14 +46,17 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
         fits.Column(name="DEC", format="1E", array=evt_dict["DEC"], unit="deg"),
         fits.Column(name="ENERGY", format="1E", array=evt_dict["ENERGY"], unit="TeV"),
     ]
-    try:
-        columns.append(fits.Column("IS_GAMMA", format="1L", array=evt_dict["IS_GAMMA"]))
-        columns.append(
-            fits.Column("BDT_SCORE", format="1E", array=evt_dict["BDT_SCORE"])
-        )
-        logging.debug("Found BDT variables in event list")
-    except KeyError:
-        logging.debug("No BDT variables in event list")
+
+    # Test if key exists in evt_dict. If yes, add these columns.
+    add_existing_column(columns, evt_dict, name="ALT", format="1E", unit="deg")
+    add_existing_column(columns, evt_dict, name="AZ", format="1E", unit="deg")
+    add_existing_column(columns, evt_dict, name="Xoff", format="1E")
+    add_existing_column(columns, evt_dict, name="Yoff", format="1E")
+    add_existing_column(columns, evt_dict, name="MSW", format="1D")
+    add_existing_column(columns, evt_dict, name="MSL", format="1D")
+    add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
+    add_existing_column(columns, evt_dict, name="BDT_SCORE", format="1E")
+
     # Number of triggered telescope if necessary
     if save_multiplicity:
         columns.append(
@@ -41,13 +71,11 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     hdu1 = addHDUClassKeyword(hdu1, class1="EVENTS")
 
     # Fill Header
-    hdu1.header.set("RADECSYS", pyV2DL3.constant.RADECSYS, "equatorial system type")
-    hdu1.header.set("EQUINOX", pyV2DL3.constant.EQUINOX, "base equinox")
+    hdu1.header.set("RADECSYS", constant.RADECSYS, "equatorial system type")
+    hdu1.header.set("EQUINOX", constant.EQUINOX, "base equinox")
     hdu1.header.set(
         "CREATOR",
-        "pyV2DL3 v{}::{}".format(
-            pyV2DL3.constant.VERSION, datasource.get_source_name()
-        ),
+        "pyV2DL3 v{}::{}".format(constant.VERSION, datasource.get_source_name()),
     )
     hdu1.header.set("ORIGIN", "VERITAS Collaboration", "Data from VERITAS")
     hdu1.header.set("TELESCOP", "VERITAS")
@@ -69,7 +97,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     hdu1.header.set("TSTOP   ", evt_dict["TSTOP"], "mission time of end of obs [s]")
     hdu1.header.set(
         "MJDREFI ",
-        pyV2DL3.constant.VTS_REFERENCE_MJD,
+        constant.VTS_REFERENCE_MJD,
         "int part of reference MJD [days]",
     )
     hdu1.header.set("MJDREFF ", 0.0, "fractional part of reference MJD [days]")
@@ -107,17 +135,26 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     hdu1.header.set("EUNIT   ", "TeV", "energy unit")
     hdu1.header.set(
         "GEOLON  ",
-        pyV2DL3.constant.VTS_REFERENCE_LON,
+        constant.VTS_REFERENCE_LON,
         "longitude of array center [deg]",
     )
     hdu1.header.set(
-        "GEOLAT  ", pyV2DL3.constant.VTS_REFERENCE_LAT, "latitude of array center [deg]"
+        "GEOLAT  ", constant.VTS_REFERENCE_LAT, "latitude of array center [deg]"
     )
     hdu1.header.set(
         "ALTITUDE",
-        pyV2DL3.constant.VTS_REFERENCE_HEIGHT,
+        constant.VTS_REFERENCE_HEIGHT,
         "altitude of array center [m]",
     )
+    if event_class_idx is not None and add_evclass:
+        hdu1.header.set("EV_CLASS", event_class_idx, "Event class number")
+
+    if hasattr(datasource, "__pedvar__"):
+        hdu1.header.set(
+            "PED_VAR",
+            datasource.__pedvar__,
+            "average pedestal variance",
+        )
 
     try:
         hdu1.header.set(
@@ -128,5 +165,14 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None):
     except KeyError:
         logging.debug("Keyword QUALITY not set in the EVENTS header")
         logging.debug("For EventdisplayAnalysis: use version >=v486")
+
+    try:
+        hdu1.header.set(
+            "NSBLEVEL",
+            evt_dict["NSBLEVEL"],
+            "NSB level (mean of pedestal variations)",
+        )
+    except KeyError:
+        logging.debug("Keyword NSBLEVEL not set in the EVENTS header")
 
     return hdu1

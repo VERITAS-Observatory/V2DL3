@@ -35,6 +35,38 @@ def parseTimeCut(tCutStr):
     return cut_arr
 
 
+"""Search a ROOT fCutsFileText for the params named in cut_searches
+
+Returns a dict that will only contain keys for found cuts.
+Use the `in` operator on the returned dictionary to see if the cut was found.
+
+Do note that the cut values are saved as strings.
+
+Arguments:
+    config_str_ori  --  fCutsFileText
+    cut_searches    --  List of the desired parameter names as strings
+
+Returns:
+    Dict containing found param names as strings, and their values as strings.
+"""
+
+
+def getCuts(config_str_ori, cut_searches):
+    config_str = str(config_str_ori)
+    cuts_found = {}
+    for line in config_str.splitlines():
+        # Skip comment lines
+        if (len(line) == 0) or (line.strip()[0] == "#"):
+            continue
+        else:
+            for cut_search in cut_searches:
+                if line.find(cut_search) >= 0:
+                    key, cut_str = line.split(" ")
+                    if len(cut_str) > 0:
+                        cuts_found[cut_search] = cut_str
+    return cuts_found
+
+
 def getTimeCut(config_str_ori):
     """Get time cut from extracted cut config text."""
     config_str = str(config_str_ori)

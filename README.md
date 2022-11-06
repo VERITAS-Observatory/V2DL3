@@ -8,7 +8,7 @@ The FITS output follows the data formats for gamma-ray astronomy as defined in o
 The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
 
 The two main tools required to convert VERITAS data products to DL3 FITS format and use them with gammapy are:
-- converter to DL3 (`v2dl3` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
+- converter to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
 - tool to generate observation index tables
 
 For contributors: please note the section for developers below.
@@ -16,29 +16,33 @@ For contributors: please note the section for developers below.
 ---
 # V2DL3 for VEGAS
 
-* vegas version >= 2.5.7
-* requirements are listed in the ```environment.yml``` file.
+* VEGAS version >= 2.5.7
+* Requirements are listed in the ```environment-vegas.yml``` file.
+* Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequesite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
 
 ## Installation
 
 Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
 ```
-conda env create -f environment.yml
+conda env create -f environment-vegas.yml
 ```
-The environment ```v2dl3``` will be created and can be activated with:
+The environment ```v2dl3-vegas``` will be created and can be activated with:
 
 ```
-conda activate v2dl3
+conda activate v2dl3-vegas
 ```
 
 Install now pyV2DL3:
 ```
-pip install . --use-feature=in-tree-build
+pip install .
 ```
+
+### Docker recipe
+To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-docker/README.md*
 
 ## The commandline tool v2dl3 with VEGAS
 
-Run `v2dl3 --help` to see all options.
+Run `v2dl3-vegas --help` to see all options.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
@@ -48,7 +52,7 @@ Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/```
 To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the ouput DL3 file.
 
 ```
-v2dl3 -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
+v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
 ```
 
 ### Generate from a VEGAS stage6 runlist
@@ -56,7 +60,13 @@ v2dl3 -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_0
 You can also provide a stage6 runlist to the command line tool. In this case the last argument is the folder where all the output DL3 files will be saved. Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
 ```
-v2dl3 -l ./runlist.txt  ./test
+v2dl3-vegas -l ./runlist.txt  ./test
+```
+
+Runlists may be generated via a utility script.
+
+```
+python utils/vegas_runlister.py --help
 ```
 
 ---
@@ -73,10 +83,10 @@ Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/u
 conda env create -f environment-eventdisplay.yml
 ```
 
-Activate the environment ```v2dl3ED``` and set `PYTHONPATH`:
+Activate the environment ```v2dl3Eventdisplay``` and set `PYTHONPATH`:
 
 ```
-conda activate v2dl3ED
+conda activate v2dl3Eventdisplay
 export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
@@ -136,14 +146,14 @@ Unit tests are encouraged and are available for few cases at this point. Unit te
 Use the [python logging system](https://docs.python.org/3/howto/logging.html) instead of the ‘print()’ function to output text. This allows to pipe all output into a log file and for different logging levels (INFO, DEBUG, …).
 
 ---
-**TEXT BELOW REQUIRES REVIEW**
 
 ##### Multi file processing
 
-To convert many runs at once with different Effective Area files there is a modified anasum script here ( ``` VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/scripts/ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh ``` ), that can be used to create a ``` v2dl3_for_runlist_from_ED485-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the full-enclosure case. 
+To convert many runs at once with different Effective Area files there is a anasum script [ANALYSIS.anasum_parallel_from_runlist.sh](https://github.com/VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/blob/main/scripts/ANALYSIS.anasum_parallel_from_runlist.sh), that can be used to create a ``` v2dl3_for_runlist_from_EDxxxx-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the point-like case. Here, xxxx is the Eventdisplay version (for eg. v487).
+
 Then in your bash run 
 ```
-./v2dl3_for_runlist_from_ED485-anasum.sh
+./v2dl3_for_runlist_from_EDxxxx-anasum.sh
 ```
 to create the fits files one after another. 
 
@@ -157,6 +167,9 @@ where `<script>` is the script that was written out by `ANALYSIS.anasum_parallel
  - `--conda_exe` path to the conda executable. Only needed if `$CONDA_EXE` is not set.
  - `--rootsys` path to rootsys. Only needed if `$ROOTSYS` is not set
  - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml'`)
+
+---
+**TEXT BELOW REQUIRES REVIEW**
 
 #### Filter events
 Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 

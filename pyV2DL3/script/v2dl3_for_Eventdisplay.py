@@ -54,9 +54,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--force_extrapolation",
-    nargs=1,
-    type=click.BOOL,
-    default=False,
+    is_flag=True,
     help="IRF is extrapolated when parameter is found to be outside IRF range",
 )
 @click.option(
@@ -65,7 +63,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.FLOAT,
     default=0.0,
     help="Parameter outside IRF range but within a given tolerance is interpolated\
-at boundary value. tolerance = ratio of absolute differece between boundary and parameter\
+at boundary value. tolerance = ratio of absolute difference between boundary and parameter\
 value to boundary",
 )
 def cli(
@@ -106,9 +104,13 @@ def cli(
         point_like = True
         full_enclosure = False
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
+    logging.info(f"Converting to DL3 (full-enclosure: {full_enclosure}, point-like: {point_like})")
 
     anasum_str, ea_str = file_pair
-    datasource = loadROOTFiles(anasum_str, ea_str, "ED")
+    logging.info(f"Eventdisplay: anasum file {anasum_str}")
+    logging.info(f"Effective: area file {ea_str}")
+    logging.info(f"Fuzzy boundary setting: {fuzzy_boundary}, force extrapolation: {force_extrapolation}")
+    datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
     datasource.fill_data(evt_filter=evt_filter)
     hdulist = genHDUlist(
@@ -123,6 +125,7 @@ def cli(
         )
         hdulist[1].header["OBS_ID"] = fname_base
     hdulist.writeto(output, overwrite=True)
+    logging.info(f"FITS output written to {output}")
 
 
 if __name__ == "__main__":
