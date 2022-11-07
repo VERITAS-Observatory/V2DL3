@@ -9,6 +9,7 @@ from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 
 logger = logging.getLogger(__name__)
 
+
 class FullEnclosureOffsetAxisError(Exception):
     pass
 
