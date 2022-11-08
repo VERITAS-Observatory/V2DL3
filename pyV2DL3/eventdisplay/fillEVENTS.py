@@ -44,8 +44,8 @@ def __fillEVENTS__(edFileIO, select=None):
             library="np"
         )[0]
         t_avg_fits = Time(start_mjd, format="mjd", scale="utc") + \
-            (Time(stop_mjd, format="mjd", scale="utc") -
-             Time(start_mjd, format="mjd", scale="utc"))/2.
+            (Time(stop_mjd, format="mjd", scale="utc") - Time(start_mjd, format="mjd", scale="utc")
+             ) / 2.
 
         # Number of seconds between reference time and run MJD at 00:00:00:
         t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
