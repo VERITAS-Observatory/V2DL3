@@ -137,7 +137,7 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["ENERGY"] = energyArr
         evt_dict["EVENT_TYPE"] = nTelArr
         if all_events:
-            evt_dict["BDT_SCORE"] = bdtScore
+            evt_dict["GAMMANESS"] = bdtScore
             evt_dict["IS_GAMMA"] = IsGamma
 
         # Filling Header info

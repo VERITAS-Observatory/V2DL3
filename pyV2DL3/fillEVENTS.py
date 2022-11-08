@@ -55,7 +55,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     add_existing_column(columns, evt_dict, name="MSW", format="1D")
     add_existing_column(columns, evt_dict, name="MSL", format="1D")
     add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
-    add_existing_column(columns, evt_dict, name="BDT_SCORE", format="1E")
+    add_existing_column(columns, evt_dict, name="GAMMANESS", format="1E")
 
     # Number of triggered telescope if necessary
     if save_multiplicity:
@@ -104,7 +104,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
 
     hdu1.header.set("TIMEUNIT", "s", "time unit is seconds since MET start")
     hdu1.header.set("TIMESYS ", "utc", "time scale is UTC")
-    hdu1.header.set("TIMEREF ", "local", "local time reference")
+    hdu1.header.set("TIMEREF ", "topocenter", "location from where the observation was made")
 
     hdu1.header.set("ONTIME  ", evt_dict["ONTIME"], "sum of good time intervals [s]")
 

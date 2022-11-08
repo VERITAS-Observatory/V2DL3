@@ -15,6 +15,7 @@ hdu_class_type = {
     ("RESPONSE", "EDISP"): ("edisp", "edisp_2d"),
     ("RESPONSE", "PSF"): ("psf", None),
     ("RESPONSE", "BKG"): ("bkg", None),
+    ("RESPONSE", "RAD_MAX"): ("rad_max", "rad_max_2d"),
 }
 
 
