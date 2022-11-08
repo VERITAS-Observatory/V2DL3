@@ -121,15 +121,15 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     )
 
     hdu1.header.set("OBJECT  ", evt_dict["OBJECT"], "observed object")
-    hdu1.header.set("RA_OBJ  ", evt_dict["RA_OBJ"], "observation position RA [deg]")
-    hdu1.header.set("DEC_OBJ ", evt_dict["DEC_OBJ"], "observation position DEC [deg]")
+    hdu1.header.set("RA_OBJ  ", evt_dict["RA_OBJ"], "right ascension of object [deg]")
+    hdu1.header.set("DEC_OBJ ", evt_dict["DEC_OBJ"], "declination of object [deg]")
 
-    hdu1.header.set("RA_PNT  ", evt_dict["RA_PNT"], "observation position RA [deg]")
-    hdu1.header.set("DEC_PNT ", evt_dict["DEC_PNT"], "observation position DEC [deg]")
+    hdu1.header.set("RA_PNT  ", evt_dict["RA_PNT"], "pointing right ascension [deg]")
+    hdu1.header.set("DEC_PNT ", evt_dict["DEC_PNT"], "pointing declination [deg]")
     hdu1.header.set(
-        "ALT_PNT ", evt_dict["ALT_PNT"], "average altitude of pointing [deg]"
+        "ALT_PNT ", evt_dict["ALT_PNT"], "average pointing altitude [deg]"
     )
-    hdu1.header.set("AZ_PNT  ", evt_dict["AZ_PNT"], "average azimuth of pointing [deg]")
+    hdu1.header.set("AZ_PNT  ", evt_dict["AZ_PNT"], "average pointing azimuth [deg]")
 
     # get the list of telescopes that participate in the event
     hdu1.header.set("TELLIST", evt_dict["TELLIST"], "comma-separated list of tel IDs")
@@ -163,7 +163,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         hdu1.header.set(
             "QUALITY",
             evt_dict["QUALITY"],
-            "Run quality flag based on VPM data used or not",
+            "run quality flag based on vpm data used or not",
         )
     except KeyError:
         logging.debug("Keyword QUALITY not set in the EVENTS header")
@@ -173,7 +173,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         hdu1.header.set(
             "NSBLEVEL",
             evt_dict["NSBLEVEL"],
-            "NSB level (mean of pedestal variations)",
+            "nsb level (mean of pedestal variations)",
         )
     except KeyError:
         logging.debug("Keyword NSBLEVEL not set in the EVENTS header")
