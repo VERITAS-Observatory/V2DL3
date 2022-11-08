@@ -90,7 +90,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         "DATE-OBS", evt_dict["DATE-OBS"], "start date (UTC) of obs yy-mm-dd hh:mm:ss"
     )
     hdu1.header.set(
-        "DATE-AVG", evt_dict["DATE-AVG"], "average date (UTC) of obs yy-mm-dd hh:mm:ss"
+        "DATE-AVG", evt_dict["DATE-AVG"], "average date (UTC) of obs"
     )
     hdu1.header.set(
         "DATE-END", evt_dict["DATE-END"], "end date (UTC) of obs yy-mm-dd hh:mm:ss"
