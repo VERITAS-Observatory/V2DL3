@@ -43,6 +43,7 @@ def __fillEVENTS__(edFileIO, select=None):
         deadtime = file["total_1/stereo/tRunSummary/DeadTimeFracOn"].array(
             library="np"
         )[0]
+        t_avg_fits = t_start_fits + (t_stop_fits-t_start_fits)/2.
 
         # Number of seconds between reference time and run MJD at 00:00:00:
         t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
@@ -143,6 +144,7 @@ def __fillEVENTS__(edFileIO, select=None):
         # Filling Header info
         evt_dict["OBS_ID"] = runNumber
         evt_dict["DATE-OBS"] = t_start_fits
+        evt_dict["DATE-AVG"] = t_avg_fits
         evt_dict["DATE-END"] = t_stop_fits
         evt_dict["TSTART"] = tstart_from_reference
         evt_dict["TSTOP"] = tstop_from_reference
