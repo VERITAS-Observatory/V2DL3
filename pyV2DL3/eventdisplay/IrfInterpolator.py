@@ -64,7 +64,7 @@ class IrfInterpolator:
         # Also the coordinates of the axes need to be in increasing order.
         zenith_axis = None
         for i, axis in enumerate(irf_axes):
-            if len(axis) == 1:
+            if len(irf_axes[axis]) == 1:
                 irf_axes[axis] = np.concatenate(
                     (irf_axes[axis].flatten(), irf_axes[axis].flatten() + 0.01), axis=None
                 )

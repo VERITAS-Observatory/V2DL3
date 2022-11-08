@@ -10,6 +10,10 @@ from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 logger = logging.getLogger(__name__)
 
 
+class FullEnclosureOffsetAxisError(Exception):
+    pass
+
+
 def find_energy_range(log_energy_tev):
     """Find min and max of energy axis"""
     energy_low = np.power(
@@ -140,6 +144,19 @@ def find_camera_offsets(camera_offsets):
     return camera_offsets, camera_offsets
 
 
+def duplicate_interpolating_coordinate(camera_offsets, irf_name):
+    """
+    This function duplicates the camera offsets value, when the dimension of
+    camera offset axis in the stored IRF is 1.
+    """
+
+    if len(camera_offsets) == 1:
+        logger.warning(f"Duplicating single offset axis for IRF {irf_name}")
+        camera_offsets = [camera_offsets[0], camera_offsets[0]]
+
+    return camera_offsets
+
+
 def fill_effective_area(
         irf_name,
         irf_interpolator,
@@ -157,6 +174,8 @@ def fill_effective_area(
     ea_final = []
 
     # Loop over offsets and store
+    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
+
     for offset in camera_offsets:
         eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
         ea_final.append(np.array(eff_area))
@@ -192,6 +211,8 @@ def fill_energy_migration(
 
     irf_interpolator.set_irf(irf_name, **kwargs)
     ac_final = []
+
+    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
 
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
@@ -381,11 +402,12 @@ def __fill_response__(
 
         # require multiple offsets for full enclosure
         if len(camera_offsets) <= 1:
-            logger.warning(
-                "IRF used for interpolation should be "
-                "defined for several offsets for"
-                "Full-Enclosure conversion"
+            logger.error(
+                "IRF used for interpolation must be "
+                "defined for several offsets for "
+                "full-enclosure conversion"
             )
+            raise FullEnclosureOffsetAxisError
 
         # Effective area (full-enclosure)
         (
