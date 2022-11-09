@@ -7,6 +7,8 @@ on:
       - 'v*'
   pull_request:
     branches: ["main"]
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -45,7 +47,8 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+            # push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'release' }}
           file: ./V2DL3/utils/v2dl3-eventdisplay-docker/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}-v2dl3-eventdisplay
