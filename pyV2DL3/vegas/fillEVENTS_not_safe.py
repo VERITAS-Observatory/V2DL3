@@ -37,13 +37,14 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     endTime_s = float(endTime.getDayNS()) / 1e9
 
     t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
-    seconds_from_reference_t0 = (Time(mjd, format="mjd", scale="utc") - t_ref).sec
+    seconds_from_reference_t0 = (
+        Time(mjd, format="mjd", scale="utc") - t_ref).sec
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
     time_avg = (Time(startTime.getString(), format="iso", scale="utc")) + \
-        ((Time(endTime.getString(), format="iso", scale="utc") - Time(startTime.getString(), format="iso", scale="utc") 
-         ) / 2.)
+        (Time(endTime.getString(), format="iso", scale="utc") - Time(startTime.getString(), format="iso", scale="utc")
+         ) / 2.
 
     # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
@@ -125,10 +126,12 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
             fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
             if fov_cut_lower > 0 or fov_cut_upper <= 180:
-                excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
+                excluded, tel_sep = check_FoV_exclusion(
+                    reco, fov_cut_upper, fov_cut_lower)
                 if excluded:
                     logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
+                                 + " separation: " +
+                                 str(tel_sep) + " not within FoVCut range: "
                                  + str(fov_cut_lower) + "-" + str(fov_cut_upper))
                     continue
 
@@ -143,10 +146,14 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         this_event_group = event_groups[event_class_idx]
         this_event_group["evNumArr"].append(reco.fArrayEventNum)
         this_event_group["timeArr"].append(time_relative_to_reference)
-        this_event_group["raArr"].append(np.rad2deg(reco.fDirectionRA_J2000_Rad))
-        this_event_group["decArr"].append(np.rad2deg(reco.fDirectionDec_J2000_Rad))
-        this_event_group["azArr"].append(np.rad2deg(reco.fDirectionAzimuth_Rad))
-        this_event_group["altArr"].append(np.rad2deg(reco.fDirectionElevation_Rad))
+        this_event_group["raArr"].append(
+            np.rad2deg(reco.fDirectionRA_J2000_Rad))
+        this_event_group["decArr"].append(
+            np.rad2deg(reco.fDirectionDec_J2000_Rad))
+        this_event_group["azArr"].append(
+            np.rad2deg(reco.fDirectionAzimuth_Rad))
+        this_event_group["altArr"].append(
+            np.rad2deg(reco.fDirectionElevation_Rad))
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
 
@@ -154,7 +161,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     # Calculate average azimuth angle from average vector on a circle
     # https://en.wikipedia.org/wiki/Mean_of_circular_quantities
     avAz_rad = np.deg2rad(avAz)
-    avAz = np.rad2deg(np.arctan2(np.sum(np.sin(avAz_rad)), np.sum(np.cos(avAz_rad))))
+    avAz = np.rad2deg(np.arctan2(
+        np.sum(np.sin(avAz_rad)), np.sum(np.cos(avAz_rad))))
     avAz = avAz if avAz > 0 else avAz + 360
 
     avRA = np.rad2deg(np.mean(avRA))
@@ -165,7 +173,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     for k in cuts:
         tc = getTimeCut(k.fCutsFileText)
 
-    goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))
+    goodTimeStart, goodTimeStop = getGTArray(
+        startTime_s, endTime_s, mergeTimeCut(tc))
     real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
 
     # Construct an array to hold the event dict(s) to be returned:
@@ -192,9 +201,11 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             evt_dict["MSL"] = arr_dict["mslArr"]
         # Filling Header info
         evt_dict["OBS_ID"] = runHeader.getRunNumber()
-        evt_dict["DATE-OBS"] = Time(startTime.getString(), format="iso", scale="utc").to_value("fits")
+        evt_dict["DATE-OBS"] = Time(startTime.getString(),
+                                    format="iso", scale="utc").to_value("fits")
         evt_dict["TIME-OBS"] = startTime.getString().split()[1]
-        evt_dict["DATE-END"] = Time(endTime.getString(), format="iso", scale="utc").to_value("fits")
+        evt_dict["DATE-END"] = Time(endTime.getString(),
+                                    format="iso", scale="utc").to_value("fits")
         evt_dict["TIME-END"] = endTime.getString().split()[1]
         evt_dict["DATE-AVG"] = time_avg.to_value("fits")
         evt_dict["TSTART"] = startTime_s
