@@ -25,5 +25,6 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 
 SHELL ["/bin/bash", "-c"]
 
+RUN mkdir /data/
 RUN source /root/.bashrc && \
     conda init bash
