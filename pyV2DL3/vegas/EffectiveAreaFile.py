@@ -80,7 +80,8 @@ class EffectiveAreaFile(object):
             logger.info("No offset axis available from file. Use 0.5 deg as default.")
             index_dict["AbsoluteOffset"] = []
             for _ in range(len(index_dict["Index"])):
-                index_dict["AbsoluteOffset"].append(0.5)
+                index_dict["AbsoluteOffset"].append(0)
+                index_dict["AbsoluteOffset"].append(10)
 
         # Validate Completeness
         axis_dict = {}
