@@ -18,7 +18,46 @@ def graph_to_array_x(graph):
     return list(graph.GetX())
 
 
-def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
+"""
+Find closest two values for az, ze and noise axes
+"""
+
+
+def get_axes_edges(az, az_index, ze, ze_index, noise, noise_index):
+    # Az
+    for low, high in zip(az_index[:-1], az_index[1:]):
+        if (az >= low) and (az < high):
+            az_low = low
+            az_high = high
+            break
+    if az > az_index[-1]:
+        az_low = az_index[-1]
+        az_high = az_index[0] + 360
+    # Ze
+    ze_low = -1
+    ze_high = -1
+    for low, high in zip(ze_index[:-1], ze_index[1:]):
+        if (ze >= low) and (ze < high):
+            ze_low = low
+            ze_high = high
+            break
+    if (ze_low < 0) or (ze_high < 0):
+        raise Exception("Ze out of range")
+    # Noise
+    noise_low = -1
+    noise_high = -1
+    for low, high in zip(noise_index[:-1], noise_index[1:]):
+        if (noise >= low) and (noise < high):
+            noise_low = low
+            noise_high = high
+            break
+    if (noise_low < 0) or (noise_high < 0):
+        raise Exception("Noise out of range")
+
+    return az_low, az_high, ze_low, ze_high, noise_low, noise_high
+
+
+def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=False):
     loaded_offset = []
     ea_data_dict = {}
     ea = []
@@ -36,7 +75,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
             effectiveAreaParameters
         )
         ea_dl3 = None
-        if pointlike:
+        if pointlike or psf_king:
             ea_dl3 = manager.getEffectiveAreaCurve(effectiveAreaParameters)
             eb_dl3 = manager.getEnergyBias2D(effectiveAreaParameters)
         else:
@@ -55,7 +94,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
 
         bLow = e[1][:-1]
         bHigh = e[1][1:]
-        if pointlike:
+        if pointlike or psf_king:
             bLow = np.power(10, [e[1][:-1]])[0]
             bHigh = np.power(10, [e[1][1:]])[0]
 
@@ -90,7 +129,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
         ea_energy_high = eHigh
 
         # Get ABias
-        if not pointlike:
+        if not pointlike and not psf_king:
             a, e = hist2array(
                 manager.getAngularBias_DL3(effectiveAreaParameters), return_edges=True
             )
@@ -143,7 +182,8 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
     ebias_data_dict["MigrationHigh"] = ebias_migration_high
     ebias_data_dict["Data"] = ebias
 
-    if not pointlike:
+    # PSF king fills abias dict via the king parameters (`get_psf_king()`)
+    if not pointlike and not psf_king:
         abias = np.array(abias)
         abias_data_dict["ELow"] = abias_energy_low
         abias_data_dict["EHigh"] = abias_energy_high
@@ -156,44 +196,14 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike):
     return ea_data_dict, ebias_data_dict, abias_data_dict
 
 
-def getIRF(az, ze, noise, event_class, pointlike):
+def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     axis_dict = event_class.axis_dict
     manager = event_class.manager
-    # Find closest two values for az, ze and noise axis
-    # Az
-    az_index = axis_dict["Azimuth"]
 
-    for low, high in zip(az_index[:-1], az_index[1:]):
-        if (az >= low) and (az < high):
-            az_low = low
-            az_high = high
-            break
-    if az > az_index[-1]:
-        az_low = az_index[-1]
-        az_high = az_index[0] + 360
-    # Ze
-    ze_index = axis_dict["Zenith"]
-    ze_low = -1
-    ze_high = -1
-    for low, high in zip(ze_index[:-1], ze_index[1:]):
-        if (ze >= low) and (ze < high):
-            ze_low = low
-            ze_high = high
-            break
-    if (ze_low < 0) or (ze_high < 0):
-        raise Exception(" Ze out of range")
-    # Noise
-    noise_index = axis_dict["Noise"]
-    noise_low = -1
-    noise_high = -1
-    for low, high in zip(noise_index[:-1], noise_index[1:]):
-        if (noise >= low) and (noise < high):
-            noise_low = low
-            noise_high = high
-            break
-    if (noise_low < 0) or (noise_high < 0):
-        raise Exception("Noise out of range")
-    # Done finding index values use for interpolation
+    # Find closest two values for az, ze and noise axis
+    az_low, az_high, ze_low, ze_high, noise_low, noise_high = get_axes_edges(
+        az, axis_dict["Azimuth"], ze, axis_dict["Zenith"], noise, axis_dict["Noise"]
+    )
 
     irf_data = []
     offset_index = axis_dict["AbsoluteOffset"]
@@ -209,6 +219,7 @@ def getIRF(az, ze, noise, event_class, pointlike):
                     ze_val,
                     noise_val,
                     pointlike,
+                    psf_king=psf_king_params is not None
                 )
                 irf_dict["EA_Dict"] = ea_dict
                 irf_dict["EBias_Dict"] = ebias_dict
@@ -314,7 +325,29 @@ def getIRF(az, ze, noise, event_class, pointlike):
     )
     # ABias
     abias_final_data = None
-    if not pointlike:
+    if psf_king_params is not None:
+        abias_king_dict = get_king_psf_params(az, ze, noise, event_class, psf_king_params)
+
+        elow = abias_king_dict['ELow']
+        ehigh = abias_king_dict['EHigh']
+        thetalow = abias_king_dict['ThetaLow']
+        thetahigh = abias_king_dict['ThetaHigh']
+        psf_gamma = abias_king_dict['Gamma']
+        psf_sigma = abias_king_dict['Sigma']
+
+        abias_final_data = np.array(
+            [(elow, ehigh, thetalow, thetahigh, psf_gamma, psf_sigma)],
+            dtype=[
+                ('ENERG_LO', '>f4', np.shape(elow)),
+                ('ENERG_HI', '>f4', np.shape(ehigh)),
+                ('THETA_LO', '>f4', np.shape(thetalow)),
+                ('THETA_HI', '>f4', np.shape(thetahigh)),
+                ('GAMMA', '>f4', np.shape(psf_gamma)),
+                ('SIGMA', '>f4', np.shape(psf_sigma))
+            ]
+        )
+
+    elif not pointlike:
         for irf in irf_data:
             abias_data_peek = irf["ABias_Dict"]["Data"]
 
@@ -373,3 +406,120 @@ def getIRF(az, ze, noise, event_class, pointlike):
         )
 
     return ea_final_data, ebias_final_data, abias_final_data
+
+
+"""
+Find closest PSF value for each axis from the provided indexes
+"""
+
+
+def get_psf_axes_values(az, az_index, ze, ze_index, noise, noise_index):
+    # Az
+    az_low = az_index[0]
+    az_high = az_index[-1]
+    for low, high in zip(az_index[:-1], az_index[1:]):
+        if (az >= low) and (az < high):
+            az_low = low
+            az_high = high
+            break
+    if abs(az - az_low) > abs(az_high - az):
+        az_psf = az_high
+    else:
+        az_psf = az_low
+
+    # Ze
+    ze_low = ze_index[0]
+    ze_high = ze_index[-1]
+    for low, high in zip(ze_index[:-1], ze_index[1:]):
+        if (ze >= low) and (ze < high):
+            ze_low = low
+            ze_high = high
+            break
+    if abs(ze - ze_low) > abs(ze_high - ze):
+        zen_psf = ze_high
+    else:
+        zen_psf = ze_low
+
+    # Noise
+    noise_low = noise_index[0]
+    noise_high = noise_index[-1]
+    for low, high in zip(noise_index[:-1], noise_index[1:]):
+        if (noise >= low) and (noise < high):
+            noise_low = low
+            noise_high = high
+            break
+    if abs(noise - noise_low) > abs(noise_high - noise):
+        noise_psf = noise_high
+    else:
+        noise_psf = noise_low
+
+    return az_psf, zen_psf, noise_psf
+
+
+"""
+Fill PSF table from King PSF parameters
+"""
+
+
+def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
+    msw_lower = event_class.msw_lower
+    msw_upper = event_class.msw_upper
+    if msw_lower == float('-inf') or msw_upper == float('inf'):
+        raise Exception(
+            "--psf_king currently requires MSW cuts to be defined in your EA file. ",
+            "King parameters are defined for particular MSW ranges")
+
+    psf_king_index = psf_king_params["index"]
+    az_psf, zen_psf, noise_psf = get_psf_axes_values(
+        az, psf_king_index["Azimuth"],
+        ze, psf_king_index["Zenith"],
+        noise, psf_king_index["Noise"]
+    )
+
+    # Init data structs
+    abias_king_dict = {}
+    full_sigma = []
+    full_lambda = []
+    offset_arrs = {}
+    offset_index = psf_king_index["AbsoluteOffset"]
+    for offset in offset_index:
+        offset_arrs[str(offset)] = []
+
+    # Search the king params for a line to match our arguments
+    for param_values in psf_king_params["values"]:
+        # `if` statements are lazily evaluated in Python
+        if (param_values[0] == zen_psf
+                and param_values[2] == noise_psf
+                and param_values[3] == az_psf
+                and param_values[4] == msw_lower
+                and param_values[5] == msw_upper):
+            # Add the line to its corresponding offset array in offset_arrs
+            for offset in offset_index:
+                if param_values[1] == offset:
+                    offset_arrs[str(offset)].append(param_values)
+
+    for key in offset_arrs:
+        offset_arr = np.array(offset_arrs[key])
+        if len(offset_arr) == 0:
+            raise Exception("Could not find any matching values in the PSF king parameters file")
+        # Build sigma and lambda
+        # Offset_arrs is sorted ascending because offset_index was sorted ascending
+        full_sigma.append(offset_arr[:, 8])
+        full_lambda.append(offset_arr[:, 10])
+
+    # Just need one offset array to sample energy bin values
+    first_offset_arr = np.array(offset_arrs[str(offset_index[0])])
+    energy_low = first_offset_arr[:, 6]
+    energy_high = first_offset_arr[:, 7]
+    energy_low_bins = np.power(10, energy_low)
+    energy_high_bins = np.power(10, energy_high)
+
+    # Assign loaded values for return
+    abias_king_dict['ELow'] = np.array(energy_low_bins)
+    abias_king_dict['EHigh'] = np.array(energy_high_bins)
+    abias_king_dict['ThetaLow'] = np.array(offset_index)
+    abias_king_dict['ThetaHigh'] = np.array(offset_index)
+    abias_king_dict['Gamma'] = np.array(full_lambda)
+    abias_king_dict['Sigma'] = np.array(full_sigma)
+
+    return abias_king_dict

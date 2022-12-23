@@ -4,23 +4,6 @@ import os
 import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
-from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
-
-
-def runlist_to_file_pair(rl_dict):
-    eas = rl_dict["EA"]
-    st5s = rl_dict["RUNLIST"]
-    file_pair = []
-    for k in st5s.keys():
-        ea_files = []
-        for ea in eas[k]:
-            ea_files.append(EffectiveAreaFile(ea))
-        if len(ea_files) == 0:
-            raise Exception("No EA filenames defined for runlist tag: " + k)
-        for f in st5s[k]:
-            file_pair.append((f, ea_files))
-
-    return file_pair
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -39,12 +22,19 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--runlist", "-l", nargs=1, type=click.Path(exists=True), help="Stage6 runlist"
 )
 @click.option(
-    '--event_class_mode',
-    '-ec',
+    "--event_class_mode",
+    "-ec",
     is_flag=True,
-    help="Use EA(s) of the same runlist ID to define event class(es) for that runlist ID. "
-         + "Event classes sort events to separate fits files based on EA cuts parameters. "
-         + "Uses only MSW intervals for now. See EffectiveAreaFile.py to extend."
+    help="Use EA file(s) of the same runlist ID to define event class(es) for that runlist ID. "
+         + "Event classes sort events to separate fits files based on EA file cuts parameters. "
+         + "See README_vegas.md for more information."
+)
+@click.option(
+    "--psf_king",
+    "-k",
+    nargs=1,
+    type=click.Path(exists=True),
+    help="Provide a file of King PSF parameter values. See README_vegas.md for more information"
 )
 @click.option(
     "--reconstruction_type",
@@ -100,6 +90,7 @@ def cli(
     file_pair,
     runlist,
     event_class_mode,
+    psf_king,
     reconstruction_type,
     no_fov_cut,
     gen_index_file,
@@ -147,6 +138,12 @@ def cli(
             click.secho("Event class mode requires runlist", fg="yellow")
             raise click.Abort()
 
+    if psf_king is not None and not full_enclosure:
+        click.echo(cli.get_help(click.Context(cli)))
+        click.secho(
+            "PSF king function should be used for full-enclosure analysis", fg="yellow")
+        raise click.Abort()
+
     if debug:
         logging.basicConfig(
             format="%(levelname)s:v2dl3: %(message)s", level=logging.DEBUG
@@ -170,17 +167,24 @@ def cli(
         full_enclosure = False
     irfs_to_store = {"full-enclosure": full_enclosure, "point-like": point_like}
 
+    # These will be passed to VegasDataSource
+    datasource_kwargs = {
+        "bypass_fov_cut": no_fov_cut,
+        "event_class_mode": event_class_mode,
+        "reco_type": reconstruction_type,
+        "save_msw_msl": save_msw_msl,
+    }
+
+    if psf_king is not None:
+        from pyV2DL3.vegas.util import load_psf_king_parameters
+        psf_king_params = load_psf_king_parameters(psf_king)
+        datasource_kwargs["psf_king_params"] = psf_king_params
+        irfs_to_store["psf-king"] = True
+
     # File pair mode
     if file_pair is not None:
-        st5_str, ea_files = file_pair
-        datasource = loadROOTFiles(st5_str, None, "VEGAS",
-                                   bypass_fov_cut=no_fov_cut,
-                                   ea_files=ea_files,
-                                   event_class_mode=event_class_mode,
-                                   reco_type=reconstruction_type,
-                                   save_msw_msl=save_msw_msl,
-                                   )
-
+        st5_str, ea_file = file_pair
+        datasource = loadROOTFiles(st5_str, ea_file, "VEGAS", **datasource_kwargs)
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
             datasource.fill_data()
@@ -194,50 +198,25 @@ def cli(
         hdulist.writeto(output, overwrite=True)
     # Runlist mode
     else:
-        from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
-        from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
-        from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
-        from pyV2DL3.vegas.parseSt6RunList import validateRunlist
-
-        with open(runlist) as f:
-            lines = f.readlines()
-        try:
-            rl_dict = parseRunlistStrs(lines)
-        except RunlistParsingError as e:
-            click.secho(str(e), fg="red")
-            raise click.Abort()
-        try:
-            validateRunlist(rl_dict, event_class_mode=event_class_mode)
-        except RunlistValidationError as e:
-            click.secho(str(e), fg="red")
-            raise click.Abort()
-        if not os.path.exists(output):
-            os.makedirs(output)
-        elif os.path.isfile(output):
-            click.secho(
-                f"{output} already exists as a file. "
-                "<output> needs to be a directory for runlist mode.",
-                fg="yellow",
-            )
-            raise click.Abort()
-
-        file_pairs = runlist_to_file_pair(rl_dict)
+        file_pairs = runlist_to_file_pairs(runlist, event_class_mode, output)
         flist = []
+        failed_list = {}
         for st5_str, ea_files in file_pairs:
             logging.info(f"Processing file: {st5_str}")
             logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
             fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            datasource = loadROOTFiles(st5_str, None, "VEGAS",
-                                       bypass_fov_cut=no_fov_cut,
-                                       ea_files=ea_files,
-                                       event_class_mode=event_class_mode,
-                                       reco_type=reconstruction_type,
-                                       save_msw_msl=save_msw_msl,
-                                       )
-
+            datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
             datasource.set_irfs_to_store(irfs_to_store)
             with cpp_print_context(verbose=verbose):
-                datasource.fill_data()
+                try:
+                    datasource.fill_data()
+                except Exception as e:
+                    logging.info("Exception encountered in " + st5_str + ":")
+                    logging.info(e)
+                    # We don't want one run's problem to stop the entire batch
+                    logging.info("Skipping " + st5_str)
+                    failed_list[st5_str] = e
+                    continue
 
             # Prepare output paths
             output_path = os.path.join(output, fname_base)
@@ -261,14 +240,20 @@ def cli(
                 hdulist.writeto(output_path, overwrite=True)
                 flist.append(output_path)
 
-        if gen_index_file:
+        if gen_index_file and len(flist) > 0:
             gen_index_files(flist, output, eclass_count=num_event_groups)
+
+        logging.info("Processing complete.")
+        if len(failed_list) > 0:
+            logging.info("V2DL3 was unable to process the following files:")
+            for key in failed_list:
+                logging.info(key + ": " + str(failed_list[key]))
 
 
 """
 Generates the index files for a list of files.
 
-Arguments:
+Parameters:
     flist         --  List of .fits filepaths
     output        --  Destination to write the generated index files.
     eclass_count  --  Number of event classes for this batch
@@ -301,7 +286,7 @@ def gen_index_files(flist, output, eclass_count=1):
 Sorts output files to subdirectories and appends "_ec#" to their filename
 according to event class.
 
-Arguments:
+Parameters:
     output       --  Output directory
     fname_base   --  Name of the fits file (without '.fits')
     eclass_idx   --  The event class # that this file belongs to
@@ -324,6 +309,61 @@ def make_eclass_path(output, fname_base, eclass_idx):
         eclass_fname = fname_base + "_ec" + str(eclass_idx)
 
     return os.path.join(output_path, eclass_fname)
+
+
+"""
+Creates `file_pair` tuples of runs and effective area files.
+
+Parameters:
+    rl_dict  --  runlist dict made by parseRunlistStrs()
+
+Returns:
+    List of tuples (stage5 filename, EffectiveAreaFile)
+"""
+
+
+def runlist_to_file_pairs(runlist, event_class_mode, output):
+    from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
+    from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
+    from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
+    from pyV2DL3.vegas.parseSt6RunList import validateRunlist
+
+    with open(runlist) as f:
+        lines = f.readlines()
+    try:
+        rl_dict = parseRunlistStrs(lines)
+    except RunlistParsingError as e:
+        click.secho(str(e), fg="red")
+        raise click.Abort()
+    try:
+        validateRunlist(rl_dict, event_class_mode=event_class_mode)
+    except RunlistValidationError as e:
+        click.secho(str(e), fg="red")
+        raise click.Abort()
+    if not os.path.exists(output):
+        os.makedirs(output)
+    elif os.path.isfile(output):
+        click.secho(
+            f"{output} already exists as a file. "
+            "<output> needs to be a directory for runlist mode.",
+            fg="yellow",
+        )
+        raise click.Abort()
+
+    # This object imports ROOT, so it should imported after click's CLI is allowed to run
+    from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
+
+    eas = rl_dict["EA"]
+    st5s = rl_dict["RUNLIST"]
+
+    for runlist_id in st5s.keys():
+        if len(eas[runlist_id]) < 1:
+            raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
+
+        ea_files = [EffectiveAreaFile(ea) for ea in eas[runlist_id]]
+        file_pairs = [(st5_file, ea_files) for st5_file in st5s[runlist_id]]
+
+    return file_pairs
 
 
 if __name__ == "__main__":

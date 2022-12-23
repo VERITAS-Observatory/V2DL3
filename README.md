@@ -44,6 +44,8 @@ To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-doc
 
 Run `v2dl3-vegas --help` to see all options.
 
+See *README_vegas.md* for more information on newer v2dl3-vegas features such as ITM reconstruction, full-enclosure, and event classes.
+
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
 Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
 
