@@ -41,6 +41,10 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
+    time_avg = (Time(startTime.getString(), format="iso", scale="utc")) + \
+        (Time(endTime.getString(), format="iso", scale="utc") - Time(startTime.getString(), format="iso", scale="utc")
+         ) / 2.
+
     # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
     num_event_groups = len(effective_area_files)
@@ -188,10 +192,11 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             evt_dict["MSL"] = arr_dict["mslArr"]
         # Filling Header info
         evt_dict["OBS_ID"] = runHeader.getRunNumber()
-        evt_dict["DATE-OBS"] = startTime.getString().split()[0]
+        evt_dict["DATE-OBS"] = Time(startTime.getString(), format="iso", scale="utc").to_value("fits")
         evt_dict["TIME-OBS"] = startTime.getString().split()[1]
-        evt_dict["DATE-END"] = endTime.getString().split()[0]
+        evt_dict["DATE-END"] = Time(endTime.getString(), format="iso", scale="utc").to_value("fits")
         evt_dict["TIME-END"] = endTime.getString().split()[1]
+        evt_dict["DATE-AVG"] = time_avg.to_value("fits")
         evt_dict["TSTART"] = startTime_s
         evt_dict["TSTOP"] = endTime_s
         evt_dict["ONTIME"] = endTime_s - startTime_s
