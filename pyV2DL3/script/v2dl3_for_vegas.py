@@ -356,12 +356,13 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
 
+    file_pairs = []
     for runlist_id in st5s.keys():
         if len(eas[runlist_id]) < 1:
             raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
 
         ea_files = [EffectiveAreaFile(ea) for ea in eas[runlist_id]]
-        file_pairs = [(st5_file, ea_files) for st5_file in st5s[runlist_id]]
+        file_pairs.extend([(st5_file, ea_files) for st5_file in st5s[runlist_id]])
 
     return file_pairs
 
