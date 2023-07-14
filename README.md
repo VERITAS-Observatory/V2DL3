@@ -26,6 +26,13 @@ Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/u
 ```
 conda env create -f environment-vegas.yml
 ```
+Sometimes conda fails, so as an alternative, install and use mamba as a direct replacement to the conda call during the installation.
+
+```
+conda install -c conda-forge mamba
+mamba env create -f environment-vegas.yml
+```
+
 The environment ```v2dl3-vegas``` will be created and can be activated with:
 
 ```
