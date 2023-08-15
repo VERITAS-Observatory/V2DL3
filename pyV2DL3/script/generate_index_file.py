@@ -1,3 +1,17 @@
+"""
+Generate index files required for the analysis with science tools
+like gammapy or ctools.
+
+The index contain each contain the following information:
+
+Observation index table describing the observation (mainly the pointing
+direction and observation start and stop time.
+
+The HDU index table contains the information file locations and directories
+of each DL3 file.
+
+"""
+
 import logging
 import os
 
@@ -82,8 +96,14 @@ def cli(
     logging.debug("Start by searching all DL3 files in:\n{}".format(folder_location))
 
     __fits_files = [
-        _file[:-1] for _file in list(os.popen(f"ls {folder_location}/*.fits*"))
+        _file[:-1] for _file in list(os.popen(f"ls {folder_location}/[0-9]*.fits*"))
     ]
+    print(len(__fits_files))
+    if len(__fits_files) == 0:
+        logging.info("No FITS files found, trying Eventdisplay-style DL3 archive folder.")
+        __fits_files = [
+            _file[:-1] for _file in list(os.popen(f"ls {folder_location}/[0-9]*/[0-9]*.fits*"))
+        ]
     fits_files = [
         f
         for f in __fits_files
