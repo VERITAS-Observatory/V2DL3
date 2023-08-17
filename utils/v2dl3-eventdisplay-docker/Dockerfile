@@ -9,8 +9,8 @@ RUN eval "$(micromamba shell hook --shell bash)" && \
 
 RUN cd V2DL3 && \
     micromamba install -y -n base -f environment-eventdisplay.yml && \
-    micromamba clean --all --yes
-ENV PYTHONPATH=$PYTHONPATH:"V2DL3/"
+    micromamba clean --all --yes && \
+    pip install -e .
 
 SHELL ["/bin/bash", "-c"]
 

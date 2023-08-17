@@ -22,7 +22,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python --version
           pip install -U build
           python -m build
 
