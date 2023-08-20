@@ -69,10 +69,11 @@ def __fillEVENTS__(edFileIO, select=None):
         # double precision. Max 24*60*60 seconds
         time_of_day = DL3EventTree["timeOfDay"]
         if time_of_day.max() > 24 * 60 * 60:
-            raise ValueError(
+            logging.error(
                 "Max value in time_of_day  \
                               array exceeds length of a day"
             )
+            raise ValueError
         # mjd time in full days since reference time + event time
         timeArr = seconds_from_reference + time_of_day
 
@@ -87,10 +88,10 @@ def __fillEVENTS__(edFileIO, select=None):
                         & (DL3EventTree[key] <= value[1])
                     )
                 else:
-                    raise TypeError(
-                        "select condition required \
-                                     a list or tuple of ranges"
+                    logging.error(
+                        "select condition required a list or tuple of ranges"
                     )
+                    raise TypeError
             logging.info(f"{np.sum(mask)} of {len(mask)} events after selection.")
 
         raArr = DL3EventTree["RA"][mask]
@@ -181,8 +182,9 @@ def __fillEVENTS__(edFileIO, select=None):
             )
             evt_dict["QUALITY"] = getRunQuality(evndisplog_data)
         except KeyError:
-            logging.exception("Eventdisplay logfile not found in anasum root file")
-            logging.exception("Please make sure to use Eventdisplay >= 486")
+            logging.error("Eventdisplay logfile not found in anasum root file")
+            logging.error("Please make sure to use Eventdisplay >= 486")
+            raise
 
         avPedvar = runSummary["pedvarsOn"][0]
 
