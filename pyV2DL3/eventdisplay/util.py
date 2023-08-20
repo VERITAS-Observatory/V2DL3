@@ -11,6 +11,10 @@ class WrongIrf(Exception):
         self.errors = errors
 
 
+class ZeroLengthEventList(Exception):
+    pass
+
+
 def produce_tel_list(tel_config):
     """Convert the list of telescopes into a string for FITS header"""
     tel_list = "".join("T" + str(tel) + "," for tel in tel_config["TelType"])

@@ -12,6 +12,7 @@ from pyV2DL3.constant import VTS_REFERENCE_MJD
 from pyV2DL3.eventdisplay.util import getGTI
 from pyV2DL3.eventdisplay.util import getRunQuality
 from pyV2DL3.eventdisplay.util import produce_tel_list
+from pyV2DL3.eventdisplay.util import ZeroLengthEventList
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,9 @@ def __fillEVENTS__(edFileIO, select=None):
         DL3EventTree = file["run_{}/stereo/DL3EventTree".format(runNumber)].arrays(
             library="np"
         )
+        if len(DL3EventTree["eventNumber"]) == 0:
+            logging.error("Empty event list")
+            raise ZeroLengthEventList
         evNumArr = DL3EventTree["eventNumber"]
 
         # This should already have microsecond resolution if stored with
