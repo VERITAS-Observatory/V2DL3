@@ -15,6 +15,7 @@ hdu_class_type = {
     ("RESPONSE", "EDISP"): ("edisp", "edisp_2d"),
     ("RESPONSE", "PSF"): ("psf", None),
     ("RESPONSE", "BKG"): ("bkg", None),
+    ("RESPONSE", "RAD_MAX"): ("rad_max", "rad_max_2d"),
 }
 
 
@@ -121,6 +122,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "RA_OBJ",
         "DEC_OBJ",
         "DATE-OBS",
+        "DATE-AVG",
         "DATE-END",
         "NSBLEVEL",
     ]
@@ -141,6 +143,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "S20",
         ">f4",
         ">f4",
+        "S20",
         "S20",
         "S20",
         ">f4",

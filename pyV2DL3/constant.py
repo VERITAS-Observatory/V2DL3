@@ -1,6 +1,6 @@
 # Global setting for both VEGAS and Eventdisplay
 
-VERSION = "0.2"
+VERSION = "0.3"
 
 # Feb 1 2005
 VTS_REFERENCE_MJD = 53402.0
@@ -13,6 +13,6 @@ VTS_REFERENCE_HEIGHT = 1277.110044  # m
 # For filling HDU headers
 HDUCLASS = "GADF"
 HDUDOC = "https://gamma-astro-data-formats.readthedocs.io"
-HDUVERS = "0.2"
+HDUVERS = "0.3"
 RADECSYS = "FK5"
 EQUINOX = float(2000)

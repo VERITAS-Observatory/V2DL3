@@ -28,7 +28,7 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
 
     hdu2.header.set("TIMEUNIT", "s", "time unit is seconds since MET start")
     hdu2.header.set("TIMESYS ", "utc", "time scale is UTC")
-    hdu2.header.set("TIMEREF ", "local", "local time reference")
+    hdu2.header.set("TIMEREF ", "topocenter", "location from where the observation was made")
 
     hdu2.header.set(
         "TIMEZERO", 0, "zero time [s]"
