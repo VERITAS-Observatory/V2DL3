@@ -77,7 +77,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
                 logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
                 raise ValueError
         else:
-            logging.error("Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
+            logging.error("Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name))
             raise ValueError
     return par
 
