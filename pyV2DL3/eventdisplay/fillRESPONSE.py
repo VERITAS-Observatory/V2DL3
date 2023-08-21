@@ -310,7 +310,8 @@ def fill_direction_migration(
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
                 np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
-            normed = direction_diff / norm * ((180 / np.pi) ** 2)
+            with np.errstate(invalid='ignore'):
+                normed = direction_diff / norm * ((180 / np.pi) ** 2)
             rpsf_final.append(np.nan_to_num(normed))
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
