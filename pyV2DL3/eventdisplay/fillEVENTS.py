@@ -186,8 +186,6 @@ def __fillEVENTS__(edFileIO, select=None):
             logging.error("Please make sure to use Eventdisplay >= 486")
             raise
 
-        avPedvar = runSummary["pedvarsOn"][0]
-
         try:
             BitArray = file["run_{}".format(runNumber)]["stereo"]["timeMask"][
                 "maskBits"
