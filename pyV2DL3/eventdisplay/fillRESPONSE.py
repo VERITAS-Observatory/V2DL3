@@ -83,9 +83,9 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
         if extrapolation:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
         elif tolerance > 0.0:
-            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance, par_name ):
+            if np.all(irf_stored_par < par) and check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance, par_name ):
                 par = np.max(irf_stored_par)
-            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance, par_name):
+            elif  np.all(irf_stored_par > par) and check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance, par_name):
                 par = np.min(irf_stored_par)
             else:
                 logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
