@@ -83,9 +83,9 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
         if extrapolation:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
         elif tolerance > 0.0:
-            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance, par_name):
+            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance, par_name, True):
                 par = np.max(irf_stored_par)
-            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance, par_name):
+            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance, par_name, False):
                 par = np.min(irf_stored_par)
             else:
                 logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
@@ -96,7 +96,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     return par
 
 
-def check_fuzzy_boundary(par, boundary, tolerance, par_name):
+def check_fuzzy_boundary(par, boundary, tolerance, par_name, max_test=False):
     """" Checks if the parameter value is within the given tolerance.
     tolerance parameter is defined as ratio of absolute difference
     between boundary and par to the boundary.
@@ -107,6 +107,7 @@ def check_fuzzy_boundary(par, boundary, tolerance, par_name):
     boundary: lower or upper boundary value of stored IRF
     tolerance: allowed value of --fuzzy_boundary command line argument
     par_name: parameter name
+    max_test: check for maximum (if True)
 
     Returns
     -------
@@ -118,7 +119,7 @@ def check_fuzzy_boundary(par, boundary, tolerance, par_name):
         return False
 
     if boundary > 0:
-        fuzzy_diff = np.abs(boundary - par) / boundary
+        fuzzy_diff = (par - boundary) / boundary
         if fuzzy_diff < tolerance:
             logging.info(
                 "Coordinate {0} tolerance is {1:0.3f} and is within {2:0.3f}".format(
