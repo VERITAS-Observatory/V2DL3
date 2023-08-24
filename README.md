@@ -116,7 +116,7 @@ The run having their observational parameters (zenith, night sky background) out
 
 - `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the exptrapolation happens even for run parameter values very far from the corresponding IRF axes range.
 
-- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`. 
+- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. Tolerances are given per IRF axes, with allowed axes are `zenith` and `pedvar` This option is preferable over `--force_extrapolation`. Example: `--fuzzy_boundary pedvar 0.10 --fuzzy_boundary zenith 0.05`.
 
 ---
 # Data storage and generating index files
