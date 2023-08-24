@@ -23,6 +23,7 @@ class IrfInterpolator:
         if os.path.isfile(filename):
             self.filename = filename
         else:
+            logging.error(f"IRF file not found {filename}")
             raise FileNotFoundError
 
     def set_irf(self, irf_name, **kwargs):
@@ -34,7 +35,7 @@ class IrfInterpolator:
             self.irf_name = irf_name
             self.__load_irf(**kwargs)
         else:
-            logging.exception(
+            logging.error(
                 "The irf you entered: {} is either wrong or not implemented.".format(
                     irf_name
                 )
@@ -75,7 +76,8 @@ class IrfInterpolator:
                 logging.debug("zenith axis index: {}".format(zenith_axis))
 
         if zenith_axis is None:
-            raise ValueError("zenith axis not found in irf_axes")
+            logging.error("zenith axis not found in irf_axes")
+            raise ValueError
 
         self.irf_data = np.flip(irf_data, axis=zenith_axis)
         self.irf_axes = list(irf_axes.values())
@@ -100,14 +102,16 @@ class IrfInterpolator:
         # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:
-                raise ValueError(
+                loging.error(
                     "IRF interpolation: for azimuth 0, require 4 coordinates "
                     "(azimuth,  pedvar, zenith, offset)"
                 )
+                raise ValueError
         elif len(coordinate) != 3:
-            raise ValueError(
+            logging.error(
                 "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
             )
+            raise ValueError
 
         if self.irf_name in self.implemented_irf_names_2d:
             # In this case, the interpolator needs to interpolate over 2 dimensions:
@@ -120,7 +124,7 @@ class IrfInterpolator:
             interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
             return interpolated_irf, [self.irf_axes[0]]
         else:
-            logging.exception(
+            logging.error(
                 "The irf you entered: {}" " is not available.".format(self.irf_name)
             )
             raise WrongIrf

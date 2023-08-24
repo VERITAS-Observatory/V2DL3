@@ -74,11 +74,11 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
             elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance):
                 par = np.min(irf_stored_par)
             else:
-                raise ValueError("Tolerance not calculated for coordinate {0}".format(par_name))
+                logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
+                raise ValueError
         else:
-            raise ValueError(
-                "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
-            )
+            logging.error("Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name))
+            raise ValueError
     return par
 
 
@@ -112,11 +112,12 @@ def check_fuzzy_boundary(par, boundary, tolerance):
             )
             return True
         else:
-            raise ValueError(
+            logging.error(
                 "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
                     fuzzy_diff, tolerance
                 )
             )
+            raise ValueError
 
     return False
 
@@ -309,7 +310,8 @@ def fill_direction_migration(
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
                 np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
-            normed = direction_diff / norm * ((180 / np.pi) ** 2)
+            with np.errstate(invalid='ignore'):
+                normed = direction_diff / norm * ((180 / np.pi) ** 2)
             rpsf_final.append(np.nan_to_num(normed))
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
