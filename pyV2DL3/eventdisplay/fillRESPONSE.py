@@ -41,6 +41,20 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 
+def get_fuzzy_boundary(par_name, tolerance_tuble):
+    """Return fuzzy boundary value for a given IRF axis (par_name)
+
+    """
+
+    try:
+        for key, value in tolerance_tuble:
+            if key == par_name:
+                return value
+    except TypeError:
+        pass
+
+    return 0.0
+
 def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
        0. checks if command line parameter force_extrapolation is given. If given,
@@ -59,7 +73,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
 
     if kwargs.get("use_click", True):
         clk = click.get_current_context()
-        tolerance = clk.params["fuzzy_boundary"]
+        tolerance = get_fuzzy_boundary(par_name, clk.params["fuzzy_boundary"])
         extrapolation = clk.params["force_extrapolation"]
     else:
         tolerance = kwargs.get("fuzzy_boundary", 0.0)
@@ -69,9 +83,9 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
         if extrapolation:
             logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
         elif tolerance > 0.0:
-            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance):
+            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance, par_name):
                 par = np.max(irf_stored_par)
-            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance):
+            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance, par_name):
                 par = np.min(irf_stored_par)
             else:
                 logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
@@ -82,7 +96,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     return par
 
 
-def check_fuzzy_boundary(par, boundary, tolerance):
+def check_fuzzy_boundary(par, boundary, tolerance, par_name):
     """" Checks if the parameter value is within the given tolerance.
     tolerance parameter is defined as ratio of absolute difference
     between boundary and par to the boundary.
@@ -92,6 +106,7 @@ def check_fuzzy_boundary(par, boundary, tolerance):
     par: parameter of given run, it can be pedvar, zenith or camera offset
     boundary: lower or upper boundary value of stored IRF
     tolerance: allowed value of --fuzzy_boundary command line argument
+    par_name: parameter name
 
     Returns
     -------
@@ -105,16 +120,16 @@ def check_fuzzy_boundary(par, boundary, tolerance):
     if boundary > 0:
         fuzzy_diff = np.abs(boundary - par) / boundary
         if fuzzy_diff < tolerance:
-            logging.warning(
-                "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
-                    fuzzy_diff, tolerance
+            logging.info(
+                "Coordinate {0} tolerance is {1:0.3f} and is within {2:0.3f}".format(
+                    par_name, fuzzy_diff, tolerance
                 )
             )
             return True
         else:
             logging.error(
-                "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
-                    fuzzy_diff, tolerance
+                "Coordinate {0} tolerance is {1:0.3f} and is outside {2:0.3f}".format(
+                    par_name, fuzzy_diff, tolerance
                 )
             )
             raise ValueError

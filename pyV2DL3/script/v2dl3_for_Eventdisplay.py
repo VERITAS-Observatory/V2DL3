@@ -5,6 +5,7 @@ from pyV2DL3.genHDUList import genHDUlist
 from pyV2DL3.genHDUList import loadROOTFiles
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+IRF_AXIS=["zenith", "pedvar"]
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -59,12 +60,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--fuzzy_boundary",
-    nargs=1,
-    type=click.FLOAT,
-    default=0.0,
+    multiple=True,
+    nargs=2,
+    type=(click.Choice(IRF_AXIS), click.FLOAT),
+    default=None,
     help="Parameter outside IRF range but within a given tolerance is interpolated\
 at boundary value. tolerance = ratio of absolute difference between boundary and parameter\
-value to boundary",
+value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair.",
 )
 def cli(
     file_pair,
@@ -109,7 +111,11 @@ def cli(
     anasum_str, ea_str = file_pair
     logging.info(f"Eventdisplay: anasum file {anasum_str}")
     logging.info(f"Effective: area file {ea_str}")
-    logging.info(f"Fuzzy boundary setting: {fuzzy_boundary}, force extrapolation: {force_extrapolation}")
+    logging.info(f"IRF axes force extrapolation: {force_extrapolation}")
+    if fuzzy_boundary is not None:
+        for key, value in fuzzy_boundary:
+            logging.info(f"Fuzzy boundary setting for {key} axis: {value}")
+
     datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
     datasource.fill_data(evt_filter=evt_filter)
