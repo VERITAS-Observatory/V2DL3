@@ -1,4 +1,3 @@
-import logging
 import pytest
 
 from pyV2DL3.eventdisplay.fillRESPONSE import check_fuzzy_boundary

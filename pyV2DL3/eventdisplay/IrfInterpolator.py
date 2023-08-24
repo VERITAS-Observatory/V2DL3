@@ -102,7 +102,7 @@ class IrfInterpolator:
         # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:
-                loging.error(
+                logging.error(
                     "IRF interpolation: for azimuth 0, require 4 coordinates "
                     "(azimuth,  pedvar, zenith, offset)"
                 )
