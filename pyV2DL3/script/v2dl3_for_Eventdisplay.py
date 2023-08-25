@@ -5,7 +5,7 @@ from pyV2DL3.genHDUList import genHDUlist
 from pyV2DL3.genHDUList import loadROOTFiles
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-IRF_AXIS=["zenith", "pedvar"]
+IRF_AXIS = ["zenith", "pedvar"]
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
