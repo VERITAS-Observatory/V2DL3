@@ -1,11 +1,12 @@
-import click
 import logging
-import numpy as np
 import os.path
-from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
-from pyV2DL3.eventdisplay.util import duplicate_dimensions
-from pyV2DL3.eventdisplay.util import WrongIrf
+
+import click
+import numpy as np
 from scipy.interpolate import RegularGridInterpolator
+
+from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
+from pyV2DL3.eventdisplay.util import WrongIrf, duplicate_dimensions
 
 
 class IrfInterpolator:
@@ -90,7 +91,8 @@ class IrfInterpolator:
             extrapolation = kwargs.get("force_extrapolation", False)
 
         if extrapolation:
-            self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
+            self.interpolator = RegularGridInterpolator(
+                self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
         else:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
