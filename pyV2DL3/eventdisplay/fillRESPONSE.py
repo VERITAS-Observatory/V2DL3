@@ -1,6 +1,6 @@
-import click
 import logging
 
+import click
 import numpy as np
 import uproot
 
@@ -100,7 +100,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
 
 
 def check_fuzzy_boundary(par, boundary, tolerance, par_name):
-    """ " Checks if the parameter value is within the given tolerance.
+    """ Checks if the parameter value is within the given tolerance.
     tolerance parameter is defined as ratio of absolute difference
     between boundary and par to the boundary.
 
@@ -306,7 +306,8 @@ def fill_direction_migration(
             rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
 
             rad_width_deg = np.diff(np.power(10, rad_edges))
-            # this step makes sure all arrays have the same dimensions, rad_width_deg and the central rad values are
+            # this step makes sure all arrays have the same dimensions,
+            # rad_width_deg and the central rad values are
             # repeated by the length of the energy axis.
             norm = np.sum(
                 direction_diff
