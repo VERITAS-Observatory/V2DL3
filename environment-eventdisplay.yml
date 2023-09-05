@@ -10,6 +10,8 @@ dependencies:
   - astropy>=4.0
   - click
   - numpy>=1.13
+  - pre-commit
+  - pyflakes
   - pytest
   - python>=3.8
   - pyyaml
