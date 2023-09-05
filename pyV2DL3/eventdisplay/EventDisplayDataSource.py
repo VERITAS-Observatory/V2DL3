@@ -6,6 +6,10 @@ from pyV2DL3.VtsDataSource import VtsDataSource
 
 
 class EventDisplayDataSource(VtsDataSource):
+    """
+    Eventdisplay data source class holding events and IRFs.
+
+    """
     def __init__(self, etv_file, ea_file):
         super(EventDisplayDataSource, self).__init__("EventDisplay", etv_file, ea_file)
         self.__evt_file__ = etv_file
@@ -13,6 +17,7 @@ class EventDisplayDataSource(VtsDataSource):
 
         # Auxiliary storage
         self.__azimuth__ = 0
+        self.__gti__ = None
         self.__zenith__ = 0
         self.__pedvar__ = 0
 
