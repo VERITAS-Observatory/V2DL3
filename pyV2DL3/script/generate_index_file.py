@@ -13,6 +13,7 @@ of each DL3 file.
 """
 
 import logging
+import glob
 import os
 
 import click
@@ -95,15 +96,10 @@ def cli(
 
     logging.debug("Start by searching all DL3 files in:\n{}".format(folder_location))
 
-    __fits_files = [
-        _file[:-1] for _file in list(os.popen(f"ls {folder_location}/[0-9]*.fits*"))
-    ]
-    print(len(__fits_files))
+    __fits_files = glob.glob(f"{folder_location}/[0-9]*.fits*")
     if len(__fits_files) == 0:
         logging.info("No FITS files found, trying Eventdisplay-style DL3 archive folder.")
-        __fits_files = [
-            _file[:-1] for _file in list(os.popen(f"ls {folder_location}/[0-9]*/[0-9]*.fits*"))
-        ]
+        __fits_files = glob.glob(f"{folder_location}/[0-9]*/[0-9]*.fits*")
     fits_files = [
         f
         for f in __fits_files
@@ -113,7 +109,7 @@ def cli(
         logging.error("No fits files found")
         return
 
-    logging.info("Found the following fits files:")
+    logging.info(f"Found the following {len(__fits_files)} fits files:")
     for f in fits_files:
         logging.info(" -> {0}".format(f))
 
