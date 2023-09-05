@@ -1,6 +1,6 @@
-import click
 import logging
 
+import click
 import numpy as np
 import uproot
 
@@ -16,12 +16,8 @@ class FullEnclosureOffsetAxisError(Exception):
 
 def find_energy_range(log_energy_tev):
     """Find min and max of energy axis"""
-    energy_low = np.power(
-        10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.0
-    )
-    energy_high = np.power(
-        10, log_energy_tev + (log_energy_tev[1] - log_energy_tev[0]) / 2.0
-    )
+    energy_low = np.power(10, log_energy_tev - (log_energy_tev[1] - log_energy_tev[0]) / 2.0)
+    energy_high = np.power(10, log_energy_tev + (log_energy_tev[1] - log_energy_tev[0]) / 2.0)
     return energy_low, energy_high
 
 
@@ -41,14 +37,27 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
     logging.info(str_woff)
 
 
+def get_fuzzy_boundary(par_name, tolerance_tuble):
+    """Return fuzzy boundary value for a given IRF axis (par_name)"""
+
+    try:
+        for key, value in tolerance_tuble:
+            if key == par_name:
+                return value
+    except TypeError:
+        pass
+
+    return 0.0
+
+
 def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
     """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
-       0. checks if command line parameter force_extrapolation is given. If given,
-          the extrapolation will happen when parameter is outside IRF range. If parameter is
-          within IRF range, it works as normal. Default is False.
-       1. Further checks for fuzzy boundary (parameter close to boundary value).
-          If fuzzy boundary is within a given tolerance then IRF is interpolated for
-          at boundary value. Default is 0.0 tolerance.
+    0. checks if command line parameter force_extrapolation is given. If given,
+       the extrapolation will happen when parameter is outside IRF range. If parameter is
+       within IRF range, it works as normal. Default is False.
+    1. Further checks for fuzzy boundary (parameter close to boundary value).
+       If fuzzy boundary is within a given tolerance then IRF is interpolated for
+       at boundary value. Default is 0.0 tolerance.
     """
 
     logging.info(
@@ -59,7 +68,7 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
 
     if kwargs.get("use_click", True):
         clk = click.get_current_context()
-        tolerance = clk.params["fuzzy_boundary"]
+        tolerance = get_fuzzy_boundary(par_name, clk.params["fuzzy_boundary"])
         extrapolation = clk.params["force_extrapolation"]
     else:
         tolerance = kwargs.get("fuzzy_boundary", 0.0)
@@ -67,23 +76,31 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
 
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
         if extrapolation:
-            logging.warning("IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name))
+            logging.warning(
+                "IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name)
+            )
         elif tolerance > 0.0:
-            if check_fuzzy_boundary(par, np.max(irf_stored_par), tolerance):
+            if np.all(irf_stored_par < par) and check_fuzzy_boundary(
+                par, np.max(irf_stored_par), tolerance, par_name
+            ):
                 par = np.max(irf_stored_par)
-            elif check_fuzzy_boundary(par, np.min(irf_stored_par), tolerance):
+            elif np.all(irf_stored_par > par) and check_fuzzy_boundary(
+                par, np.min(irf_stored_par), tolerance, par_name
+            ):
                 par = np.min(irf_stored_par)
             else:
                 logging.error("Tolerance not calculated for coordinate {0}".format(par_name))
                 raise ValueError
         else:
-            logging.error("Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name))
+            logging.error(
+                "Coordinate not inside IRF {0} range! Try using --fuzzy_boundary".format(par_name)
+            )
             raise ValueError
     return par
 
 
-def check_fuzzy_boundary(par, boundary, tolerance):
-    """" Checks if the parameter value is within the given tolerance.
+def check_fuzzy_boundary(par, boundary, tolerance, par_name):
+    """ Checks if the parameter value is within the given tolerance.
     tolerance parameter is defined as ratio of absolute difference
     between boundary and par to the boundary.
 
@@ -92,6 +109,7 @@ def check_fuzzy_boundary(par, boundary, tolerance):
     par: parameter of given run, it can be pedvar, zenith or camera offset
     boundary: lower or upper boundary value of stored IRF
     tolerance: allowed value of --fuzzy_boundary command line argument
+    par_name: parameter name
 
     Returns
     -------
@@ -103,18 +121,18 @@ def check_fuzzy_boundary(par, boundary, tolerance):
         return False
 
     if boundary > 0:
-        fuzzy_diff = np.abs(boundary - par) / boundary
+        fuzzy_diff = np.abs(par - boundary) / boundary
         if fuzzy_diff < tolerance:
-            logging.warning(
-                "Coordinate tolerance is {0:0.3f} and is within {1:0.3f}".format(
-                    fuzzy_diff, tolerance
+            logging.info(
+                "Coordinate {0} tolerance is {1:0.3f} and is within {2:0.3f}".format(
+                    par_name, fuzzy_diff, tolerance
                 )
             )
             return True
         else:
             logging.error(
-                "Coordinate tolerance is {0:0.3f} and is outside {1:0.3f}".format(
-                    fuzzy_diff, tolerance
+                "Coordinate {0} tolerance is {1:0.3f} and is outside {2:0.3f}".format(
+                    par_name, fuzzy_diff, tolerance
                 )
             )
             raise ValueError
@@ -159,14 +177,7 @@ def duplicate_interpolating_coordinate(camera_offsets, irf_name):
 
 
 def fill_effective_area(
-        irf_name,
-        irf_interpolator,
-        camera_offsets,
-        pedvar,
-        zenith,
-        theta_low,
-        theta_high,
-        **kwargs
+    irf_name, irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
 ):
     """Effective areas"""
 
@@ -199,14 +210,7 @@ def fill_effective_area(
 
 
 def fill_energy_migration(
-        irf_name,
-        irf_interpolator,
-        camera_offsets,
-        pedvar,
-        zenith,
-        theta_low,
-        theta_high,
-        **kwargs
+    irf_name, irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
 ):
     """Energy migration matrix"""
 
@@ -248,7 +252,7 @@ def fill_energy_migration(
 
 
 def fill_direction_migration(
-        irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
+    irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
 ):
     """Direction dispersion (for full-enclosure IRFs)"""
 
@@ -259,7 +263,6 @@ def fill_direction_migration(
     test_psf = False  # use PSF distribution from IRFs by default
 
     for offset in camera_offsets:
-
         # direction diff (rad, energy),
         direction_diff, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
@@ -303,14 +306,20 @@ def fill_direction_migration(
             rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
 
             rad_width_deg = np.diff(np.power(10, rad_edges))
-            # this step makes sure all arrays have the same dimensions, rad_width_deg and the central rad values are
+            # this step makes sure all arrays have the same dimensions,
+            # rad_width_deg and the central rad values are
             # repeated by the length of the energy axis.
-            norm = np.sum(direction_diff * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
-                          / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1), axis=0)
+            norm = np.sum(
+                direction_diff
+                * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
+                / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1),
+                axis=0,
+            )
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
-                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2)
-            with np.errstate(invalid='ignore'):
+                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2
+            )
+            with np.errstate(invalid="ignore"):
                 normed = direction_diff / norm * ((180 / np.pi) ** 2)
             rpsf_final.append(np.nan_to_num(normed))
 
@@ -336,7 +345,7 @@ def fill_direction_migration(
 
 
 def __fill_response__(
-        ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None, **kwargs
+    ed_file_io, effective_area, azimuth, zenith, pedvar, irf_to_store=None, **kwargs
 ):
     if irf_to_store is None:
         irf_to_store = {}
@@ -348,15 +357,9 @@ def __fill_response__(
 
     # Extract camera offsets available from the effective areas file.
     fast_eff_area = uproot.open(effective_area)["fEffAreaH2F"]
-    camera_offsets = np.unique(
-        np.round(fast_eff_area["Woff"].array(library="np"), decimals=2)
-    )
-    zeniths_irf = np.unique(
-        np.round(fast_eff_area["ze"].array(library="np"), decimals=0)
-    )
-    pedvar_irf = np.unique(
-        np.round(fast_eff_area["pedvar"].array(library="np"), decimals=2)
-    )
+    camera_offsets = np.unique(np.round(fast_eff_area["Woff"].array(library="np"), decimals=2))
+    zeniths_irf = np.unique(np.round(fast_eff_area["ze"].array(library="np"), decimals=0))
+    pedvar_irf = np.unique(np.round(fast_eff_area["pedvar"].array(library="np"), decimals=2))
 
     print_logging_info(irf_to_store, camera_offsets, pedvar, zenith)
 
@@ -365,21 +368,13 @@ def __fill_response__(
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
-
         # Effective area (full-enclosure)
         (
             response_dict["EA"],
             response_dict["LO_THRES"],
             response_dict["HI_THRES"],
         ) = fill_effective_area(
-            "eff",
-            irf_interpolator,
-            camera_offsets,
-            pedvar,
-            zenith,
-            theta_low,
-            theta_high,
-            **kwargs
+            "eff", irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
         )
 
         # Get RAD_MAX; cuts don't depend on energy/wobble
@@ -397,11 +392,10 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
-            **kwargs
+            **kwargs,
         )
 
     elif irf_to_store["full-enclosure"]:
-
         # require multiple offsets for full enclosure
         if len(camera_offsets) <= 1:
             logger.error(
@@ -424,7 +418,7 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
-            **kwargs
+            **kwargs,
         )
 
         # Energy dispersion (full-enclosure)
@@ -436,18 +430,12 @@ def __fill_response__(
             zenith,
             theta_low,
             theta_high,
-            **kwargs
+            **kwargs,
         )
 
         # Direction dispersion (for full-enclosure IRFs)
         response_dict["PSF"] = fill_direction_migration(
-            irf_interpolator,
-            camera_offsets,
-            pedvar,
-            zenith,
-            theta_low,
-            theta_high,
-            **kwargs
+            irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
         )
 
     return response_dict
