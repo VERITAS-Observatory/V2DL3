@@ -9,7 +9,7 @@ class VtsDataSource(object):
         self.__ea_file__ = ea_file
 
         self.__evt__ = {}
-        self.__git__ = {}
+        self.__gti__ = {}
         self.__response__ = dict()
         # 'point-like' or 'full-enclosure'
         # Default is point like
