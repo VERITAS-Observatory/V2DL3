@@ -123,10 +123,12 @@ def __get_start_stop_times(file):
     # convert mjd to fits format
     t_start = Time(start_mjd, format="mjd", scale="utc")
     t_stop = Time(stop_mjd, format="mjd", scale="utc")
-    t_avg = Time(start_mjd, format="mjd", scale="utc") + \
-        (
+    t_avg = (
+        Time(start_mjd, format="mjd", scale="utc")
+        + (
             Time(stop_mjd, format="mjd", scale="utc") - Time(start_mjd, format="mjd", scale="utc")
         ) / 2.
+    )
 
     return t_start, t_stop, t_avg
 
@@ -198,10 +200,7 @@ def __read_quality_flag_from_log(file, runNumber):
 
     """
     try:
-        return getRunQuality(file["run_{}/stereo/evndispLog".format(runNumber)].member(
-                "fLines"
-            )
-        )
+        return getRunQuality(file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines"))
     except KeyError:
         logging.error("Eventdisplay logfile not found in anasum root file")
         logging.error("Please make sure to use Eventdisplay >= 486")
