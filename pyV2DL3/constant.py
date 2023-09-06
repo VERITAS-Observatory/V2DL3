@@ -1,4 +1,4 @@
-# Global setting for both VEGAS and Eventdisplay
+# Global setting
 
 VERSION = "0.3"
 

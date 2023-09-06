@@ -2,8 +2,8 @@ import logging
 
 from astropy.io import fits
 
-from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 import pyV2DL3.constant as constant
+from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
 
 def add_existing_column(columns, evt_dict, name, format, unit=None):
@@ -167,7 +167,6 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
         )
     except KeyError:
         logging.debug("Keyword QUALITY not set in the EVENTS header")
-        logging.debug("For EventdisplayAnalysis: use version >=v486")
 
     try:
         hdu1.header.set(
