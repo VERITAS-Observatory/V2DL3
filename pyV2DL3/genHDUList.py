@@ -26,26 +26,24 @@ def genPrimaryHDU():
     return hdu0
 
 
-def loadROOTFiles(data_file, effective_area_file, file_type="VEGAS", **kwargs):
+def loadROOTFiles(data_file, effective_area_file, file_type, **kwargs):
+    """
+    Load event lists, event header, and instrument reponse functions
+    from VEGAS / Eventdisplay ROOT files.
+
+    """
     if effective_area_file is None:
         raise Exception("Running V2DL3 without effective area file(s) is currently unsupported.")
 
     if file_type == "VEGAS":
-        if effective_area_file is None:
-            raise Exception("VegasDataSource uses EffectiveAreaFile for effective areas")
-
         from pyV2DL3.vegas.VegasDataSource import VegasDataSource
         return VegasDataSource(data_file, effective_area_file, **kwargs)
 
-    if file_type != "Eventdisplay":
-        raise Exception("File type not supported: {}".format(file_type))
-
-    if effective_area_file is None:
-        raise Exception("EventDisplay requires an effective area file."
-                        "\nEventDisplay with event classes is unsupported.")
-    else:
+    if file_type == "Eventdisplay":
         from pyV2DL3.eventdisplay.EventDisplayDataSource import EventDisplayDataSource
         return EventDisplayDataSource(data_file, effective_area_file)
+
+    raise Exception("File type not supported: {}".format(file_type))
 
 
 def genHDUlist(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
