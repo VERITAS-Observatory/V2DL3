@@ -47,15 +47,6 @@ def __fillEVENTS__(edFileIO, select=None):
 
         mask = __get_mask(DL3EventTree, select)
 
-        try:
-            # Test if anasum file was created using the all events option.
-            # In this case write out the additional output.
-            IsGamma = DL3EventTree["IsGamma"][mask]
-            bdtScore = DL3EventTree["MVA"][mask]
-            all_events = True
-        except KeyError:
-            all_events = False
-
         # Event List
         evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"]
         evt_dict["TIME"] = __get_time_vector(DL3EventTree, seconds_from_reference)
@@ -65,9 +56,13 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["AZ"] = DL3EventTree["Az"][mask]
         evt_dict["ENERGY"] = DL3EventTree["Energy"][mask]
         evt_dict["EVENT_TYPE"] = DL3EventTree["NImages"][mask]
-        if all_events:
-            evt_dict["GAMMANESS"] = bdtScore
-            evt_dict["IS_GAMMA"] = IsGamma
+        try:
+            # Test if anasum file was created using the all events option.
+            # In this case write out the additional output.
+            evt_dict["GAMMANESS"] = DL3EventTree["MVA"][mask]
+            evt_dict["IS_GAMMA"] = DL3EventTree["IsGamma"][mask]
+        except KeyError:
+            pass
 
         # Header info
         evt_dict["OBS_ID"] = runNumber
@@ -255,11 +250,12 @@ def __get_time_vector(DL3EventTree, seconds_from_reference):
 
 def __get_mask(DL3EventTree, select):
     """
+    Apply a selection to the event list
 
     """
 
     mask = np.ones(len(DL3EventTree["RA"]), bool)
-    if select is not None:
+    if select is not None and len(select) > 0:
         logging.info(select)
         for key, value in select.items():
             if isinstance(value, (list, tuple)):
