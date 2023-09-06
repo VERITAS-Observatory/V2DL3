@@ -9,6 +9,7 @@ channels:
 dependencies:
   - astropy>=4.0
   - click
+  - flake8
   - numpy>=1.13
   - pre-commit
   - pyflakes
