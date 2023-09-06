@@ -32,22 +32,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install conda dependencies
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          source $CONDA/etc/profile.d/conda.sh
-          conda config --set always_yes yes --set changeps1 no
-          conda update -q conda
-          conda env create -n v2dl3Eventdisplay -f environment-eventdisplay.yml
-          conda activate v2dl3Eventdisplay
-          conda info
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: environment-eventdisplay.yml
+          create-args: python=${{ matrix.python-version }}
+          init-shell: bash
 
       - name: flake8
         shell: bash -leo pipefail {0}
         run: |
-          source $CONDA/etc/profile.d/conda.sh
-          conda activate v2dl3Eventdisplay
-          conda install flake8
           flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
                    --show-source --statistics .
           flake8 --count --max-complexity=25 --ignore=E203,W503 \
