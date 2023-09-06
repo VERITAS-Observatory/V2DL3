@@ -1,5 +1,7 @@
 import logging
 
+import yaml
+
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fill_response__
 from pyV2DL3.VtsDataSource import VtsDataSource
@@ -22,14 +24,7 @@ class EventDisplayDataSource(VtsDataSource):
         self.__pedvar__ = 0
 
     def __fill_evt__(self, **kwargs):
-        try:
-            import yaml
-
-            with open(kwargs["evt_filter"], "r") as file:
-                evt_filter = yaml.load(file, Loader=yaml.FullLoader)
-        except (KeyError, TypeError):
-            # evt_filter option not used
-            evt_filter = {}
+        evt_filter = self.__fill_event_filter(kwargs.get("evt_filter", None))
 
         gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
         self.__gti__ = gti
@@ -37,6 +32,19 @@ class EventDisplayDataSource(VtsDataSource):
         self.__azimuth__ = ea_config["azimuth"]
         self.__zenith__ = ea_config["zenith"]
         self.__pedvar__ = ea_config["pedvar"]
+
+    @staticmethod
+    def __fill_event_filter(filter_file):
+        """
+        Read event filter from yaml file
+
+        """
+        try:
+            with open(filter_file, "r") as file:
+                evt_filter = yaml.load(file, Loader=yaml.FullLoader)
+        except (KeyError, TypeError):
+            evt_filter = {}
+        return evt_filter
 
     def __fill_gti__(self, **kwargs):
         pass
