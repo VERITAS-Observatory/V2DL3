@@ -93,7 +93,7 @@ def __fillEVENTS__(edFileIO, select=None):
         evt_dict["QUALITY"] = __read_quality_flag_from_log(file, runNumber)
         gti_tstart_from_reference, gti_tstop_from_reference, evt_dict["ONTIME"] = \
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
-        evt_dict["LIVETIME"] = evt_dict["ONTIME"] * (1 - evt_dict["DEADC"])
+        evt_dict["LIVETIME"] = evt_dict["ONTIME"] * evt_dict["DEADC"]
 
     return (
         {
