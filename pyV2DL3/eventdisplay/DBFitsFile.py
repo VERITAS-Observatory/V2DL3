@@ -1,5 +1,5 @@
 """
-Provide tools to access DB fits files.
+Provide tools to access DB FITS files.
 
 """
 
