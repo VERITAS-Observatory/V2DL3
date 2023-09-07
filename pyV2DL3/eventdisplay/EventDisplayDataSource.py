@@ -26,7 +26,8 @@ class EventDisplayDataSource(VtsDataSource):
     def __fill_evt__(self, **kwargs):
         evt_filter = self.__fill_event_filter(kwargs.get("evt_filter", None))
 
-        gti, ea_config, events = __fillEVENTS__(self.__evt_file__, evt_filter)
+        gti, ea_config, events = __fillEVENTS__(
+            self.__evt_file__, evt_filter, kwargs.get("db_fits_file", None))
         self.__gti__ = gti
         self.__evt__ = events
         self.__azimuth__ = ea_config["azimuth"]
@@ -40,7 +41,7 @@ class EventDisplayDataSource(VtsDataSource):
 
         """
         try:
-            with open(filter_file, "r") as file:
+            with open(filter_file, "r", encoding="utf-8") as file:
                 evt_filter = yaml.load(file, Loader=yaml.FullLoader)
         except (KeyError, TypeError):
             evt_filter = {}
@@ -51,16 +52,13 @@ class EventDisplayDataSource(VtsDataSource):
 
     def __fill_response__(self, **kwargs):
         logging.info(
-            (
                 "Parameters used to query IRFs:"
-                " az={0:.2f} deg,"
-                " ze={1:.2f} deg,"
-                " pedvar={2:.1f}"
-            ).format(
+                " az=%0.2f deg,"
+                " ze=%1.2f deg,"
+                " pedvar=%2.1f",
                 self.__azimuth__,
                 self.__zenith__,
                 self.__pedvar__,
-            )
         )
 
         self.__response__ = __fill_response__(
