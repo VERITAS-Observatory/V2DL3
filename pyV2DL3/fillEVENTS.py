@@ -5,6 +5,8 @@ from astropy.io import fits
 import pyV2DL3.constant as constant
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
+logger = logging.getLogger(__name__)
+
 
 def add_existing_column(columns, evt_dict, name, format, unit=None):
     """
@@ -19,8 +21,6 @@ def add_existing_column(columns, evt_dict, name, format, unit=None):
     format: str
     unit: str or None
 
-    Returns
-    -------
     """
 
     if name in evt_dict:
@@ -30,7 +30,11 @@ def add_existing_column(columns, evt_dict, name, format, unit=None):
 
 
 def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event_class_idx=None):
-    logging.debug("Create EVENT HDU")
+    """
+    Fill event header and data (HDU)
+
+    """
+    logger.debug("Create EVENT HDU")
     evt_dict = datasource.get_evt_data()
 
     if event_class_idx is not None:
@@ -152,6 +156,17 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     if event_class_idx is not None and add_evclass:
         hdu1.header.set("EV_CLASS", event_class_idx, "Event class number")
 
+    fill_non_standard_headers(hdu1, evt_dict, datasource)
+
+    return hdu1
+
+
+def fill_non_standard_headers(hdu1, evt_dict, datasource):
+    """
+    Fill non-standard header entries.
+
+    """
+
     if hasattr(datasource, "__pedvar__"):
         hdu1.header.set(
             "PED_VAR",
@@ -159,22 +174,60 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
             "average pedestal variance",
         )
 
-    try:
-        hdu1.header.set(
-            "QUALITY",
-            evt_dict["QUALITY"],
-            "run quality flag based on vpm data used or not",
-        )
-    except KeyError:
-        logging.debug("Keyword QUALITY not set in the EVENTS header")
+    hdu_keys = non_standard_hdu_keys_and_comments()
 
-    try:
-        hdu1.header.set(
-            "NSBLEVEL",
-            evt_dict["NSBLEVEL"],
-            "nsb level (mean of pedestal variations)",
-        )
-    except KeyError:
-        logging.debug("Keyword NSBLEVEL not set in the EVENTS header")
+    for key, hdu_entry in hdu_keys.items():
+        try:
+            hdu1.header.set(
+                hdu_entry[0],
+                evt_dict[key],
+                hdu_entry[1]
+            )
+        except KeyError:
+            logger.debug("Keyword %s not set in the EVENTS header", hdu_entry[0])
 
-    return hdu1
+
+def non_standard_hdu_keys_and_comments():
+    """
+    Dictionary with evt_dict keys, HDU header keys and comments
+    for non standard entries (mostly related to run information
+    quality and weather)
+
+    """
+
+    return {
+        "QUALITY":  ["QUALITY ", "run quality flag based on vpm data used or not"],
+        "NSBLEVEL": ["NSBLEVEL", "nsb level (mean of pedestal variations)"],
+        "run_type":  ["RUNTYPE ", "run type (e.g. observing, laser)"],
+        "observing_mode": ["OBSMODE ", "observing mode (e.g. wobble, on)"],
+        "run_status": ["RUNSTAT ", "run status (e.g. ended, aborted)"],
+        "weather": ["WEATHER ", "weather conditions (A is best)"],
+        "config_mask": ["CONFIG  ", "telescope configuration mask"],
+        "trigger_config": ["TRIGCFG ", "trigger configuration"],
+        "data_category": ["DATACAT ", "data category (e.g. science, calibration)"],
+        "dqm_status": ["DQMSTAT ", "DQM status (e.g. good, do_no_use)"],
+        "dqm_status_reason": ["DQMREAS ", "DQM status reason"],
+        "dqm_tel_cut_mask": ["DQMMASK", "DQM telescope cut mask"],
+        "vpm_config_mask": ["VPMCFG  ", "VPM configuration mask"],
+        "light_level": ["LIGHTLEV", "light level (from currents)"],
+        "l3_rate_mean": ["L3RATE  ", "mean L3 rate [Hz]"],
+        "l3_rate_std": ["L3RATESD", "std deviation of L3 rate [Hz]"],
+        "nsb_mean": ["CURRMEAN", "mean currents [muA]"],
+        "nsb_std": ["CURRSTD ", "std deviation of currents [muA]"],
+        "nsb_median": ["CURRMED ", "median currents [muA]"],
+        "wind_speed_mean": ["WINDSPE ", "mean wind speed [mph]"],
+        "wind_speed_max": ["WINDMAX ", "maximum wind speed [mph]"],
+        "wind_speed_min": ["WINDMIN ", "minimum wind speed [mph]"],
+        "wind_speed_dir": ["WINDDIR ", "wind direction [deg]"],
+        "air_temperature": ["AIRTEMP ", "air temperature [deg_C]"],
+        "relative_humidity": ["RELHUMID", "relative humidity [pct]"],
+        "fir_mean_0": ["FIRMEAN0", "mean FIR temperature (TEL0) [deg_C]"],
+        "fir_mean_1": ["FIRMEAN1", "mean FIR temperature (TEL1) [deg_C]"],
+        "fir_mean_3": ["FIRMEAN3", "mean FIR temperature (TEL3) [deg_C]"],
+        "fir_std_0": ["FIRSTD0", "std deviation FIR temperature (TEL0) [deg_C]"],
+        "fir_std_1": ["FIRSTD1", "std deviation FIR temperature (TEL1) [deg_C]"],
+        "fir_std_3": ["FIRSTD3", "std deviation FIR temperature (TEL3) [deg_C]"],
+        "fir_mean_corrected_0": ["FIRCORM0", "mean corrected FIR temperature (TEL0) [deg_C]"],
+        "fir_mean_corrected_1": ["FIRCORM1", "mean corrected FIR temperature (TEL1) [deg_C]"],
+        "fir_mean_corrected_3": ["FIRCORM3", "mean corrected FIR temperature (TEL3) [deg_C]"],
+    }
