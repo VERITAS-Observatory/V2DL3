@@ -10,6 +10,7 @@ from pyV2DL3.constant import (
     VTS_REFERENCE_LON,
     VTS_REFERENCE_MJD,
 )
+from pyV2DL3.eventdisplay.DBFitsFile import read_db_fits_file
 from pyV2DL3.eventdisplay.util import (
     ZeroLengthEventList,
     getGTI,
@@ -20,7 +21,7 @@ from pyV2DL3.eventdisplay.util import (
 logger = logging.getLogger(__name__)
 
 
-def __fillEVENTS__(edFileIO, select=None):
+def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     """
     Fill event list and event header from anasum file
 
@@ -65,6 +66,8 @@ def __fillEVENTS__(edFileIO, select=None):
         gti_tstart_from_reference, gti_tstop_from_reference, evt_dict["ONTIME"] = \
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         evt_dict["LIVETIME"] = evt_dict["ONTIME"] * evt_dict["DEADC"]
+
+    evt_dict.update(read_db_fits_file(db_fits_file))
 
     return (
         {
