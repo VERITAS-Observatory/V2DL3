@@ -52,13 +52,12 @@ class EventDisplayDataSource(VtsDataSource):
 
     def __fill_response__(self, **kwargs):
         logging.info(
-                "Parameters used to query IRFs:"
-                " az=%0.2f deg,"
-                " ze=%1.2f deg,"
-                " pedvar=%2.1f",
-                self.__azimuth__,
-                self.__zenith__,
-                self.__pedvar__,
+            "Parameters used to query IRFs: az=%0.2f deg,"
+            " ze=%1.2f deg,"
+            " pedvar=%2.1f",
+            self.__azimuth__,
+            self.__zenith__,
+            self.__pedvar__,
         )
 
         self.__response__ = __fill_response__(

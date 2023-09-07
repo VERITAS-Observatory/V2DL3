@@ -196,9 +196,9 @@ def non_standard_hdu_keys_and_comments():
     """
 
     return {
-        "QUALITY":  ["QUALITY ", "run quality flag based on vpm data used or not"],
+        "QUALITY": ["QUALITY ", "run quality flag based on vpm data used or not"],
         "NSBLEVEL": ["NSBLEVEL", "nsb level (mean of pedestal variations)"],
-        "run_type":  ["RUNTYPE ", "run type (e.g. observing, laser)"],
+        "run_type": ["RUNTYPE ", "run type (e.g. observing, laser)"],
         "observing_mode": ["OBSMODE ", "observing mode (e.g. wobble, on)"],
         "run_status": ["RUNSTAT ", "run status (e.g. ended, aborted)"],
         "weather": ["WEATHER ", "weather conditions (A is best)"],
