@@ -99,8 +99,8 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
     mask = __get_mask(DL3EventTree, select)
 
     evt_dict = {}
-    evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"]
-    evt_dict["TIME"] = __get_time_vector(DL3EventTree, seconds_from_reference)
+    evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
+    evt_dict["TIME"] = __get_time_vector(DL3EventTree["timeOfDay"][mask], seconds_from_reference)
     evt_dict["RA"] = DL3EventTree["RA"][mask]
     evt_dict["DEC"] = DL3EventTree["DEC"][mask]
     evt_dict["ALT"] = DL3EventTree["El"][mask]
@@ -241,7 +241,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
     return gti_tstart_from_reference, gti_tstop_from_reference, ontime_s
 
 
-def __get_time_vector(DL3EventTree, seconds_from_reference):
+def __get_time_vector(time_of_day, seconds_from_reference):
     """
     Time vector in seconds since reference time
 
@@ -250,7 +250,6 @@ def __get_time_vector(DL3EventTree, seconds_from_reference):
 
     """
 
-    time_of_day = DL3EventTree["timeOfDay"]
     if time_of_day.max() > 24 * 60 * 60:
         logging.error(
             "Max value in time_of_day  \
@@ -276,11 +275,13 @@ def __get_mask(DL3EventTree, select):
                     & (DL3EventTree[key] >= value[0])
                     & (DL3EventTree[key] <= value[1])
                 )
+            elif isinstance(value, (int, float)):
+                mask = mask & (DL3EventTree[key] == value)
             else:
                 logging.error(
                     "select condition required a list or tuple of ranges"
                 )
                 raise TypeError
-        logging.info(f"{np.sum(mask)} of {len(mask)} events after selection.")
+        logging.info("%d of %d events after selection.", np.sum(mask), len(mask))
 
     return mask
