@@ -6,6 +6,7 @@ Provide tools to access DB FITS files.
 import logging
 
 import astropy.io.registry
+import numpy as np
 from astropy.table import Table
 
 logger = logging.getLogger(__name__)
@@ -35,4 +36,18 @@ def read_db_fits_file(db_fits_file):
         logger.error("DB FITS file does not contain DQM table: %s", db_fits_file)
         raise
 
+    ensure_nan_instead_masked_arrays(db_dict)
+
     return db_dict
+
+
+def ensure_nan_instead_masked_arrays(db_dict):
+    """
+    Replace masked arrays with NaNs
+    (FITS headers do not allow for NaN values)
+
+    """
+
+    for key, value in db_dict.items():
+        if isinstance(value, np.ma.core.MaskedConstant):
+            db_dict[key] = None
