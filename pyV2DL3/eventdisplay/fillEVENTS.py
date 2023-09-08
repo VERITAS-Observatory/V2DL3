@@ -117,6 +117,8 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
     except KeyError:
         pass
 
+    logger.info("Number of events: %d", len(evt_dict["EVENT_ID"]))
+
     return (
         evt_dict,
         np.max(DL3EventTree["ImgSel"][mask]),
