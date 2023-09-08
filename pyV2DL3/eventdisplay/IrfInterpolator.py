@@ -1,11 +1,12 @@
-import click
 import logging
-import numpy as np
 import os.path
-from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
-from pyV2DL3.eventdisplay.util import duplicate_dimensions
-from pyV2DL3.eventdisplay.util import WrongIrf
+
+import click
+import numpy as np
 from scipy.interpolate import RegularGridInterpolator
+
+from pyV2DL3.eventdisplay.IrfExtractor import extract_irf
+from pyV2DL3.eventdisplay.util import WrongIrf, duplicate_dimensions
 
 
 class IrfInterpolator:
@@ -90,7 +91,8 @@ class IrfInterpolator:
             extrapolation = kwargs.get("force_extrapolation", False)
 
         if extrapolation:
-            self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
+            self.interpolator = RegularGridInterpolator(
+                self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
         else:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
@@ -102,7 +104,7 @@ class IrfInterpolator:
         # The interpolation is slightly different for 1D or 2D IRFs.
         if self.azimuth == 0:
             if len(coordinate) != 4:
-                loging.error(
+                logging.error(
                     "IRF interpolation: for azimuth 0, require 4 coordinates "
                     "(azimuth,  pedvar, zenith, offset)"
                 )
@@ -121,10 +123,12 @@ class IrfInterpolator:
         elif self.irf_name in self.implemented_irf_names_1d:
             # In this case, the interpolator needs to interpolate only
             # over 1 dimension (true energy):
-            interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
+            try:
+                interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
+            except ValueError:
+                logging.error("IRF interpolation failed for axis %s", self.irf_name)
+                raise ValueError
             return interpolated_irf, [self.irf_axes[0]]
         else:
-            logging.error(
-                "The irf you entered: {}" " is not available.".format(self.irf_name)
-            )
+            logging.error("The requested %s" " is not available.", self.irf_name)
             raise WrongIrf
