@@ -1,210 +1,157 @@
-# V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter.
+# V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter
 
-V2DL3 is a tool to convert VERITAS data products to DL3 FITS format, allowing to use e.g. the [Gammapy science tools](https://gammapy.org/) for analysis. 
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://github.com/VERITAS-Observatory/V2DL3/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/138582622.svg)](https://zenodo.org/badge/latestdoi/138582622)
 
-The converter can be used to convert point-like and full-enclosure IRFs. 
+V2DL3 is a tool to convert [VERITAS](https://veritas.sao.arizona.edu/) data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for  the high-level analysis.
+
+DL3 files include event lists, instrument response functions (IRFs) and observation index tables.
+The V2DL3 converter can be used to convert point-like and full-enclosure IRFs.
 The FITS output follows the data formats for gamma-ray astronomy as defined in open [gamma-astro-data-formats](https://github.com/open-gamma-ray-astro/gamma-astro-data-formats) (GADF) repository.
 
-The projects tries to share as many tools as possible between VEGAS and Eventdisplay, especially those used for writing the FITS files.
+The V2DL3 project tries to share as many tools as possible between VEGAS and [Eventdisplay](https://github.com/VERITAS-Observatory/EventDisplay_v4), especially those used for writing the FITS files.
 
-The two main tools required to convert VERITAS data products to DL3 FITS format and use them with gammapy are:
-- converter to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3_for_Eventdisplay.py` for Eventdisplay)
-- tool to generate observation index tables
+Two main steps are required to convert VERITAS data products to DL3 FITS format and use them with gammapy.
+Each of these steps are covered by one of the following tools:
 
-For contributors: please note the section for developers below.
+- converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-for-eventdisplay` for Eventdisplay)
+- `v2dl3-generate-index-file` tool to generate observation index tables
 
----
-# V2DL3 for VEGAS
+## V2DL3 for VEGAS
 
-* VEGAS version >= 2.5.7
-* Requirements are listed in the ```environment-vegas.yml``` file.
-* Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequesite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
+- VEGAS version >= 2.5.7
+- Requirements are listed in the ```environment-vegas.yml``` file.
+- Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequisite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
 
-## Installation
+### Installation
 
-Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
-```
+Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependencies:
+
+```bash
 conda env create -f environment-vegas.yml
 ```
+
 The environment ```v2dl3-vegas``` will be created and can be activated with:
 
-```
+```bash
 conda activate v2dl3-vegas
 ```
 
 Install now pyV2DL3:
-```
+
+```bash
 pip install .
 ```
 
 ### Docker recipe
+
 To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-docker/README.md*
 
-## The commandline tool v2dl3 with VEGAS
+### The command line tool v2dl3 with VEGAS
 
 Run `v2dl3-vegas --help` to see all options.
 
 See *README_vegas.md* for more information on newer v2dl3-vegas features such as ITM reconstruction, full-enclosure, and event classes.
 
 Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
-Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder. 
+Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder.
 
-### One file at a time
+#### One file at a time
 
-To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the ouput DL3 file.
+To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the output DL3 file.
 
-```
+```bash
 v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
 ```
 
-### Generate from a VEGAS stage6 runlist
+#### Generate from a VEGAS stage6 run list
 
-You can also provide a stage6 runlist to the command line tool. In this case the last argument is the folder where all the output DL3 files will be saved. Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
+You can also provide a stage6 run list to the command line tool. In this case the last argument is the folder where all the output DL3 files will be saved. Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
-```
+```bash
 v2dl3-vegas -l ./runlist.txt  ./test
 ```
 
-Runlists may be generated via a utility script.
+Run lists may be generated via a utility script.
 
-```
+```bash
 python utils/vegas_runlister.py --help
 ```
 
----
+## V2DL3 for EventDisplay
 
-# V2DL3 for EventDisplay
+Requires data products generated with Eventdisplay version >= 490.
 
-- use Eventdisplay version >= 487
-- recipes for Docker containers are available from the [V2DL3-Docker-recipes](https://github.com/Eventdisplay/V2DL3-Docker-recipes) repository.
+### Developer Installation
 
-## Installation
+Install dependencies and activate the environment using the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html):
 
-Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependenies:
-```
+```bash
 conda env create -f environment-eventdisplay.yml
-```
-
-Activate the environment ```v2dl3Eventdisplay``` and set `PYTHONPATH`:
-
-```
 conda activate v2dl3Eventdisplay
 export PYTHONPATH=$PYTHONPATH:"${PWD}"
 ```
 
-Note that no pip is required for using the v2dl3 tool with Eventdisplay.
+Note that no pip is required for using the v2dl3 tool with Eventdisplay
+(this will change in future).
 
-## Usage of commandline tool v2dl3
+### Converting Eventdisplay data products to DL3
 
 Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
 
 Convert an anasum output file to DL3.
 The following input is required:
+
 - anasum file for a given run
 - effective area file for the corresponding cut applied during the preparation of the anasum file (DL3 version)
 
 Example for point-like analysis:
-```
+
+```bash
 python pyV2DL3/script/v2dl3_for_Eventdisplay.py -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
 ```
+
 Example for full-enclosure analysis:
-```
+
+```bash
 python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
 ```
 
-The run having their observational parameters (zenith, night sky background) outside but close to corresponding IRF axes range can be run with the one of the following two commandline parameters: 
+The run having their observational parameters (e.g., zenith, night sky background) outside but close to corresponding IRF axes range can be converted with the one of the following two command line parameters:
 
-- `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the exptrapolation happens even for run parameter values very far from the corresponding IRF axes range.
+- `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
 
-- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. Tolerances are given per IRF axes, with allowed axes are `zenith` and `pedvar` This option is preferable over `--force_extrapolation`. Example: `--fuzzy_boundary pedvar 0.10 --fuzzy_boundary zenith 0.05`.
+- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`.
 
----
-# Data storage and generating index files
+## Data storage and generating index files
 
-Two index files are required for DL3-type analysis and can be generated with the tool `generate_index_file.py`.
+Generate observation index and HDU tables for DL3 data storage are required to use with *gammapy* in for reading and analysis of the generated DL3 data.
+This steps is independent of VEGAS or Eventdisplay.
+The two index files are generated with the tool `generate_index_file.py`.
 
-The tables are descriped on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+
 - [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
 - [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
 
 To use `generate_index_file.py`, run:
+
 - `generate_index_file --help` when using VEGAS
-- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay 
+- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay
 
----
+## Contributing and Developing Code
 
-# Contributing and Developing Code
+Your contribution is welcome!
 
 A few remarks when contributing code:
+
 - goal is to keep as much common code for converting from VEGAS or Eventdisplay data products
 - put package specific code into the [pyV2DL3/vegas](pyV2DL3/vegas) and [pyV2DL3/eventdisplay](pyV2DL3/eventdisplay) directories. As different environments are used for both packages, do not put any imports to vegas/eventdisplay in modules in pyV2DL3
 
-To ensure readability, we try follow the Python [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide. 
+To ensure readability, we try follow the Python [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide.
 
 Functions and classes should contain a docstring with a short description.
 
-Unit tests are encouraged and are available for few cases at this point. Unit tests are in the tests directory and can be called using [pytest](http://docs.pytest.org/). 
+Unit tests are encouraged and are available for few cases at this point. Unit tests are in the tests directory and can be called using [pytest](http://docs.pytest.org/).
 
 Use the [python logging system](https://docs.python.org/3/howto/logging.html) instead of the ‘print()’ function to output text. This allows to pipe all output into a log file and for different logging levels (INFO, DEBUG, …).
-
----
-
-##### Multi file processing
-
-To convert many runs at once with different Effective Area files there is a anasum script [ANALYSIS.anasum_parallel_from_runlist.sh](https://github.com/VERITAS-Observatory/Eventdisplay_AnalysisScripts_VTS/blob/main/scripts/ANALYSIS.anasum_parallel_from_runlist.sh), that can be used to create a ``` v2dl3_for_runlist_from_EDxxxx-anasum.sh ``` script. This script then contains one line for each processed file in the formatting as shown above in the point-like case. Here, xxxx is the Eventdisplay version (for eg. v487).
-
-Then in your bash run 
-```
-./v2dl3_for_runlist_from_EDxxxx-anasum.sh
-```
-to create the fits files one after another. 
-
-Alternatively, you can submit one job for each entry of this script using
-```bash
-v2dl3_qsub --v2dl3_script <script>
-```
-where `<script>` is the script that was written out by `ANALYSIS.anasum_parallel_from_runlist_v2dl3.sh`.
-`v2dl3_qsub` has the following options:
- - `--conda_env` name of the conda environment. Default is `v2dl3` 
- - `--conda_exe` path to the conda executable. Only needed if `$CONDA_EXE` is not set.
- - `--rootsys` path to rootsys. Only needed if `$ROOTSYS` is not set
- - `--add_option` allows to add further options to v2dl3. (e.g. `--add_option '--evt_filter /path/to/file.yaml'`)
-
----
-**TEXT BELOW REQUIRES REVIEW**
-
-#### Filter events
-Using --evt_filter option, you can filter which events are written to the fits file. The argument takes the path of a 
-yaml file that stores conditions. E.g. to select only events between 0.5 and 1.0 TeV:
-```yaml
-Energy: [0.5, 1.0]
-```
-
----
-### Git pushing
-If two people have used the same notebook at the same time it gets a bit nasty with a merge due to differences in outputs and cell run counts.  To overcome this I have followed the instructions in http://timstaley.co.uk/posts/making-git-and-jupyter-notebooks-play-nice/
-
-Specifically, this requires that you have jq (https://stedolan.github.io/jq/) which should be easy enough to install, I get it through brew on my mac (I'm not sure what happens if you don't have jq installed - maybe you will find out!).
-
-The following files have been edited to allow for this (in this repository directory, if you want you can set some of this up globally).
-
-.git/config
-```
-[core]
-attributesfile = .gitattributes
-
-[filter "nbstrip_full"]
-clean = "jq --indent 1 \
-        '(.cells[] | select(has(\"outputs\")) | .outputs) = []  \
-        | (.cells[] | select(has(\"execution_count\")) | .execution_count) = null  \
-        | .metadata = {\"language_info\": {\"name\": \"python\", \"pygments_lexer\": \"ipython3\"}} \
-        | .cells[].metadata = {} \
-        '"
-smudge = cat
-required = true
-```
-
-.gitattributes
-```
-*.ipynb filter=nbstrip_full
-```
