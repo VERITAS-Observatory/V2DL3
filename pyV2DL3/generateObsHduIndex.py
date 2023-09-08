@@ -3,8 +3,7 @@ import os
 
 from astropy.io import fits
 from astropy.io.fits import table_to_hdu
-from astropy.table import Table
-from astropy.table import vstack
+from astropy.table import Table, vstack
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
@@ -99,7 +98,7 @@ def get_unit_string_from_comment(comment_string):
     Return unit string from FITS comment
 
     Examples: 'average pointing azimuth [deg]'
-    
+
     """
     bstart = comment_string.find("[")
     bstopp = comment_string.find("]")
