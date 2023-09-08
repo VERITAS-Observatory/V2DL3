@@ -9,9 +9,12 @@ channels:
 dependencies:
   - astropy>=4.0
   - click
+  - flake8
   - numpy>=1.13
+  - pre-commit
+  - pyflakes
   - pytest
-  - python>=3.8
+  - python>=3.11
   - pyyaml
   - scipy
   - uproot

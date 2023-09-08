@@ -1,5 +1,8 @@
 # V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter
 
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://github.com/VERITAS-Observatory/V2DL3/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/138582622.svg)](https://zenodo.org/badge/latestdoi/138582622)
+
 V2DL3 is a tool to convert [VERITAS](https://veritas.sao.arizona.edu/) data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for  the high-level analysis.
 
 DL3 files include event lists, instrument response functions (IRFs) and observation index tables.
@@ -93,13 +96,10 @@ python utils/vegas_runlister.py --help
 ## V2DL3 for EventDisplay
 
 The pip installation as discussed above is recommended for all users.
-Requires are on inputs are data products generated with Eventdisplay version >= 487.
 
 ### Developer Installation
 
 Install dependencies and activate the environment using the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html):
-
-TODO - check this!
 
 ```bash
 conda env create -f environment-eventdisplay.yml
@@ -139,7 +139,7 @@ The run having their observational parameters (e.g., zenith, night sky backgroun
 
 Generate observation index and HDU tables for DL3 data storage are required to use with *gammapy* in for reading and analysis of the generated DL3 data.
 This steps is independent of VEGAS or Eventdisplay.
-The wwo index files are generated with the tool `generate_index_file.py`.
+The two index files are generated with the tool `generate_index_file.py`.
 
 The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
 
@@ -149,7 +149,7 @@ The tables are described on the [GADF website](https://gamma-astro-data-formats.
 To use `generate_index_file.py`, run:
 
 - `generate_index_file --help` when using VEGAS
-- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay 
+- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay
 
 ## Contributing and Developing Code
 

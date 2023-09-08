@@ -57,7 +57,8 @@ def find_closest_az(azimuth, azMins, azMaxs):
     az_centers = np.array((azMaxs[:-1] + azMins[1:]) / 2.0)
     az_centers[az_centers < 0] += 360
     if np.any(az_centers < 0) or np.any(az_centers > 360):
-        raise ValueError("IRF azimuth bins not in the range 0-360")
+        logging.error("IRF azimuth bins not in the range 0-360")
+        raise ValueError
     return find_nearest(az_centers, azimuth)
 
 
@@ -98,8 +99,8 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf[i]
         except Exception:
-            logging.exception("Unexpected error:", sys.exc_info()[0])
-            logging.exception("Entry number ", i)
+            logging.error("Unexpected error:", sys.exc_info()[0])
+            logging.error("Entry number ", i)
             raise
 
     axes = {'energies': energies[0], 'pedvars': pedvars, 'zeniths': zds, 'woffs': woffs}
@@ -160,8 +161,8 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf
         except Exception:
-            logging.exception("Unexpected error:", sys.exc_info()[0])
-            logging.exception("Entry number ", i)
+            logging.error("Unexpected error:", sys.exc_info()[0])
+            logging.error("Entry number ", i)
             raise
 
     axes = {
@@ -182,7 +183,8 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
     """
 
     if not azimuth:
-        raise ValueError("Azimuth for IRF extraction not given")
+        logging.error("Azimuth for IRF extraction not given")
+        raise ValueError
 
     irf_fn = extract_irf_1d if irf1d else extract_irf_2d
     return irf_fn(filename, irf_name, azimuth)

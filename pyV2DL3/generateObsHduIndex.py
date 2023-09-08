@@ -3,8 +3,7 @@ import os
 
 from astropy.io import fits
 from astropy.io.fits import table_to_hdu
-from astropy.table import Table
-from astropy.table import vstack
+from astropy.table import Table, vstack
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
@@ -95,7 +94,12 @@ def gen_hdu_index(filelist, index_file_dir="./"):
 
 
 def get_unit_string_from_comment(comment_string):
-    """return unit string from FITS comment"""
+    """
+    Return unit string from FITS comment
+
+    Examples: 'average pointing azimuth [deg]'
+
+    """
     bstart = comment_string.find("[")
     bstopp = comment_string.find("]")
     if bstart != -1 and bstopp != -1:
@@ -151,9 +155,8 @@ def gen_obs_index(filelist, index_file_dir="./"):
     _tableunits = {}
     _tabledata = {n: [] for n in names}
     missing_keys = set()
-    # loop through the files
+
     for _file in filelist:
-        # fits files.
         if not os.path.exists(_file):
             logging.warning("{} does not exist. Skipped!".format(_file))
             continue

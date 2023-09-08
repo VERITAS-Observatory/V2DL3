@@ -3,9 +3,9 @@
 cff-version: 1.2.0
 message: If you use this software, please cite it using these metadata.
 title: "V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter."
-# doi: TO BE FILLED
-version: 0.2.0
-date-released: 2022-02-28
+doi: 10.5281/zenodo.8306205
+version: 0.5.0
+date-released: 2023-09-08
 keywords:
 - "gamma-ray astronomy"
 - "astronomy software"
