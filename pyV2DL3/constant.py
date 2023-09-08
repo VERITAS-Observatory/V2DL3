@@ -1,6 +1,6 @@
 # Global setting
 
-VERSION = "0.3"
+VERSION = "0.5"
 
 # Feb 1 2005
 VTS_REFERENCE_MJD = 53402.0

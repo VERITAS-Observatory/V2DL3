@@ -15,7 +15,7 @@ on:
       - 'setup.py'
 
 jobs:
-  tests:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,17 +31,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install conda dependencies
-        uses: mamba-org/setup-micromamba@v1
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
         with:
-          environment-file: environment-eventdisplay.yml
-          create-args: python=${{ matrix.python-version }}
-          init-shell: bash
-
-      - name: flake8
-        shell: bash -leo pipefail {0}
-        run: |
-          flake8 --count --select=E9,F63,F7,F82 --ignore=E203,W503 \
-                   --show-source --statistics .
-          flake8 --count --max-complexity=25 --ignore=E203,W503 \
-                 --max-line-length=127 --statistics .
+          ignore: "E203,W503"
+          max-line-length: "127"
+          path: "."
