@@ -123,10 +123,12 @@ class IrfInterpolator:
         elif self.irf_name in self.implemented_irf_names_1d:
             # In this case, the interpolator needs to interpolate only
             # over 1 dimension (true energy):
-            interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
+            try:
+                interpolated_irf = self.interpolator((self.irf_axes[0], *coordinate))
+            except ValueError:
+                logging.error("IRF interpolation failed for axis %s", self.irf_name)
+                raise ValueError
             return interpolated_irf, [self.irf_axes[0]]
         else:
-            logging.error(
-                "The irf you entered: {}" " is not available.".format(self.irf_name)
-            )
+            logging.error("The requested %s" " is not available.", self.irf_name)
             raise WrongIrf
