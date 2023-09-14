@@ -88,7 +88,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     else:
         hdu1.header.set("INSTRUME", "VERITAS")
 
-    hdu1.header.set("OBS_ID  ", evt_dict["OBS_ID"], "run number")
+    hdu1.header.set("OBS_ID  ", evt_dict["OBS_ID"], "Run Number")
 
     hdu1.header.set(
         "DATE-OBS", evt_dict["DATE-OBS"], "start date (UTC) of obs yy-mm-dd hh:mm:ss"
