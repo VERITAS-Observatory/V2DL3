@@ -51,7 +51,7 @@ def gen_hdu_index(filelist, index_file_dir="./"):
         # open the fits file
         dl3_hdu = fits.open(_file)
 
-        # informations to be stored
+        # information to be stored
         obsid = dl3_hdu[1].header["OBS_ID"]
         n_hdus = len(dl3_hdu) - 1
         obs_id = [obsid] * n_hdus
@@ -100,11 +100,15 @@ def get_unit_string_from_comment(comment_string):
     Examples: 'average pointing azimuth [deg]'
 
     """
+    _unit_string = None
     bstart = comment_string.find("[")
     bstopp = comment_string.find("]")
     if bstart != -1 and bstopp != -1:
-        return comment_string[bstart + 1: bstopp]
-    return None
+        _unit_string = comment_string[bstart + 1: bstopp]
+        # this is a hack to fix a bug in the VERITAS DL3 files
+        if _unit_string == "muA":
+            return "uA"
+    return _unit_string
 
 
 def gen_obs_index(filelist, index_file_dir="./"):
@@ -152,6 +156,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "S20",
         ">f4",
     ]
+    names, dtype = _add_auxiliary_headers(names, dtype)
     _tableunits = {}
     _tabledata = {n: [] for n in names}
     missing_keys = set()
@@ -170,7 +175,20 @@ def gen_obs_index(filelist, index_file_dir="./"):
                 )
             else:
                 try:
-                    value.append(dl3_hdu[1].header[key])
+                    if dl3_hdu[1].header[key] == 'NULL':
+                        try:
+                            _index = names.index(key)
+                            if dtype[_index] == '>f4':
+                                value.append(-9999.0)
+                            elif dtype[_index] == '>i8':
+                                value.append(-9999)
+                            else:
+                                value.append("")
+                        except IndexError:
+                            logging.warning("Keyword %s with invalid entry", key)
+                            continue
+                    else:
+                        value.append(dl3_hdu[1].header[key])
                 except KeyError:
                     logging.warning("Keyword " + key + " not found when building obs. index file")
                     missing_keys.add(key)
@@ -256,3 +274,33 @@ def create_obs_hdu_index_file(
     obs_table = gen_obs_index(filelist, index_file_dir)
     logging.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
+
+
+def _add_auxiliary_headers(names, dtype):
+    """
+    Add auxiliary header entries (mostly DQM related)
+
+    """
+
+    aux_header_list = [
+        "PED_VAR ", "QUALITY ", "RUNTYPE ", "OBSMODE ", "RUNSTAT ", "WEATHER ",
+        "CONFIG  ", "TRIGCFG ", "DATACAT ", "DQMSTAT ", "DQMREAS ", "DQMMASK ",
+        "VPMCFG  ", "LIGHTLEV", "L3RATE  ", "L3RATESD", "CURRMEAN", "CURRSTD ",
+        "CURRMED ", "WINDSPE ", "WINDMAX ", "WINDMIN ", "WINDDIR ", "AIRTEMP ",
+        "RELHUMID", "FIRMEAN0", "FIRMEAN1", "FIRMEAN3", "FIRSTD0 ",
+        "FIRSTD1 ", "FIRSTD3 ", "FIRCORM0", "FIRCORM1", "FIRCORM3",
+    ]
+
+    aux_dtype = [
+        ">f4", ">f4", "S20", "S20", "S20", "S20",
+        ">i8", "S20", "S20", "S20", "S20", ">i8",
+        ">i8", "S20", ">f4", ">f4", ">f4", ">f4",
+        ">f4", ">f4", ">f4", ">f4", ">f4", ">f4",
+        ">f4", ">f4", ">f4", ">f4", ">f4",
+        ">f4", ">f4", ">f4", ">f4", ">f4",
+    ]
+
+    names.extend(aux_header_list)
+    dtype.extend(aux_dtype)
+
+    return names, dtype
