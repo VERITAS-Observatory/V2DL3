@@ -7,6 +7,8 @@ from astropy.table import Table, vstack
 
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
+logger = logging.getLogger(__name__)
+
 hdu_class_type = {
     ("EVENTS", None): ("events", "events"),
     ("GTI", None): ("gti", "gti"),
@@ -45,7 +47,7 @@ def gen_hdu_index(filelist, index_file_dir="./"):
         _path = os.path.dirname(_rel_path)
 
         if not os.path.exists(_file):
-            logging.warning("{} does not exist. Skipped!".format(_file))
+            logger.warning("{} does not exist. Skipped!".format(_file))
             continue
 
         # open the fits file
@@ -163,7 +165,7 @@ def gen_obs_index(filelist, index_file_dir="./"):
 
     for _file in filelist:
         if not os.path.exists(_file):
-            logging.warning("{} does not exist. Skipped!".format(_file))
+            logger.warning("{} does not exist. Skipped!".format(_file))
             continue
         dl3_hdu = fits.open(_file)
         # get values and units from fits header entries
@@ -185,12 +187,15 @@ def gen_obs_index(filelist, index_file_dir="./"):
                             else:
                                 value.append("")
                         except IndexError:
-                            logging.warning("Keyword %s with invalid entry", key)
+                            logger.warning("Keyword %s with invalid entry", key)
                             continue
                     else:
                         value.append(dl3_hdu[1].header[key])
                 except KeyError:
-                    logging.warning("Keyword " + key + " not found when building obs. index file")
+                    logger.debug(
+                        "Keyword %s not found in %s when building observation index file",
+                        key, _file
+                    )
                     missing_keys.add(key)
                     continue
 
@@ -268,11 +273,11 @@ def create_obs_hdu_index_file(
     """
 
     hdu_table = gen_hdu_index(filelist, index_file_dir)
-    logging.debug("Writing {} ...".format(hdu_index_file))
+    logger.debug("Writing {} ...".format(hdu_index_file))
     hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
     obs_table = gen_obs_index(filelist, index_file_dir)
-    logging.debug("Writing {} ...".format(obs_index_file))
+    logger.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
 
 
