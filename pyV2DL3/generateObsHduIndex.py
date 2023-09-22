@@ -1,6 +1,7 @@
 import logging
 import os
 
+import astropy.units as u
 from astropy.io import fits
 from astropy.io.fits import table_to_hdu
 from astropy.table import Table, vstack
@@ -113,7 +114,7 @@ def get_unit_string_from_comment(comment_string):
     return _unit_string
 
 
-def gen_obs_index(filelist, index_file_dir="./"):
+def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
     names = [
         "OBS_ID",
         "RA_PNT",
@@ -158,14 +159,15 @@ def gen_obs_index(filelist, index_file_dir="./"):
         "S20",
         ">f4",
     ]
-    names, dtype = _add_auxiliary_headers(names, dtype)
+    if dqm_header:
+        names, dtype = _add_auxiliary_headers(names, dtype)
     _tableunits = {}
     _tabledata = {n: [] for n in names}
     missing_keys = set()
 
     for _file in filelist:
         if not os.path.exists(_file):
-            logger.warning("{} does not exist. Skipped!".format(_file))
+            logger.warning("%s does not exist. Skipped!", _file)
             continue
         dl3_hdu = fits.open(_file)
         # get values and units from fits header entries
@@ -179,29 +181,33 @@ def gen_obs_index(filelist, index_file_dir="./"):
                 try:
                     if dl3_hdu[1].header[key] == 'NULL':
                         try:
-                            _index = names.index(key)
-                            if dtype[_index] == '>f4':
-                                value.append(-9999.0)
-                            elif dtype[_index] == '>i8':
-                                value.append(-9999)
-                            else:
-                                value.append("")
+                            value.append(
+                                _default_null_value(dtype[names.index(key)])
+                            )
                         except IndexError:
                             logger.warning("Keyword %s with invalid entry", key)
                             continue
                     else:
                         value.append(dl3_hdu[1].header[key])
                 except KeyError:
-                    logger.debug(
-                        "Keyword %s not found in %s when building observation index file",
-                        key, _file
-                    )
-                    missing_keys.add(key)
-                    continue
+                    if dqm_header:
+                        value.append(_default_null_value(dtype[names.index(key)]))
+                    else:
+                        logger.debug(
+                            "Keyword %s not found in %s when building observation index file",
+                            key, _file
+                        )
+                        missing_keys.add(key)
+                        continue
 
-                _tableunits[key] = get_unit_string_from_comment(
-                    dl3_hdu[1].header.comments[key]
-                )
+                try:
+                    _tableunits[key] = get_unit_string_from_comment(
+                        dl3_hdu[1].header.comments[key]
+                    )
+                except KeyError:
+                    if key not in _tableunits:
+                        _tableunits[key] = None
+                    pass
 
     for key in missing_keys:
         key_idx = names.index(key)
@@ -209,7 +215,15 @@ def gen_obs_index(filelist, index_file_dir="./"):
         del dtype[key_idx]
         del _tabledata[key]
 
-    obs_table = Table(_tabledata, names=names, dtype=dtype)
+    for key, value in _tabledata.items():
+        value, _tableunits[key] = _check_unit_consistency(
+            key, value, _tableunits[key]
+        )
+
+    try:
+        obs_table = Table(_tabledata, names=names, dtype=dtype)
+    except TypeError:
+        print("AAAA", _tabledata, names, dtype)
 
     for key, value in _tableunits.items():
         if value:
@@ -240,6 +254,7 @@ def create_obs_hdu_index_file(
         index_file_dir="./",
         hdu_index_file="hdu-index.fits.gz",
         obs_index_file="obs-index.fits.gz",
+        dqm_header=False,
 ):
     """Create Observation Index File and HDU index file
 
@@ -276,7 +291,7 @@ def create_obs_hdu_index_file(
     logger.debug("Writing {} ...".format(hdu_index_file))
     hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
-    obs_table = gen_obs_index(filelist, index_file_dir)
+    obs_table = gen_obs_index(filelist, index_file_dir, dqm_header)
     logger.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
 
@@ -309,3 +324,26 @@ def _add_auxiliary_headers(names, dtype):
     dtype.extend(aux_dtype)
 
     return names, dtype
+
+
+def _default_null_value(dtype):
+    """
+    Return null (none value) for a given dtype
+    """
+
+    if dtype == '>f4':
+        return -9999.0
+    if dtype == '>i8':
+        return -9999
+    return ""
+
+
+def _check_unit_consistency(key, value, units):
+    """
+    Use wherever possible SI units
+
+    """
+    if key is not None and key.find("WIND") != -1:
+        mph = u.imperial.mile / u.hour
+        return [v * mph.to(u.km / u.h) for v in value], "km/h"
+    return value, units
