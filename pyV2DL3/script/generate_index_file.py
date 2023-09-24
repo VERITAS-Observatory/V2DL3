@@ -119,11 +119,13 @@ def cli(
     if not fits_files:
         logging.error("No fits files found")
         return
+    fits_files.sort()
 
-    logging.info("Found the following %d fits files:", len(fits_files))
+    logging.info("Found the following fits files:")
     for _file in fits_files:
         logging.info(" -> %s", _file)
 
+    logging.info("Found %d fits files", len(fits_files))
     logging.info(
         "Generating index files %s/obs-index.fits.gz and %s/hdu-index.fits.gz",
         index_file_dir, index_file_dir
