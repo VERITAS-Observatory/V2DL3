@@ -6,7 +6,7 @@ PDIR=$(pwd)
 
 echo "Preparing test data in ./test-eventdisplay-CI"
 mkdir -p test-eventdisplay-CI
-cd test-eventdisplay-CI
+cd test-eventdisplay-CI || exit
 ../download_Eventdisplay_test_data.sh
 rm -f ED-*.fits.gz ED-*.log *.tar.gz
 
@@ -50,4 +50,4 @@ python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
 
 tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml
 
-cd ${PDIR}
+cd ${PDIR} || exit
