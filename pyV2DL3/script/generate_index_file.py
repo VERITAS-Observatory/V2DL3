@@ -126,10 +126,6 @@ def cli(
         logging.info(" -> %s", _file)
 
     logging.info("Found %d fits files", len(fits_files))
-    logging.info(
-        "Generating index files %s/obs-index.fits.gz and %s/hdu-index.fits.gz",
-        index_file_dir, index_file_dir
-    )
     create_obs_hdu_index_file(
         fits_files, index_file_dir, hdu_index_file, obs_index_file, dqm_header
     )
