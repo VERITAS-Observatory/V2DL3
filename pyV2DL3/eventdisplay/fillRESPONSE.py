@@ -368,7 +368,7 @@ def __fill_response__(
     theta_low, theta_high = find_camera_offsets(camera_offsets)
 
     if irf_to_store["point-like"]:
-        # Effective area (full-enclosure)
+        # Effective area (point-like)
         (
             response_dict["EA"],
             response_dict["LO_THRES"],
