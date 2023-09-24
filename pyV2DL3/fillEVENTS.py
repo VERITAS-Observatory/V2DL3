@@ -54,8 +54,8 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     # Test if key exists in evt_dict. If yes, add these columns.
     add_existing_column(columns, evt_dict, name="ALT", format="1E", unit="deg")
     add_existing_column(columns, evt_dict, name="AZ", format="1E", unit="deg")
-    add_existing_column(columns, evt_dict, name="Xoff", format="1E")
-    add_existing_column(columns, evt_dict, name="Yoff", format="1E")
+    add_existing_column(columns, evt_dict, name="Xoff", format="1E", unit="deg")
+    add_existing_column(columns, evt_dict, name="Yoff", format="1E", unit="deg")
     add_existing_column(columns, evt_dict, name="MSW", format="1D")
     add_existing_column(columns, evt_dict, name="MSL", format="1D")
     add_existing_column(columns, evt_dict, name="IS_GAMMA", format="1L")
