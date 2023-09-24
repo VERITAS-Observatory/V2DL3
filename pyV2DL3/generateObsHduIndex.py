@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 import astropy.units as u
 from astropy.io import fits
@@ -161,71 +162,67 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
     ]
     if dqm_header:
         names, dtype = _add_auxiliary_headers(names, dtype)
-    _tableunits = {}
-    _tabledata = {n: [] for n in names}
+    _table_units = {}
+    _table_data = {n: [] for n in names}
     missing_keys = set()
 
     for _file in filelist:
+        t1 = time.perf_counter(), time.process_time()
+        logger.debug("Reading %s ...", _file)
         if not os.path.exists(_file):
             logger.warning("%s does not exist. Skipped!", _file)
             continue
         dl3_hdu = fits.open(_file)
-        # get values and units from fits header entries
-        for key, value in _tabledata.items():
-            if key == "ZEN_PNT":
-                value.append(90.0 - float(dl3_hdu[1].header["ALT_PNT"]))
-                _tableunits[key] = get_unit_string_from_comment(
-                    dl3_hdu[1].header.comments["ALT_PNT"]
-                )
-            else:
-                try:
-                    if dl3_hdu[1].header[key] == 'NULL':
-                        try:
-                            value.append(
-                                _default_null_value(dtype[names.index(key)])
-                            )
-                        except IndexError:
-                            logger.warning("Keyword %s with invalid entry", key)
-                            continue
-                    else:
-                        value.append(dl3_hdu[1].header[key])
-                except KeyError:
-                    if dqm_header:
-                        value.append(_default_null_value(dtype[names.index(key)]))
-                    else:
-                        logger.debug(
-                            "Keyword %s not found in %s when building observation index file",
-                            key, _file
-                        )
-                        missing_keys.add(key)
-                        continue
 
-                try:
-                    _tableunits[key] = get_unit_string_from_comment(
-                        dl3_hdu[1].header.comments[key]
-                    )
-                except KeyError:
-                    if key not in _tableunits:
-                        _tableunits[key] = None
-                    pass
+        # get values and units from fits header entries
+        for key, value in _table_data.items():
+            if not _fill_table_data(key, value, dtype[names.index(key)], dl3_hdu, dqm_header):
+                logger.debug(
+                    "Keyword %s not found in %s when building observation index file",
+                    key, _file
+                )
+                missing_keys.add(key)
+                continue
+            _add_table_units(key, _table_units, dl3_hdu)
+
+        t2 = time.perf_counter(), time.process_time()
+        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+        print()
+
+#            # temp check for none
+#            for i, v in enumerate(value):
+#                if v is None:
+#                    logger.warning(
+#                        "None value found for %s in %s", key, _file
+#                    )
+#                    print("Value", v)
+#                elif isinstance(v, str) and v.upper() == "NULL":
+#                    logger.warning(
+#                        "NULL value found for %s in %s", key, _file
+#                    )
+#                    print("Value", v)
+#                elif isinstance(v, float) and not np.isfinite(v):
+#                    logger.warning(
+#                        "Not finite value found for %s in %s", key, _file
+#                    )
+#                    print("Value", v)
+        dl3_hdu.close()
 
     for key in missing_keys:
         key_idx = names.index(key)
         del names[key_idx]
         del dtype[key_idx]
-        del _tabledata[key]
+        del _table_data[key]
 
-    for key, value in _tabledata.items():
-        value, _tableunits[key] = _check_unit_consistency(
-            key, value, _tableunits[key]
+    for key, value in _table_data.items():
+        value, _table_units[key] = _check_unit_consistency(
+            key, value, _table_units[key]
         )
 
-    try:
-        obs_table = Table(_tabledata, names=names, dtype=dtype)
-    except TypeError:
-        print("AAAA", _tabledata, names, dtype)
+    obs_table = Table(_table_data, names=names, dtype=dtype)
 
-    for key, value in _tableunits.items():
+    for key, value in _table_units.items():
         if value:
             obs_table[key].unit = value
 
@@ -287,9 +284,9 @@ def create_obs_hdu_index_file(
 
     """
 
-    hdu_table = gen_hdu_index(filelist, index_file_dir)
-    logger.debug("Writing {} ...".format(hdu_index_file))
-    hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
+#    hdu_table = gen_hdu_index(filelist, index_file_dir)
+#    logger.debug("Writing {} ...".format(hdu_index_file))
+#    hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
     obs_table = gen_obs_index(filelist, index_file_dir, dqm_header)
     logger.debug("Writing {} ...".format(obs_index_file))
@@ -329,6 +326,7 @@ def _add_auxiliary_headers(names, dtype):
 def _default_null_value(dtype):
     """
     Return null (none value) for a given dtype
+
     """
 
     if dtype == '>f4':
@@ -345,5 +343,44 @@ def _check_unit_consistency(key, value, units):
     """
     if key is not None and key.find("WIND") != -1:
         mph = u.imperial.mile / u.hour
-        return [v * mph.to(u.km / u.h) for v in value], "km/h"
+        return [v * mph.to(u.km / u.h) if v is not None else None for v in value], "km/h"
     return value, units
+
+
+def _add_table_units(key, _table_units, dl3_hdu):
+    """
+    Fill unit string for table
+
+    """
+    _tmp_key = "ALT_PNT" if key == "ZEN_PNT" else key
+    try:
+        _table_units[key] = get_unit_string_from_comment(
+            dl3_hdu[1].header.comments[_tmp_key]
+        )
+    except KeyError:
+        if key not in _table_units:
+            _table_units[key] = None
+
+
+def _fill_table_data(key, value, dtype, dl3_hdu, dqm_header):
+    """
+    Fill table data
+
+    """
+
+    if key == "ZEN_PNT":
+        value.append(90.0 - float(dl3_hdu[1].header["ALT_PNT"]))
+        return True
+
+    try:
+        if dl3_hdu[1].header[key] == 'NULL' or dl3_hdu[1].header[key] is None:
+            value.append(_default_null_value(dtype))
+        else:
+            value.append(dl3_hdu[1].header[key])
+    except KeyError:
+        if dqm_header:
+            value.append(_default_null_value(dtype))
+        else:
+            return False
+
+    return True
