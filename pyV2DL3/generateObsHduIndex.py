@@ -47,44 +47,42 @@ def gen_hdu_index(filelist, index_file_dir="./"):
         _filename = os.path.basename(_rel_path)
         _path = os.path.dirname(_rel_path)
 
-        if not os.path.exists(_file):
+        try:
+            with fits.open(_file) as dl3_hdu:
+                obsid = dl3_hdu[1].header["OBS_ID"]
+                n_hdus = len(dl3_hdu) - 1
+                obs_id = [obsid] * n_hdus
+
+                hdu_type_name = []
+                hdu_type = []
+                hdu_name = []
+                file_dir = [_path] * n_hdus
+                file_name = [_filename] * n_hdus
+
+                for hdu in dl3_hdu[1:]:
+                    type_, class_ = get_hdu_type_and_class(hdu.header)
+                    hdu_type_name.append(type_)
+                    hdu_type.append(class_)
+                    hdu_name.append(hdu.name)
+
+                t = Table(
+                    [obs_id, hdu_type_name, hdu_type, file_dir, file_name, hdu_name],
+                    names=(
+                        "OBS_ID",
+                        "HDU_TYPE",
+                        "HDU_CLASS",
+                        "FILE_DIR",
+                        "FILE_NAME",
+                        "HDU_NAME",
+                    ),
+                    dtype=(">i8", "S6", "S10", "S40", "S54", "S20"),
+                )
+
+                hdu_tables.append(t)
+
+        except FileNotFoundError:
             logger.warning("{} does not exist. Skipped!".format(_file))
-            continue
 
-        # open the fits file
-        dl3_hdu = fits.open(_file)
-
-        # information to be stored
-        obsid = dl3_hdu[1].header["OBS_ID"]
-        n_hdus = len(dl3_hdu) - 1
-        obs_id = [obsid] * n_hdus
-
-        hdu_type_name = []
-        hdu_type = []
-        hdu_name = []
-        file_dir = [_path] * n_hdus
-        file_name = [_filename] * n_hdus
-
-        for hdu in dl3_hdu[1:]:
-            type_, class_ = get_hdu_type_and_class(hdu.header)
-            hdu_type_name.append(type_)
-            hdu_type.append(class_)
-            hdu_name.append(hdu.name)
-
-        t = Table(
-            [obs_id, hdu_type_name, hdu_type, file_dir, file_name, hdu_name],
-            names=(
-                "OBS_ID",
-                "HDU_TYPE",
-                "HDU_CLASS",
-                "FILE_DIR",
-                "FILE_NAME",
-                "HDU_NAME",
-            ),
-            dtype=(">i8", "S6", "S10", "S40", "S54", "S20"),
-        )
-
-        hdu_tables.append(t)
     if not hdu_tables:
         raise NoFitsFileError("No fits file found in the list.")
 
@@ -260,10 +258,12 @@ def create_obs_hdu_index_file(
 
     """
 
+    logger.info("Filling HDU index")
     hdu_table = gen_hdu_index(filelist, index_file_dir)
     logger.debug("Writing {} ...".format(hdu_index_file))
     hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
+    logger.info("Filling Obs index")
     obs_table = gen_obs_index(filelist, index_file_dir, dqm_header)
     logger.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
