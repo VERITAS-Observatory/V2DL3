@@ -95,6 +95,8 @@ def cli(
     else:
         logging.basicConfig(level=logging.INFO)
 
+    logging.info("Generating HUD and OBS index files")
+
     if not recreate:
         if os.path.exists(f"{index_file_dir}/obs-index.fits.gz"):
             logging.info("Existing %s/obs-index.fits.gz", index_file_dir)
@@ -121,9 +123,9 @@ def cli(
         return
     fits_files.sort()
 
-    logging.info("Found the following fits files:")
+    logging.debug("Found the following fits files:")
     for _file in fits_files:
-        logging.info(" -> %s", _file)
+        logging.debug(" -> %s", _file)
 
     logging.info("Found %d fits files", len(fits_files))
     create_obs_hdu_index_file(
