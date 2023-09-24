@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 
 import astropy.units as u
 from astropy.io import fits
@@ -138,7 +137,7 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
         "DATE-END",
         "NSBLEVEL",
     ]
-    dtype = [
+    data_type = [
         ">i8",
         ">f4",
         ">f4",
@@ -161,58 +160,35 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
         ">f4",
     ]
     if dqm_header:
-        names, dtype = _add_auxiliary_headers(names, dtype)
+        names, data_type = _add_auxiliary_headers(names, data_type)
     _table_units = {}
     _table_data = {n: [] for n in names}
     missing_keys = set()
 
     for _file in filelist:
-        t1 = time.perf_counter(), time.process_time()
-        logger.debug("Reading %s ...", _file)
-        if not os.path.exists(_file):
+        logger.debug("Reading obs header from %s ...", _file)
+        try:
+            with fits.open(_file) as dl3_hdu:
+                # get values and units from fits header entries
+                for key, value in _table_data.items():
+                    if not _fill_table_data(
+                        key, value, data_type[names.index(key)], dl3_hdu[1].header, dqm_header
+                    ):
+                        logger.debug(
+                            "Keyword %s not found in %s when building observation index file",
+                            key, _file
+                        )
+                        missing_keys.add(key)
+                        continue
+                    _add_table_units(key, _table_units, dl3_hdu[1].header)
+        except FileNotFoundError:
             logger.warning("%s does not exist. Skipped!", _file)
             continue
-        dl3_hdu = fits.open(_file)
-
-        # get values and units from fits header entries
-        for key, value in _table_data.items():
-            if not _fill_table_data(key, value, dtype[names.index(key)], dl3_hdu, dqm_header):
-                logger.debug(
-                    "Keyword %s not found in %s when building observation index file",
-                    key, _file
-                )
-                missing_keys.add(key)
-                continue
-            _add_table_units(key, _table_units, dl3_hdu)
-
-        t2 = time.perf_counter(), time.process_time()
-        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-        print()
-
-#            # temp check for none
-#            for i, v in enumerate(value):
-#                if v is None:
-#                    logger.warning(
-#                        "None value found for %s in %s", key, _file
-#                    )
-#                    print("Value", v)
-#                elif isinstance(v, str) and v.upper() == "NULL":
-#                    logger.warning(
-#                        "NULL value found for %s in %s", key, _file
-#                    )
-#                    print("Value", v)
-#                elif isinstance(v, float) and not np.isfinite(v):
-#                    logger.warning(
-#                        "Not finite value found for %s in %s", key, _file
-#                    )
-#                    print("Value", v)
-        dl3_hdu.close()
 
     for key in missing_keys:
         key_idx = names.index(key)
         del names[key_idx]
-        del dtype[key_idx]
+        del data_type[key_idx]
         del _table_data[key]
 
     for key, value in _table_data.items():
@@ -220,7 +196,7 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
             key, value, _table_units[key]
         )
 
-    obs_table = Table(_table_data, names=names, dtype=dtype)
+    obs_table = Table(_table_data, names=names, dtype=data_type)
 
     for key, value in _table_units.items():
         if value:
@@ -284,16 +260,16 @@ def create_obs_hdu_index_file(
 
     """
 
-#    hdu_table = gen_hdu_index(filelist, index_file_dir)
-#    logger.debug("Writing {} ...".format(hdu_index_file))
-#    hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
+    hdu_table = gen_hdu_index(filelist, index_file_dir)
+    logger.debug("Writing {} ...".format(hdu_index_file))
+    hdu_table.writeto(f"{index_file_dir}/{hdu_index_file}", overwrite=True)
 
     obs_table = gen_obs_index(filelist, index_file_dir, dqm_header)
     logger.debug("Writing {} ...".format(obs_index_file))
     obs_table.writeto(f"{index_file_dir}/{obs_index_file}", overwrite=True)
 
 
-def _add_auxiliary_headers(names, dtype):
+def _add_auxiliary_headers(names, data_type):
     """
     Add auxiliary header entries (mostly DQM related)
 
@@ -308,7 +284,7 @@ def _add_auxiliary_headers(names, dtype):
         "FIRSTD1 ", "FIRSTD3 ", "FIRCORM0", "FIRCORM1", "FIRCORM3",
     ]
 
-    aux_dtype = [
+    aux_data_type = [
         ">f4", ">i8", "S20", "S20", "S20", "S20",
         ">i8", "S20", "S20", "S20", "S20", ">i8",
         ">i8", "S20", ">f4", ">f4", ">f4", ">f4",
@@ -318,20 +294,20 @@ def _add_auxiliary_headers(names, dtype):
     ]
 
     names.extend(aux_header_list)
-    dtype.extend(aux_dtype)
+    data_type.extend(aux_data_type)
 
-    return names, dtype
+    return names, data_type
 
 
-def _default_null_value(dtype):
+def _default_null_value(data_type):
     """
-    Return null (none value) for a given dtype
+    Return null (none value) for a given data_type
 
     """
 
-    if dtype == '>f4':
+    if data_type == '>f4':
         return -9999.0
-    if dtype == '>i8':
+    if data_type == '>i8':
         return -9999
     return ""
 
@@ -347,7 +323,7 @@ def _check_unit_consistency(key, value, units):
     return value, units
 
 
-def _add_table_units(key, _table_units, dl3_hdu):
+def _add_table_units(key, _table_units, header):
     """
     Fill unit string for table
 
@@ -355,31 +331,31 @@ def _add_table_units(key, _table_units, dl3_hdu):
     _tmp_key = "ALT_PNT" if key == "ZEN_PNT" else key
     try:
         _table_units[key] = get_unit_string_from_comment(
-            dl3_hdu[1].header.comments[_tmp_key]
+            header.comments[_tmp_key]
         )
     except KeyError:
         if key not in _table_units:
             _table_units[key] = None
 
 
-def _fill_table_data(key, value, dtype, dl3_hdu, dqm_header):
+def _fill_table_data(key, value, data_type, header, dqm_header):
     """
     Fill table data
 
     """
 
     if key == "ZEN_PNT":
-        value.append(90.0 - float(dl3_hdu[1].header["ALT_PNT"]))
+        value.append(90.0 - float(header["ALT_PNT"]))
         return True
 
     try:
-        if dl3_hdu[1].header[key] == 'NULL' or dl3_hdu[1].header[key] is None:
-            value.append(_default_null_value(dtype))
+        if header[key] == 'NULL' or header[key] is None:
+            value.append(_default_null_value(data_type))
         else:
-            value.append(dl3_hdu[1].header[key])
+            value.append(header[key])
     except KeyError:
         if dqm_header:
-            value.append(_default_null_value(dtype))
+            value.append(_default_null_value(data_type))
         else:
             return False
 
