@@ -12,7 +12,7 @@ dependencies:
   - pandas
   - pkgconfig
   - pytest
-  - python>=3.8
+  - python=3.8
   - pyyaml
   - root
   - root_numpy
