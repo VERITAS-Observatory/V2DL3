@@ -3,7 +3,6 @@ import logging
 
 import numpy as np
 import ROOT
-from root_numpy import hist2array
 from scipy.interpolate import RegularGridInterpolator
 
 
@@ -88,7 +87,19 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
             continue
 
         # Get Ebias
-        a, e = hist2array(eb_dl3, return_edges=True)
+        n_bins_x = eb_dl3.GetNbinsX()
+        n_bins_y = eb_dl3.GetNbinsY()
+
+        bin_edges_x = [eb_dl3.GetXaxis().GetBinLowEdge(i) for i in range(1, n_bins_x + 2)]
+        bin_edges_y = [eb_dl3.GetYaxis().GetBinLowEdge(i) for i in range(1, n_bins_y + 2)]
+        a = np.zeros((n_bins_y, n_bins_x))
+        for i in range(1, n_bins_x + 1):
+            for j in range(1, n_bins_y + 1):
+                bin_content = eb_dl3.GetBinContent(i, j)
+                a[j - 1, i - 1] = bin_content
+        e = np.vstack((bin_edges_x, bin_edges_y))
+
+
         eLow = np.power(10, [e[0][:-1]])[0]
         eHigh = np.power(10, [e[0][1:]])[0]
 
@@ -130,9 +141,9 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
         # Get ABias
         if not pointlike and not psf_king:
-            a, e = hist2array(
-                manager.getAngularBias_DL3(effectiveAreaParameters), return_edges=True
-            )
+            a = np.array([manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i) for i in range(1, manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX() + 1)])
+            e = np.array([manager.getAngularBias_DL3(effectiveAreaParameters).GetBinLowEdge(i) for i in range(1, manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX() + 2)])
+
             eLow = np.power(10, [e[0][:-1]])[0]
             eHigh = np.power(10, [e[0][1:]])[0]
 
