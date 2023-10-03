@@ -249,9 +249,6 @@ def __fillEVENTS_not_safe__(
         if event_class_mode:
             evt_dict["ENERGY"] = arr_dict["energyArr"]
 
-
-
-
     avNoise = 0
     nTels = 0
     for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
