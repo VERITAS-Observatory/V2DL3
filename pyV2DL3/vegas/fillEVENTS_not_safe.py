@@ -32,6 +32,8 @@ def __fillEVENTS_not_safe__(
     corr_EB=False,
     psf_king_params=None,
 ):
+    if corr_EB and event_class_mode:
+        raise Exception("Currently Energy Bias and multiple EAs not supported")
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -244,6 +246,11 @@ def __fillEVENTS_not_safe__(
         evt_dict["DEC_OBJ"] = np.rad2deg(runHeader.getSourceDec())
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
+        if event_class_mode:
+            evt_dict["ENERGY"] = arr_dict["energyArr"]
+
+
+
 
     avNoise = 0
     nTels = 0
