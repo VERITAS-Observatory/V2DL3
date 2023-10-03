@@ -328,7 +328,7 @@ but including here just in case and making it easy to turn off)
 
 Paramters:
     energy -- Stage 5 energy of the Events (in TeV)
-    effective_area_files -- The Effective Area 
+    effective_area_files -- The Effective Area
 
 
 """

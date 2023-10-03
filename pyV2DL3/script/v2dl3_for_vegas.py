@@ -186,8 +186,8 @@ def cli(
         irfs_to_store["psf-king"] = True
     """
     The main loop for all of the files to call and store the contents
-    into the fits files. This function is in a weird spot because 
-    of the imports of the previous functions. 
+    into the fits files. This function is in a weird spot because
+    of the imports of the previous functions.
     """
 
     def processFilePair(
