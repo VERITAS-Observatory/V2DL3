@@ -12,8 +12,8 @@ of each DL3 file.
 
 """
 
-import logging
 import glob
+import logging
 import os
 
 import click
@@ -52,10 +52,21 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default="obs-index.fits.gz",
     help="Observation index file (default:obs-index.fits.gz)",
 )
-@click.option("--recreate", "-r", is_flag=True)
+@click.option(
+    "--recreate",
+    "-r",
+    is_flag=True,
+    help="Recreate index files even if they already exist.",
+)
 @click.option("--debug", "-d", is_flag=True)
+@click.option(
+    "--dqm_header",
+    "-dqm",
+    is_flag=True,
+    help="Add DQM header to the HDU index file.",
+)
 def cli(
-    folder_location, index_file_dir, hdu_index_file, obs_index_file, recreate, debug
+    folder_location, index_file_dir, hdu_index_file, obs_index_file, recreate, debug, dqm_header
 ):
     """Command line tool for generating index file from a set of DL3 files
 
@@ -84,17 +95,19 @@ def cli(
     else:
         logging.basicConfig(level=logging.INFO)
 
+    logging.info("Generating HUD and OBS index files")
+
     if not recreate:
         if os.path.exists(f"{index_file_dir}/obs-index.fits.gz"):
-            logging.info(f"Existing {index_file_dir}/obs-index.fits.gz")
+            logging.info("Existing %s/obs-index.fits.gz", index_file_dir)
             logging.info("Remove before continuing or use recreate option -r")
             return
         if os.path.exists(f"{index_file_dir}/hdu-index.fits.gz"):
-            logging.info(f"Existing {index_file_dir}/hdu-index.fits.gz")
+            logging.info("Existing %s/hdu-index.fits.gz", index_file_dir)
             logging.info("Remove before continuing or use recreate option -r")
             return
 
-    logging.debug("Start by searching all DL3 files in:\n{}".format(folder_location))
+    logging.debug("Start by searching all DL3 files in:\n%s", folder_location)
 
     __fits_files = glob.glob(f"{folder_location}/[0-9]*.fits*")
     if len(__fits_files) == 0:
@@ -108,16 +121,15 @@ def cli(
     if not fits_files:
         logging.error("No fits files found")
         return
+    fits_files.sort()
 
-    logging.info(f"Found the following {len(__fits_files)} fits files:")
-    for f in fits_files:
-        logging.info(" -> {0}".format(f))
+    logging.debug("Found the following fits files:")
+    for _file in fits_files:
+        logging.debug(" -> %s", _file)
 
-    logging.info(
-        f"Generating index files {index_file_dir}/obs-index.fits.gz and {index_file_dir}/hdu-index.fits.gz"
-    )
+    logging.info("Found %d fits files", len(fits_files))
     create_obs_hdu_index_file(
-        fits_files, index_file_dir, hdu_index_file, obs_index_file
+        fits_files, index_file_dir, hdu_index_file, obs_index_file, dqm_header
     )
 
 
