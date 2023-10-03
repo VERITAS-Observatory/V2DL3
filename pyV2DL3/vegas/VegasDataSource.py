@@ -7,13 +7,16 @@ from pyV2DL3.VtsDataSource import VtsDataSource
 
 
 class VegasDataSource(VtsDataSource):
-    def __init__(self, evt_file, ea_files,
-                 bypass_fov_cut=False,
-                 event_class_mode=False,
-                 psf_king_params=None,
-                 reco_type=1,
-                 save_msw_msl=False,
-                 ):
+    def __init__(
+        self,
+        evt_file,
+        ea_files,
+        bypass_fov_cut=False,
+        event_class_mode=False,
+        psf_king_params=None,
+        reco_type=1,
+        save_msw_msl=False,
+    ):
         super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
         # Loading VEGAS if not already done so
@@ -42,19 +45,22 @@ class VegasDataSource(VtsDataSource):
         """
         cpy_nonestring = "<class 'CPyCppyy_NoneType'>"
 
-        if str(type(self.__evt_file__)) != cpy_nonestring and not isinstance(self.__evt_file__, str):
+        if str(type(self.__evt_file__)) != cpy_nonestring and not isinstance(
+            self.__evt_file__, str
+        ):
             self.__evt_file__.closeTheRootFile()
 
     def __fill_evt__(self):
-
-
-        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__ea_files__,
-                                                            self.__irf_to_store__,
-                                                            event_class_mode=self.__event_class_mode__,
-                                                            fov_cut=self.__fov_cut__,
-                                                            reco_type=self.__reco_type__,
-                                                            save_msw_msl=self.__save_msw_msl__,
-                                                            psf_king_params=self.__psf_king_params__)
+        gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(
+            self.__evt_file__,
+            self.__ea_files__,
+            self.__irf_to_store__,
+            event_class_mode=self.__event_class_mode__,
+            fov_cut=self.__fov_cut__,
+            reco_type=self.__reco_type__,
+            save_msw_msl=self.__save_msw_msl__,
+            psf_king_params=self.__psf_king_params__,
+        )
         self.__gti__ = gti
         # This is an array of dicts for each event class (array of one when not using event class mode)
         self.__evt__ = evt_dicts
@@ -73,8 +79,14 @@ class VegasDataSource(VtsDataSource):
         # Fill response for each event class
         for ec in self.__ea_files__:
             response_dicts.append(
-                __fillRESPONSE_not_safe__(ec, az, ze, nn, self.__irf_to_store__,
-                                          psf_king_params=self.__psf_king_params__)
+                __fillRESPONSE_not_safe__(
+                    ec,
+                    az,
+                    ze,
+                    nn,
+                    self.__irf_to_store__,
+                    psf_king_params=self.__psf_king_params__,
+                )
             )
 
         self.__response__ = response_dicts

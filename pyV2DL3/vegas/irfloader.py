@@ -90,15 +90,18 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
         n_bins_x = eb_dl3.GetNbinsX()
         n_bins_y = eb_dl3.GetNbinsY()
 
-        bin_edges_x = [eb_dl3.GetXaxis().GetBinLowEdge(i) for i in range(1, n_bins_x + 2)]
-        bin_edges_y = [eb_dl3.GetYaxis().GetBinLowEdge(i) for i in range(1, n_bins_y + 2)]
+        bin_edges_x = [
+            eb_dl3.GetXaxis().GetBinLowEdge(i) for i in range(1, n_bins_x + 2)
+        ]
+        bin_edges_y = [
+            eb_dl3.GetYaxis().GetBinLowEdge(i) for i in range(1, n_bins_y + 2)
+        ]
         a = np.zeros((n_bins_x, n_bins_y))
         for i in range(1, n_bins_x + 1):
             for j in range(1, n_bins_y + 1):
                 bin_content = eb_dl3.GetBinContent(i, j)
                 a[i - 1, j - 1] = bin_content
         e = np.vstack((bin_edges_x, bin_edges_y))
-
 
         eLow = np.power(10, [e[0][:-1]])[0]
         eHigh = np.power(10, [e[0][1:]])[0]
@@ -141,8 +144,26 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
         # Get ABias
         if not pointlike and not psf_king:
-            a = np.array([manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i) for i in range(1, manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX() + 1)])
-            e = np.array([manager.getAngularBias_DL3(effectiveAreaParameters).GetBinLowEdge(i) for i in range(1, manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX() + 2)])
+            a = np.array(
+                [
+                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i)
+                    for i in range(
+                        1,
+                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
+                        + 1,
+                    )
+                ]
+            )
+            e = np.array(
+                [
+                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinLowEdge(i)
+                    for i in range(
+                        1,
+                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
+                        + 2,
+                    )
+                ]
+            )
 
             eLow = np.power(10, [e[0][:-1]])[0]
             eHigh = np.power(10, [e[0][1:]])[0]
@@ -230,7 +251,7 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
                     ze_val,
                     noise_val,
                     pointlike,
-                    psf_king=psf_king_params is not None
+                    psf_king=psf_king_params is not None,
                 )
                 irf_dict["EA_Dict"] = ea_dict
                 irf_dict["EBias_Dict"] = ebias_dict
@@ -337,25 +358,27 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     # ABias
     abias_final_data = None
     if psf_king_params is not None:
-        abias_king_dict = get_king_psf_params(az, ze, noise, event_class, psf_king_params)
+        abias_king_dict = get_king_psf_params(
+            az, ze, noise, event_class, psf_king_params
+        )
 
-        elow = abias_king_dict['ELow']
-        ehigh = abias_king_dict['EHigh']
-        thetalow = abias_king_dict['ThetaLow']
-        thetahigh = abias_king_dict['ThetaHigh']
-        psf_gamma = abias_king_dict['Gamma']
-        psf_sigma = abias_king_dict['Sigma']
+        elow = abias_king_dict["ELow"]
+        ehigh = abias_king_dict["EHigh"]
+        thetalow = abias_king_dict["ThetaLow"]
+        thetahigh = abias_king_dict["ThetaHigh"]
+        psf_gamma = abias_king_dict["Gamma"]
+        psf_sigma = abias_king_dict["Sigma"]
 
         abias_final_data = np.array(
             [(elow, ehigh, thetalow, thetahigh, psf_gamma, psf_sigma)],
             dtype=[
-                ('ENERG_LO', '>f4', np.shape(elow)),
-                ('ENERG_HI', '>f4', np.shape(ehigh)),
-                ('THETA_LO', '>f4', np.shape(thetalow)),
-                ('THETA_HI', '>f4', np.shape(thetahigh)),
-                ('GAMMA', '>f4', np.shape(psf_gamma)),
-                ('SIGMA', '>f4', np.shape(psf_sigma))
-            ]
+                ("ENERG_LO", ">f4", np.shape(elow)),
+                ("ENERG_HI", ">f4", np.shape(ehigh)),
+                ("THETA_LO", ">f4", np.shape(thetalow)),
+                ("THETA_HI", ">f4", np.shape(thetahigh)),
+                ("GAMMA", ">f4", np.shape(psf_gamma)),
+                ("SIGMA", ">f4", np.shape(psf_sigma)),
+            ],
         )
 
     elif not pointlike:
@@ -475,16 +498,20 @@ Fill PSF table from King PSF parameters
 def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     msw_lower = event_class.msw_lower
     msw_upper = event_class.msw_upper
-    if msw_lower == float('-inf') or msw_upper == float('inf'):
+    if msw_lower == float("-inf") or msw_upper == float("inf"):
         raise Exception(
             "--psf_king currently requires MSW cuts to be defined in your EA file. ",
-            "King parameters are defined for particular MSW ranges")
+            "King parameters are defined for particular MSW ranges",
+        )
 
     psf_king_index = psf_king_params["index"]
     az_psf, zen_psf, noise_psf = get_psf_axes_values(
-        az, psf_king_index["Azimuth"],
-        ze, psf_king_index["Zenith"],
-        noise, psf_king_index["Noise"]
+        az,
+        psf_king_index["Azimuth"],
+        ze,
+        psf_king_index["Zenith"],
+        noise,
+        psf_king_index["Noise"],
     )
 
     # Init data structs
@@ -499,11 +526,13 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     # Search the king params for a line to match our arguments
     for param_values in psf_king_params["values"]:
         # `if` statements are lazily evaluated in Python
-        if (param_values[0] == zen_psf
-                and param_values[2] == noise_psf
-                and param_values[3] == az_psf
-                and param_values[4] == msw_lower
-                and param_values[5] == msw_upper):
+        if (
+            param_values[0] == zen_psf
+            and param_values[2] == noise_psf
+            and param_values[3] == az_psf
+            and param_values[4] == msw_lower
+            and param_values[5] == msw_upper
+        ):
             # Add the line to its corresponding offset array in offset_arrs
             for offset in offset_index:
                 if param_values[1] == offset:
@@ -512,7 +541,9 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     for key in offset_arrs:
         offset_arr = np.array(offset_arrs[key])
         if len(offset_arr) == 0:
-            raise Exception("Could not find any matching values in the PSF king parameters file")
+            raise Exception(
+                "Could not find any matching values in the PSF king parameters file"
+            )
         # Build sigma and lambda
         # Offset_arrs is sorted ascending because offset_index was sorted ascending
         full_sigma.append(offset_arr[:, 8])
@@ -526,11 +557,11 @@ def get_king_psf_params(az, ze, noise, event_class, psf_king_params):
     energy_high_bins = np.power(10, energy_high)
 
     # Assign loaded values for return
-    abias_king_dict['ELow'] = np.array(energy_low_bins)
-    abias_king_dict['EHigh'] = np.array(energy_high_bins)
-    abias_king_dict['ThetaLow'] = np.array(offset_index)
-    abias_king_dict['ThetaHigh'] = np.array(offset_index)
-    abias_king_dict['Gamma'] = np.array(full_lambda)
-    abias_king_dict['Sigma'] = np.array(full_sigma)
+    abias_king_dict["ELow"] = np.array(energy_low_bins)
+    abias_king_dict["EHigh"] = np.array(energy_high_bins)
+    abias_king_dict["ThetaLow"] = np.array(offset_index)
+    abias_king_dict["ThetaHigh"] = np.array(offset_index)
+    abias_king_dict["Gamma"] = np.array(full_lambda)
+    abias_king_dict["Sigma"] = np.array(full_sigma)
 
     return abias_king_dict
