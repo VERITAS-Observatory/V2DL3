@@ -91,13 +91,12 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
         n_bins_y = eb_dl3.GetNbinsY()
 
         bin_edges_x = [eb_dl3.GetXaxis().GetBinLowEdge(i) for i in range(1, n_bins_x + 2)]
-        
         bin_edges_y = [eb_dl3.GetYaxis().GetBinLowEdge(i) for i in range(1, n_bins_y + 2)]
-        a = np.zeros((n_bins_y, n_bins_y))
+        a = np.zeros((n_bins_x, n_bins_y))
         for i in range(1, n_bins_x + 1):
             for j in range(1, n_bins_y + 1):
                 bin_content = eb_dl3.GetBinContent(i, j)
-                a[i - 1,j-1] = bin_content
+                a[i - 1, j - 1] = bin_content
         e = np.vstack((bin_edges_x, bin_edges_y))
 
 
@@ -296,6 +295,7 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     )
     ea_interpolator = RegularGridInterpolator(inter_axis, ea_array)
     ebias_interpolator = RegularGridInterpolator(inter_axis, ebias_array)
+
     # Now lets actually build the data block to be passed
     # EA
     elow = irf_data[0]["EA_Dict"]["ELow"]

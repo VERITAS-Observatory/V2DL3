@@ -46,12 +46,15 @@ class VegasDataSource(VtsDataSource):
             self.__evt_file__.closeTheRootFile()
 
     def __fill_evt__(self):
+
+
         gti, ea_config, evt_dicts = __fillEVENTS_not_safe__(self.__evt_file__, self.__ea_files__,
+                                                            self.__irf_to_store__,
                                                             event_class_mode=self.__event_class_mode__,
                                                             fov_cut=self.__fov_cut__,
                                                             reco_type=self.__reco_type__,
                                                             save_msw_msl=self.__save_msw_msl__,
-                                                            )
+                                                            psf_king_params=self.__psf_king_params__)
         self.__gti__ = gti
         # This is an array of dicts for each event class (array of one when not using event class mode)
         self.__evt__ = evt_dicts

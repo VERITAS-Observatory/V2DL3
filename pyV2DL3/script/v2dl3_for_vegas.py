@@ -110,7 +110,8 @@ def cli(
         1) Single file mode
             When --file_pair is invoked, the path to the stage5 file
             and the corresponding effective area should be provided.
-            The <output> argument is then the resulting fits file name.
+            The <output> argument is then the directory to which
+            the fits files will be saved to.
         2) File list mode
             When using the option --runlist, the path to a stage6 runlist
             should be used.  The <output> is then the directory to which
@@ -158,7 +159,7 @@ def cli(
     logging.debug("Start importing ROOT")
     from pyV2DL3.genHDUList import genHDUlist
     from pyV2DL3.genHDUList import loadROOTFiles
-    from pyV2DL3.vegas.root_lib_util import cpp_print_context
+    from pyV2DL3.vegas.root_lib_util import cpp_print_context # Lundy- I don't like that this is where these are imported
 
     # Store in a dict the IRFs to be stored within a file.
     # By default we will only store point-like IRFs.
@@ -180,74 +181,87 @@ def cli(
         psf_king_params = load_psf_king_parameters(psf_king)
         datasource_kwargs["psf_king_params"] = psf_king_params
         irfs_to_store["psf-king"] = True
+    """
+    The main loop for all of the files to call and store the contents
+    into the fits files. This function is in a weird spot because 
+    of the imports of the previous functions. 
+    """
+    def processFilePair(st5_str, ea_files,flist,failed_list,output,
+                        save_multiplicity,filename_to_obsid,
+                        datasource_kwargs,irfs_to_store,verbose):
 
-    # File pair mode
-    if file_pair is not None:
-        st5_str, ea_file = file_pair
-        datasource = loadROOTFiles(st5_str, ea_file, "VEGAS", **datasource_kwargs)
+        logging.info(f"Processing file: {st5_str}")
+        logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
+        fname_base = os.path.splitext(os.path.basename(st5_str))[0]
+        datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
-            datasource.fill_data()
-        hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity)
-        fname_base = os.path.splitext(os.path.basename(output))[0]
-        if filename_to_obsid:
-            logging.info(
-                f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
-            )
-            hdulist[1].header["OBS_ID"] = fname_base
-        hdulist.writeto(output, overwrite=True)
+            try:
+                datasource.fill_data()
+            except Exception as e:
+                logging.info("Exception encountered in " + st5_str + ":")
+                logging.info(e)
+                # We don't want one run's problem to stop the entire batch
+                logging.info("Skipping " + st5_str)
+                failed_list[st5_str] = e
+                return flist,failed_list,1
+
+        # Prepare output paths
+        output_path = os.path.join(output, fname_base)
+        # This is length 1 when not using event class mode
+        num_event_groups = len(datasource.get_evt_data())
+        if num_event_groups < 1:
+            raise Exception("No event data found")
+        for i in range(0, num_event_groups):
+            # Make event class subdirectories if there is more than one event group in the VegasDataSource
+            if num_event_groups > 1:
+                output_path = make_eclass_path(output, fname_base, i)
+
+            # Write out the fits files
+            hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
+            if filename_to_obsid:
+                logging.info(
+                    f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
+                )
+                hdulist[1].header["OBS_ID"] = fname_base
+            output_path += ".fits"
+            hdulist.writeto(output_path, overwrite=True)
+            flist.append(output_path)
+
+        return flist,failed_list,num_event_groups
+
+
+    flist = []
+    failed_list = {}    
+    # File pair mode
+    if file_pair is not None:
+        from pyV2DL3.vegas.EffectiveAreaFile import EffectiveAreaFile
+        if not os.path.exists(output):
+            os.makedirs(output)
+        st5_str, ea_file = file_pair
+        ea_file= EffectiveAreaFile(ea_file)
+        flist,failed_list,num_event_groups=processFilePair(st5_str,ea_file,flist,failed_list,output,
+                    save_multiplicity,filename_to_obsid,
+                    datasource_kwargs,irfs_to_store,verbose)
     # Runlist mode
     else:
         file_pairs = runlist_to_file_pairs(runlist, event_class_mode, output)
-        flist = []
-        failed_list = {}
-        for st5_str, ea_files in file_pairs:
-            logging.info(f"Processing file: {st5_str}")
-            logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
-            fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-            datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
-            datasource.set_irfs_to_store(irfs_to_store)
-            with cpp_print_context(verbose=verbose):
-                try:
-                    datasource.fill_data()
-                except Exception as e:
-                    logging.info("Exception encountered in " + st5_str + ":")
-                    logging.info(e)
-                    # We don't want one run's problem to stop the entire batch
-                    logging.info("Skipping " + st5_str)
-                    failed_list[st5_str] = e
-                    continue
+        for st5_str, ea_file in file_pairs:
+            flist,failed_list,num_event_groups=processFilePair(st5_str, ea_file,flist,failed_list,output,
+                    save_multiplicity,filename_to_obsid,
+                    datasource_kwargs,irfs_to_store,verbose)
 
-            # Prepare output paths
-            output_path = os.path.join(output, fname_base)
-            # This is length 1 when not using event class mode
-            num_event_groups = len(datasource.get_evt_data())
-            if num_event_groups < 1:
-                raise Exception("No event data found")
-            for i in range(0, num_event_groups):
-                # Make event class subdirectories if there is more than one event group in the VegasDataSource
-                if num_event_groups > 1:
-                    output_path = make_eclass_path(output, fname_base, i)
 
-                # Write out the fits files
-                hdulist = genHDUlist(datasource, save_multiplicity=save_multiplicity, event_class_idx=i)
-                if filename_to_obsid:
-                    logging.info(
-                        f"Overwriting OBS_ID={hdulist[1].header['OBS_ID']} with OBS_ID={fname_base}"
-                    )
-                    hdulist[1].header["OBS_ID"] = fname_base
-                output_path += ".fits"
-                hdulist.writeto(output_path, overwrite=True)
-                flist.append(output_path)
+    #Clean up and report files that didn't work
 
-        if gen_index_file and len(flist) > 0:
-            gen_index_files(flist, output, eclass_count=num_event_groups)
+    if gen_index_file and len(flist) > 0:    
+        gen_index_files(flist, output, eclass_count=num_event_groups)
 
-        logging.info("Processing complete.")
-        if len(failed_list) > 0:
-            logging.info("V2DL3 was unable to process the following files:")
-            for key in failed_list:
-                logging.info(key + ": " + str(failed_list[key]))
+    logging.info("Processing complete.")
+    if len(failed_list) > 0:
+        logging.info("V2DL3 was unable to process the following files:")
+        for key in failed_list:
+            logging.info(key + ": " + str(failed_list[key]))
 
 
 """
@@ -345,7 +359,7 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
     elif os.path.isfile(output):
         click.secho(
             f"{output} already exists as a file. "
-            "<output> needs to be a directory for runlist mode.",
+            "<output> needs to be a directory.",
             fg="yellow",
         )
         raise click.Abort()

@@ -94,14 +94,13 @@ class EffectiveAreaFile(object):
                 raise Exception("{} Axis need to have more than two values".format(k))
         return axis_dict, index_dict
 
-    def get_safe_energy(self, az, ze, noise):
+    def get_safe_energy(self, az, ze, noise, offset=0.5):
         manager = self.manager
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
         effectiveAreaParameters.fAzimuth = az
         effectiveAreaParameters.fZenith = ze
         effectiveAreaParameters.fNoise = noise
-        # Should this be hardcoded? https://github.com/VERITAS-Observatory/V2DL3/issues/156
-        effectiveAreaParameters.fOffset = 0.5
+        effectiveAreaParameters.fOffset = offset
         effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
             effectiveAreaParameters
         )
