@@ -348,6 +348,7 @@ def energyBiasCorr(
     irf_to_store,
     psf_king_params,
 ):
+    logger.debug("Using Energy Bias Correction")
     axis_dict = effective_area_file.axis_dict
     manager = effective_area_file.manager
     offset_index = axis_dict["AbsoluteOffset"]
@@ -363,7 +364,6 @@ def energyBiasCorr(
 
     energyCorr = np.zeros(len(energy))
     correction = 1.0
-
     for i in range(len(energy)):
         e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
         offset_near = np.argmin(np.abs(offset_index - offset[i]))

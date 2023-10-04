@@ -82,6 +82,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "--point-like", is_flag=True, help="Store point-like IRFs (direction cut applied)"
 )
+@click.option(
+    "--energy-bias-corr", is_flag=True, help="Apply the energy bias correction"
+)
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--verbose", "-v", is_flag=True, help="Print root output")
 @click.argument("output", metavar="<output>")
@@ -98,6 +101,7 @@ def cli(
     filename_to_obsid,
     full_enclosure,
     point_like,
+    energy_bias_corr,
     debug,
     verbose,
     output,
@@ -176,6 +180,7 @@ def cli(
         "event_class_mode": event_class_mode,
         "reco_type": reconstruction_type,
         "save_msw_msl": save_msw_msl,
+        "corr_EB_params" : energy_bias_corr,
     }
 
     if psf_king is not None:

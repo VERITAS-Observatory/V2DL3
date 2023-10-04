@@ -16,6 +16,7 @@ class VegasDataSource(VtsDataSource):
         psf_king_params=None,
         reco_type=1,
         save_msw_msl=False,
+        corr_EB_params=False,
     ):
         super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
@@ -31,6 +32,7 @@ class VegasDataSource(VtsDataSource):
         self.__psf_king_params__ = psf_king_params
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
+        self.__corr_EB_params__ = corr_EB_params
 
         # Auxiliary storage
         self.__azimuth__ = 0
@@ -59,6 +61,7 @@ class VegasDataSource(VtsDataSource):
             fov_cut=self.__fov_cut__,
             reco_type=self.__reco_type__,
             save_msw_msl=self.__save_msw_msl__,
+            corr_EB=self.__corr_EB_params__,
             psf_king_params=self.__psf_king_params__,
         )
         self.__gti__ = gti
