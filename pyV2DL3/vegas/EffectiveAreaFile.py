@@ -5,6 +5,7 @@ from ctypes import c_float
 
 from pyV2DL3.vegas.util import getCuts
 from pyV2DL3.vegas.load_vegas import VEGASStatus
+
 logger = logging.getLogger(__name__)
 
 """
@@ -33,19 +34,22 @@ class EffectiveAreaFile(object):
         # Initialize the cuts parameter names to search for
         cut_searches = [
             "ThetaSquareUpper",
-            "MeanScaledWidthLower", "MeanScaledWidthUpper",
-            "MaxHeightLower", "MaxHeightUpper",
-            "FoVCutUpper", "FoVCutLower",
+            "MeanScaledWidthLower",
+            "MeanScaledWidthUpper",
+            "MaxHeightLower",
+            "MaxHeightUpper",
+            "FoVCutUpper",
+            "FoVCutLower",
         ]
 
         # Initialize corresponding class variables and default values
         self.theta_square_upper = None
-        self.msw_lower = float('-inf')
-        self.msw_upper = float('inf')
+        self.msw_lower = float("-inf")
+        self.msw_upper = float("inf")
         self.max_height_lower = None
         self.max_height_upper = None
-        self.fov_cut_lower = float('-inf')
-        self.fov_cut_upper = float('inf')
+        self.fov_cut_lower = float("-inf")
+        self.fov_cut_upper = float("inf")
 
         # Now load the cuts params
         self.__load_cuts_info__(cut_searches)
@@ -56,6 +60,7 @@ class EffectiveAreaFile(object):
     """
     Build az, zen, noise, and offset indexes for this file.
     """
+
     def __build_index__(self):
         manager = self.manager
         axis = ["Azimuth", "Zenith", "Noise"]
@@ -94,14 +99,13 @@ class EffectiveAreaFile(object):
                 raise Exception("{} Axis need to have more than two values".format(k))
         return axis_dict, index_dict
 
-    def get_safe_energy(self, az, ze, noise):
+    def get_safe_energy(self, az, ze, noise, offset=0.5):
         manager = self.manager
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
         effectiveAreaParameters.fAzimuth = az
         effectiveAreaParameters.fZenith = ze
         effectiveAreaParameters.fNoise = noise
-        # Should this be hardcoded? https://github.com/VERITAS-Observatory/V2DL3/issues/156
-        effectiveAreaParameters.fOffset = 0.5
+        effectiveAreaParameters.fOffset = offset
         effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
             effectiveAreaParameters
         )
@@ -113,6 +117,7 @@ class EffectiveAreaFile(object):
     """
     Loads and stores the effective area file's cuts parameters values
     """
+
     def __load_cuts_info__(self, cut_searches):
         # This dict will only contain keys from the found cuts.
         for cuts in self.effective_area_IO.loadTheCutsInfo():
@@ -130,9 +135,13 @@ class EffectiveAreaFile(object):
         if "MeanScaledWidthUpper" in ea_cut_dict:
             self.msw_upper = float(ea_cut_dict["MeanScaledWidthUpper"])
 
-        if (self.msw_lower >= self.msw_upper):
-            raise Exception("MeanScaledWidthLower: " + str(
-                self.msw_lower) + " must be < MeanScaledWidthUpper: " + str(self.msw_upper))
+        if self.msw_lower >= self.msw_upper:
+            raise Exception(
+                "MeanScaledWidthLower: "
+                + str(self.msw_lower)
+                + " must be < MeanScaledWidthUpper: "
+                + str(self.msw_upper)
+            )
 
         # Theta^2 cut is required
         if "ThetaSquareUpper" in ea_cut_dict:

@@ -13,13 +13,27 @@ from pyV2DL3.vegas.util import getTimeCut
 from pyV2DL3.vegas.util import mergeTimeCut
 from pyV2DL3.vegas.util import produceTelList
 
+from pyV2DL3.vegas.irfloader import get_irf_not_safe
+
+
 logger = logging.getLogger(__name__)
 
 windowSizeForNoise = 7
 
 
-def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
-                            fov_cut=True, event_class_mode=False, reco_type=1, save_msw_msl=False):
+def __fillEVENTS_not_safe__(
+    vegasFileIO,
+    effective_area_files,
+    irf_to_store,
+    fov_cut=True,
+    event_class_mode=False,
+    reco_type=1,
+    save_msw_msl=False,
+    corr_EB=False,
+    psf_king_params=None,
+):
+    if corr_EB and event_class_mode:
+        raise Exception("Currently Energy Bias and multiple EAs not supported")
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
@@ -41,9 +55,10 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
     startTime_s = startTime_s + seconds_from_reference_t0
     endTime_s = endTime_s + seconds_from_reference_t0
 
-    time_avg = (Time(startTime.getString(), format="iso", scale="utc")) + \
-        (Time(endTime.getString(), format="iso", scale="utc") - Time(startTime.getString(), format="iso", scale="utc")
-         ) / 2.
+    time_avg = (Time(startTime.getString(), format="iso", scale="utc")) + (
+        Time(endTime.getString(), format="iso", scale="utc")
+        - Time(startTime.getString(), format="iso", scale="utc")
+    ) / 2.0
 
     # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
@@ -89,8 +104,9 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         elif reco_type == 2:
             reco = ev.M3D
         else:
-            raise Exception("Invalid reconstruction type!"
-                            "\nSee --help for supported arguments")
+            raise Exception(
+                "Invalid reconstruction type!" "\nSee --help for supported arguments"
+            )
 
         # Include event in averages regardless of whether it gets cut
         avAlt.append(reco.fArrayTrackingElevation_Deg)
@@ -116,8 +132,13 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             # If this event falls outside of any event class
             if event_class_idx >= num_event_groups:
                 # Skip to next event
-                logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                             + " MSW: " + str(fMSW) + " not within an event class' MSW range")
+                logger.debug(
+                    "Event excluded: "
+                    + str(reco.fArrayEventNum)
+                    + " MSW: "
+                    + str(fMSW)
+                    + " not within an event class' MSW range"
+                )
                 continue
 
         # Check FoV if appropriate
@@ -125,11 +146,20 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             fov_cut_upper = effective_area_files[event_class_idx].fov_cut_upper
             fov_cut_lower = effective_area_files[event_class_idx].fov_cut_lower
             if fov_cut_lower > 0 or fov_cut_upper <= 180:
-                excluded, tel_sep = check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower)
+                excluded, tel_sep = check_FoV_exclusion(
+                    reco, fov_cut_upper, fov_cut_lower
+                )
                 if excluded:
-                    logger.debug("Event excluded: " + str(reco.fArrayEventNum)
-                                 + " separation: " + str(tel_sep) + " not within FoVCut range: "
-                                 + str(fov_cut_lower) + "-" + str(fov_cut_upper))
+                    logger.debug(
+                        "Event excluded: "
+                        + str(reco.fArrayEventNum)
+                        + " separation: "
+                        + str(tel_sep)
+                        + " not within FoVCut range: "
+                        + str(fov_cut_lower)
+                        + "-"
+                        + str(fov_cut_upper)
+                    )
                     continue
 
         if event_class_mode or save_msw_msl:
@@ -184,7 +214,6 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         evt_dict["DEC"] = arr_dict["decArr"]
         evt_dict["ALT"] = arr_dict["altArr"]
         evt_dict["AZ"] = arr_dict["azArr"]
-        evt_dict["ENERGY"] = arr_dict["energyArr"]
         evt_dict["EVENT_TYPE"] = arr_dict["nTelArr"]
         if "mswArr" in arr_dict:
             evt_dict["MSW"] = arr_dict["mswArr"]
@@ -192,9 +221,13 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
             evt_dict["MSL"] = arr_dict["mslArr"]
         # Filling Header info
         evt_dict["OBS_ID"] = runHeader.getRunNumber()
-        evt_dict["DATE-OBS"] = Time(startTime.getString(), format="iso", scale="utc").to_value("fits")
+        evt_dict["DATE-OBS"] = Time(
+            startTime.getString(), format="iso", scale="utc"
+        ).to_value("fits")
         evt_dict["TIME-OBS"] = startTime.getString().split()[1]
-        evt_dict["DATE-END"] = Time(endTime.getString(), format="iso", scale="utc").to_value("fits")
+        evt_dict["DATE-END"] = Time(
+            endTime.getString(), format="iso", scale="utc"
+        ).to_value("fits")
         evt_dict["TIME-END"] = endTime.getString().split()[1]
         evt_dict["DATE-AVG"] = time_avg.to_value("fits")
         evt_dict["TSTART"] = startTime_s
@@ -213,6 +246,8 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         evt_dict["DEC_OBJ"] = np.rad2deg(runHeader.getSourceDec())
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
+        if event_class_mode:
+            evt_dict["ENERGY"] = arr_dict["energyArr"]
 
     avNoise = 0
     nTels = 0
@@ -223,6 +258,24 @@ def __fillEVENTS_not_safe__(vegasFileIO, effective_area_files,
         nTels += 1
 
     avNoise /= nTels
+    if corr_EB:
+        offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
+            SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
+        )
+        offset = offset.degree
+        evt_dict["ENERGY"] = energyBiasCorr(
+            arr_dict["energyArr"],
+            avAz,
+            (90.0 - avAlt),
+            avNoise,
+            offset,
+            effective_area_files[event_class_idx],
+            irf_to_store,
+            psf_king_params,
+        )
+    else:
+        evt_dict["ENERGY"] = arr_dict["energyArr"]
+
     return (
         {
             "goodTimeStart": goodTimeStart,
@@ -253,13 +306,15 @@ def check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower):
     event_skycoord = SkyCoord(
         np.rad2deg(reco.fDirectionRA_J2000_Rad),
         np.rad2deg(reco.fDirectionDec_J2000_Rad),
-        frame='icrs', unit=(units.deg, units.deg)
+        frame="icrs",
+        unit=(units.deg, units.deg),
     )
 
     pointing_position = SkyCoord(
         np.rad2deg(reco.fArrayTrackingRA_J2000_Rad),
         np.rad2deg(reco.fArrayTrackingDec_J2000_Rad),
-        frame='icrs', unit=(units.deg, units.deg)
+        frame="icrs",
+        unit=(units.deg, units.deg),
     )
 
     tel_sep = pointing_position.separation(event_skycoord).degree
@@ -268,3 +323,59 @@ def check_FoV_exclusion(reco, fov_cut_upper, fov_cut_lower):
         return True, tel_sep
 
     return False, tel_sep
+
+
+"""
+Applies the Energy Bias Correction for Experimental Bias (might not be necessary
+as gammapy already has the migration matrix which it uses for energy reconstruction
+but including here just in case and making it easy to turn off)
+
+Paramters:
+    energy -- Stage 5 energy of the Events (in TeV)
+    effective_area_files -- The Effective Area
+
+
+"""
+
+
+def energyBiasCorr(
+    energy,
+    azimuth,
+    zenith,
+    noise,
+    offset,
+    effective_area_file,
+    irf_to_store,
+    psf_king_params,
+):
+    logger.debug("Using Energy Bias Correction")
+    axis_dict = effective_area_file.axis_dict
+    manager = effective_area_file.manager
+    offset_index = axis_dict["AbsoluteOffset"]
+    __, ebias_dict, __ = get_irf_not_safe(
+        manager,
+        offset_index,
+        azimuth,
+        zenith,
+        noise,
+        irf_to_store["point-like"],
+        psf_king=psf_king_params,
+    )
+
+    energyCorr = np.zeros(len(energy))
+    correction = 1.0
+    for i in range(len(energy)):
+        e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
+        offset_near = np.argmin(np.abs(offset_index - offset[i]))
+        mig_near = np.argmax(ebias_dict["Data"][offset_near, :, e_near])
+        correction = (
+            (
+                ebias_dict["MigrationHigh"][mig_near]
+                - ebias_dict["MigrationLow"][mig_near]
+            )
+            / 2
+        ) + ebias_dict["MigrationLow"][mig_near]
+        if correction < 1e-14:
+            correction = 1.0  # This correction should never be negative or zero
+        energyCorr[i] = (energy[i]) / correction
+    return energyCorr

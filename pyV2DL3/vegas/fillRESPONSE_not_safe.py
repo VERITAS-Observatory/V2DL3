@@ -12,8 +12,12 @@ def __fillRESPONSE_not_safe__(
 ):
     response_dict = {}
     ea_final_data, ebias_final_data, abias_final_data = getIRF(
-        azimuth, zenith, noise, effective_area_file, irf_to_store["point-like"],
-        psf_king_params=psf_king_params
+        azimuth,
+        zenith,
+        noise,
+        effective_area_file,
+        irf_to_store["point-like"],
+        psf_king_params=psf_king_params,
     )
     minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise)
     response_dict["LO_THRES"] = minEnergy
