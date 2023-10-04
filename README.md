@@ -73,10 +73,10 @@ Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/```
 
 #### One file at a time
 
-To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the output DL3 file.
+To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the output directory .Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
 ```bash
-v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
+v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test
 ```
 
 #### Generate from a VEGAS stage6 run list
@@ -96,6 +96,10 @@ python utils/vegas_runlister.py --help
 ## V2DL3 for EventDisplay
 
 The pip installation as discussed above is recommended for all users.
+
+### User Installation
+
+A simple installation using pypip (pip) is in preparation. For now, please follow the developer installation instructions.
 
 ### Developer Installation
 
@@ -120,20 +124,48 @@ The following input is required:
 Example for point-like analysis:
 
 ```bash
-python pyV2DL3/script/v2dl3_for_Eventdisplay.py -f 54809.anasum.root [Effective Area File] ./outputdir/54809.anasum.fits
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+    -f 54809.anasum.root [Effective Area File] \
+     ./output_dir/54809.anasum.fits
 ```
 
 Example for full-enclosure analysis:
 
 ```bash
-python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure -f 64080.anasum.root [Effective Area File] ./outputdir/64080.anasum.fits
+python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+     --full-enclosure \
+    -f 64080.anasum.root [Effective Area File] \
+     ./output_dir/64080.anasum.fits
 ```
 
-The run having their observational parameters (e.g., zenith, night sky background) outside but close to corresponding IRF axes range can be converted with the one of the following two command line parameters:
-
-- `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
+Runs with observational parameters (i.e., zenith, night sky background) outside but close to corresponding IRF axes range can be converted with the one of the following two command line parameters:
 
 - `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`.
+- `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
+
+Recommended options is: `--fuzzy_boundary zenith 0.05 --fuzzy_boundary pedvar 0.5`.
+This takes into account that extrapolation of the IRF zenith axis is applied to very large zenith angles only, where shower properties changes significantly with small changes in zenith angle.
+
+Further options are:
+
+- `--save_multiplicity`: write telescope multiplicity as `EVENTTYPE` keyword.
+- `--instrument_epoch [epoch]`: write instrument epoch as `INSTRUME` keyword.
+- `--db_fits_file [db_fits_file]`: copy run information (e.g., weather, L3 rates) from DB fits file into header information. Requires access to DB fits files.
+- `--evt_filter [filter_file]`: apply an event filter defined in a yaml or json file (examples below).
+
+#### Event filter examples
+
+Selects all events with `IsGamma == 1` (relevant only for anasum files produced with the `WRITE_ALL_EVENTS` set to 1).
+
+```yaml
+IsGamma: 1
+```
+
+Select all events with energies between 1 and 10 TeV:
+
+```yaml
+ENERGY: [1, 10]
+```
 
 ## Data storage and generating index files
 
