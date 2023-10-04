@@ -39,8 +39,12 @@ def validateRunlist(r_dict, event_class_mode=False):
         for gid, item in r_dict["EA"].items():
             if len(item) != 1:
                 exception_str = "Only one EA file can be used for each group.\n"
-                exception_str += "[EA ID: {:d}] has {:d} files.\n".format(gid, len(item))
-                exception_str += "If you meant to define event classes, run again with -ec"
+                exception_str += "[EA ID: {:d}] has {:d} files.\n".format(
+                    gid, len(item)
+                )
+                exception_str += (
+                    "If you meant to define event classes, run again with -ec"
+                )
                 raise RunlistValidationError(exception_str)
     # Check if all files exists
     for gid, item in r_dict["EA"].items():

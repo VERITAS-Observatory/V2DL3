@@ -58,10 +58,10 @@ Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/```
 
 #### One file at a time
 
-To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the output DL3 file.
+To convert a single stage 5 file to DL3 fits you need to provide the path to the stage 5 file as well as the corresponding effective area file using the flag ```-f```. The last argument is the name of the output directory .Beware that the file names for the outputs are inferred from the root file name (xxx.root -> xxx.fits)
 
 ```bash
-v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test.fits
+v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test
 ```
 
 #### Generate from a VEGAS stage6 run list
