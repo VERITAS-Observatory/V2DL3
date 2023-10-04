@@ -14,7 +14,7 @@ The V2DL3 project tries to share as many tools as possible between VEGAS and [Ev
 Two main steps are required to convert VERITAS data products to DL3 FITS format and use them with gammapy.
 Each of these steps are covered by one of the following tools:
 
-- converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-for-eventdisplay` for Eventdisplay)
+- converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-eventdisplay` for Eventdisplay)
 - `v2dl3-generate-index-file` tool to generate observation index tables
 
 ## User installation
@@ -30,7 +30,7 @@ pip install .
 > [!NOTE]
 > This This will replaced in near future by a pip install from PyPI.
 
-All scripts (`v2dl3-vegas`, `v2dl3-for-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
+All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
 
 ## V2DL3 for VEGAS
 
