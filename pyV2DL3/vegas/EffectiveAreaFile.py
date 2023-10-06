@@ -99,7 +99,7 @@ class EffectiveAreaFile(object):
                 raise Exception("{} Axis need to have more than two values".format(k))
         return axis_dict, index_dict
 
-    def get_safe_energy(self, az, ze, noise, offset=0.5):
+    def get_safe_energy(self, az, ze, noise, offset=0.5, st6_configs=None):
         manager = self.manager
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
         effectiveAreaParameters.fAzimuth = az
@@ -110,6 +110,16 @@ class EffectiveAreaFile(object):
             effectiveAreaParameters
         )
         minEnergy, maxEnergy = c_float(), c_float()
+        split_configs = {
+            opt.split()[0]: opt.split()[1] for opt in st6_configs if st6_configs is not None
+        }
+        if "EA_SafeEnergyRangeMethod" in split_configs.keys():
+            safe_energy_method = split_configs["EA_SafeEnergyRangeMethod"]
+            ea_uncertainty = split_configs["EA_MaxEffectiveAreaUncertainty"]
+            energy_bias = split_configs["EA_MaxAllowedEnergyBias"]
+            self.manager.setOption("EA_SafeEnergyRangeMethod", safe_energy_method)
+            self.manager.setOption("EA_MaxEffectiveAreaUncertainty", ea_uncertainty)
+            self.manager.setOption("EA_MaxAllowedEnergyBias", energy_bias)
 
         manager.getSafeEnergyRange(effectiveAreaParameters, 0.5, minEnergy, maxEnergy)
         return minEnergy.value / 1000.0, maxEnergy.value / 1000.0

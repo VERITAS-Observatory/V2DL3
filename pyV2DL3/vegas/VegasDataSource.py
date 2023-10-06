@@ -17,6 +17,7 @@ class VegasDataSource(VtsDataSource):
         reco_type=1,
         save_msw_msl=False,
         corr_EB_params=False,
+        st6_configs = None
     ):
         super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
@@ -33,6 +34,7 @@ class VegasDataSource(VtsDataSource):
         self.__reco_type__ = reco_type
         self.__save_msw_msl__ = save_msw_msl
         self.__corr_EB_params__ = corr_EB_params
+        self.__st6_configs__ = st6_configs
 
         # Auxiliary storage
         self.__azimuth__ = 0
@@ -63,6 +65,7 @@ class VegasDataSource(VtsDataSource):
             save_msw_msl=self.__save_msw_msl__,
             corr_EB=self.__corr_EB_params__,
             psf_king_params=self.__psf_king_params__,
+
         )
         self.__gti__ = gti
         # This is an array of dicts for each event class (array of one when not using event class mode)
@@ -89,6 +92,7 @@ class VegasDataSource(VtsDataSource):
                     nn,
                     self.__irf_to_store__,
                     psf_king_params=self.__psf_king_params__,
+                    st6_configs = self.__st6_configs__
                 )
             )
 
