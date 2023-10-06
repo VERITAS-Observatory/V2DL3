@@ -65,7 +65,7 @@ class VegasDataSource(VtsDataSource):
             save_msw_msl=self.__save_msw_msl__,
             corr_EB=self.__corr_EB_params__,
             psf_king_params=self.__psf_king_params__,
-
+            st6_configs=self.__st6_configs__
         )
         self.__gti__ = gti
         # This is an array of dicts for each event class (array of one when not using event class mode)
@@ -92,7 +92,7 @@ class VegasDataSource(VtsDataSource):
                     nn,
                     self.__irf_to_store__,
                     psf_king_params=self.__psf_king_params__,
-                    st6_configs = self.__st6_configs__
+                    st6_configs=self.__st6_configs__
                 )
             )
 

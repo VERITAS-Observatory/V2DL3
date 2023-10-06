@@ -111,12 +111,15 @@ class EffectiveAreaFile(object):
         )
         minEnergy, maxEnergy = c_float(), c_float()
         split_configs = {
-            opt.split()[0]: opt.split()[1] for opt in st6_configs if st6_configs is not None
+            opt.split(" ")[0]: opt.split(" ")[1] for opt in st6_configs if st6_configs is not None
         }
         if "EA_SafeEnergyRangeMethod" in split_configs.keys():
-            safe_energy_method = split_configs["EA_SafeEnergyRangeMethod"]
-            ea_uncertainty = split_configs["EA_MaxEffectiveAreaUncertainty"]
-            energy_bias = split_configs["EA_MaxAllowedEnergyBias"]
+            safe_energy_method = str(split_configs["EA_SafeEnergyRangeMethod"])
+            ea_uncertainty = float(split_configs["EA_MaxEffectiveAreaUncertainty"])
+            energy_bias = float(split_configs["EA_MaxAllowedEnergyBias"])
+            logger.debug(
+                f"Loaded st6 options EA_SafeEnergyRangeMethod: {safe_energy_method}, EA_MaxEffectiveAreaUncertainty: {ea_uncertainty}, EA_MaxAllowedEnergyBias: {energy_bias}"
+            )
             self.manager.setOption("EA_SafeEnergyRangeMethod", safe_energy_method)
             self.manager.setOption("EA_MaxEffectiveAreaUncertainty", ea_uncertainty)
             self.manager.setOption("EA_MaxAllowedEnergyBias", energy_bias)

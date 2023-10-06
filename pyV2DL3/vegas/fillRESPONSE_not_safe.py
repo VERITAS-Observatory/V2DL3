@@ -19,7 +19,7 @@ def __fillRESPONSE_not_safe__(
         irf_to_store["point-like"],
         psf_king_params=psf_king_params,
     )
-    minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise, st6_configs)
+    minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise, st6_configs=st6_configs)
     response_dict["LO_THRES"] = minEnergy
     response_dict["HI_THRES"] = maxEnergy
 
