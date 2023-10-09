@@ -17,7 +17,7 @@ class VegasDataSource(VtsDataSource):
         reco_type=1,
         save_msw_msl=False,
         corr_EB_params=False,
-        st6_configs = None
+        st6_configs=None
     ):
         super(VegasDataSource, self).__init__("VEGAS", evt_file, None)
 
