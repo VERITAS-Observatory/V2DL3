@@ -110,21 +110,22 @@ class EffectiveAreaFile(object):
             effectiveAreaParameters
         )
         minEnergy, maxEnergy = c_float(), c_float()
-        split_configs = {
-            opt.split(" ")[0]: opt.split(" ")[1] for opt in st6_configs if st6_configs is not None
-        }
-        if "EA_SafeEnergyRangeMethod" in split_configs.keys():
-            safe_energy_method = str(split_configs["EA_SafeEnergyRangeMethod"])
-            ea_uncertainty = float(split_configs["EA_MaxEffectiveAreaUncertainty"])
-            energy_bias = float(split_configs["EA_MaxAllowedEnergyBias"])
-            logger.debug(
-                f"Loaded st6 options EA_SafeEnergyRangeMethod: {safe_energy_method}, "
-                f"EA_MaxEffectiveAreaUncertainty: {ea_uncertainty}, "
-                f"EA_MaxAllowedEnergyBias: {energy_bias}"
-            )
-            self.manager.setOption("EA_SafeEnergyRangeMethod", safe_energy_method)
-            self.manager.setOption("EA_MaxEffectiveAreaUncertainty", ea_uncertainty)
-            self.manager.setOption("EA_MaxAllowedEnergyBias", energy_bias)
+        if st6_configs is not None:
+            split_configs = {
+                opt.split(" ")[0]: opt.split(" ")[1] for opt in st6_configs if st6_configs is not None
+            }
+            if "EA_SafeEnergyRangeMethod" in split_configs.keys():
+                safe_energy_method = str(split_configs["EA_SafeEnergyRangeMethod"])
+                ea_uncertainty = float(split_configs["EA_MaxEffectiveAreaUncertainty"])
+                energy_bias = float(split_configs["EA_MaxAllowedEnergyBias"])
+                logger.debug(
+                    f"Loaded st6 options EA_SafeEnergyRangeMethod: {safe_energy_method}, "
+                    f"EA_MaxEffectiveAreaUncertainty: {ea_uncertainty}, "
+                    f"EA_MaxAllowedEnergyBias: {energy_bias}"
+                )
+                self.manager.setOption("EA_SafeEnergyRangeMethod", safe_energy_method)
+                self.manager.setOption("EA_MaxEffectiveAreaUncertainty", ea_uncertainty)
+                self.manager.setOption("EA_MaxAllowedEnergyBias", energy_bias)
 
         manager.getSafeEnergyRange(effectiveAreaParameters, 0.5, minEnergy, maxEnergy)
         return minEnergy.value / 1000.0, maxEnergy.value / 1000.0

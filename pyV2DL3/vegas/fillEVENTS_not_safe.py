@@ -260,11 +260,10 @@ def __fillEVENTS_not_safe__(
 
     avNoise /= nTels
 
-    split_configs = {
-        opt.split()[0]: opt.split()[1] for opt in st6_configs if st6_configs is not None
-    }
-    if "EA_ApplyEnergyCorrectionForExperimentalBias" in split_configs.keys():
-        corr_EB = bool(split_configs["EA_ApplyEnergyCorrectionForExperimentalBias"])
+    if st6_configs is not None:
+        split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
+        if "EA_ApplyEnergyCorrectionForExperimentalBias" in split_configs.keys():
+            corr_EB = bool(split_configs["EA_ApplyEnergyCorrectionForExperimentalBias"])
     if corr_EB:
         offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
             SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
