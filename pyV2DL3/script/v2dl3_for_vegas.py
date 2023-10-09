@@ -410,7 +410,8 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
 
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
-    configs = rl_dict["CONFIG"]
+    if "CONFIG" in rl_dict.keys():
+        configs = rl_dict["CONFIG"]
 
     file_pairs = []
     for runlist_id in st5s.keys():
