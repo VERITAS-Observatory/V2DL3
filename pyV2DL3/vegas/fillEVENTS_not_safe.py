@@ -13,7 +13,7 @@ from pyV2DL3.vegas.util import getTimeCut
 from pyV2DL3.vegas.util import mergeTimeCut
 from pyV2DL3.vegas.util import produceTelList
 
-from pyV2DL3.vegas.irfloader import get_irf_not_safe
+#from pyV2DL3.vegas.irfloader import get_irf_not_safe
 
 import ROOT
 
@@ -337,7 +337,7 @@ Paramters:
 
 
 """
-from pprint import pprint
+#from pprint import pprint
 
 
 def energyBiasCorr(
@@ -351,7 +351,7 @@ def energyBiasCorr(
     psf_king_params,
 ):
     logger.debug("Using Energy Bias Correction")
-    axis_dict = effective_area_file.axis_dict
+    #axis_dict = effective_area_file.axis_dict
     manager = effective_area_file.manager
     energyCorr = []
 
