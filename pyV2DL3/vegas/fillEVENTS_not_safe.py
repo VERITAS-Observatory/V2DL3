@@ -15,6 +15,7 @@ from pyV2DL3.vegas.util import produceTelList
 
 from pyV2DL3.vegas.irfloader import get_irf_not_safe
 
+import ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -265,8 +266,8 @@ def __fillEVENTS_not_safe__(
         offset = offset.degree
         evt_dict["ENERGY"] = energyBiasCorr(
             arr_dict["energyArr"],
-            avAz,
-            (90.0 - avAlt),
+            arr_dict["azArr"],
+            (90.0 - arr_dict["altArr"]),
             avNoise,
             offset,
             effective_area_files[event_class_idx],
@@ -336,7 +337,7 @@ Paramters:
 
 
 """
-
+from pprint import pprint
 
 def energyBiasCorr(
     energy,
@@ -351,31 +352,48 @@ def energyBiasCorr(
     logger.debug("Using Energy Bias Correction")
     axis_dict = effective_area_file.axis_dict
     manager = effective_area_file.manager
-    offset_index = axis_dict["AbsoluteOffset"]
-    __, ebias_dict, __ = get_irf_not_safe(
-        manager,
-        offset_index,
-        azimuth,
-        zenith,
-        noise,
-        irf_to_store["point-like"],
-        psf_king=psf_king_params,
-    )
+    energyCorr=[]
 
-    energyCorr = np.zeros(len(energy))
-    correction = 1.0
     for i in range(len(energy)):
-        e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
-        offset_near = np.argmin(np.abs(offset_index - offset[i]))
-        mig_near = np.argmax(ebias_dict["Data"][offset_near, :, e_near])
-        correction = (
-            (
-                ebias_dict["MigrationHigh"][mig_near]
-                - ebias_dict["MigrationLow"][mig_near]
-            )
-            / 2
-        ) + ebias_dict["MigrationLow"][mig_near]
-        if correction < 1e-14:
-            correction = 1.0  # This correction should never be negative or zero
-        energyCorr[i] = (energy[i]) / correction
+        effectiveAreaParameters = ROOT.VAEASimpleParameterData()
+        effectiveAreaParameters.fAzimuth = azimuth[i]
+        effectiveAreaParameters.fZenith = zenith[i]
+        effectiveAreaParameters.fNoise = noise
+        effectiveAreaParameters.fOffset = offset[i]
+        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(effectiveAreaParameters)
+        correction=manager.getCorrectionForExperimentalBias(effectiveAreaParameters,energy[i]*1000)
+        energytemp=energy[i]/correction
+        logger.debug(energy[i])
+        logger.debug(str(energytemp))
+        energyCorr.append(energytemp)
+
+
     return energyCorr
+
+     #offset_index = axis_dict["AbsoluteOffset"]
+     #__, ebias_dict, __ = get_irf_not_safe(
+       #  manager,
+       #  offset_index,
+       #  azimuth,
+       #  zenith,
+       #  noise,
+       #  irf_to_store["point-like"],
+     #    psf_king=psf_king_params,
+     #)
+
+    # energyCorr = np.zeros(len(energy))
+     #correction = 1.0
+     #for i in range(len(energy)):
+      #   e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
+      #   offset_near = np.argmin(np.abs(offset_index - offset[i]))
+       #  mig_near = np.argmax(ebias_dict["Data"][offset_near, :, e_near])
+       #  correction = (
+       #      (
+       #          ebias_dict["MigrationHigh"][mig_near]
+       #          - ebias_dict["MigrationLow"][mig_near]
+      #       )      #       / 2
+     #   ) + ebias_dict["MigrationLow"][mig_near]
+    #    if correction < 1e-14:
+    #        correction = 1.0  # This correction should never be negative or zero
+    #    energyCorr[i] = (energy[i]) / correction
+    #return energyCorr
