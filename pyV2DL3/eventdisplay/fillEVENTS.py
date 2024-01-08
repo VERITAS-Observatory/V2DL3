@@ -107,8 +107,8 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
     evt_dict["AZ"] = DL3EventTree["Az"][mask]
     evt_dict["ENERGY"] = DL3EventTree["Energy"][mask]
     evt_dict["EVENT_TYPE"] = DL3EventTree["NImages"][mask]
-    evt_dict["Xoff"] = DL3EventTree["Xoff"][mask]
-    evt_dict["Yoff"] = DL3EventTree["Yoff"][mask]
+    evt_dict["XDET"] = DL3EventTree["Xoff"][mask]
+    evt_dict["YDET"] = DL3EventTree["Yoff"][mask]
     try:
         # Test if anasum file was created using the all events option.
         # In this case write out the additional output.
