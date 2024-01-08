@@ -41,7 +41,7 @@ set -e
 
 echo "Installing v2dl3-vegas..."
 pip install --upgrade pip setuptools wheel setuptools_scm 
-python --version
+pip list
 pip install . 
 
 # ---------- TEST RUNS -----------
