@@ -51,6 +51,7 @@ jobs:
           cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
           docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
           cd $DOCKER_WORKSPACE \
+          && git config --global --add safe.directory /$DOCKER_WORKSPACE \
           && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
           "
           cp -r $NEW_DIR ../$NEW_DIR
@@ -67,6 +68,7 @@ jobs:
           cp ../vegas_docker_test_runs_static.sh vegas_docker_test_runs_static.sh
           docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
           cd $DOCKER_WORKSPACE \
+          && git config --global --add safe.directory /$DOCKER_WORKSPACE \
           && bash vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
           "
           cp -r $CONTROL_DIR ../$CONTROL_DIR
