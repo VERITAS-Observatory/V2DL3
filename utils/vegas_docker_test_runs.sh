@@ -39,10 +39,14 @@ export LANG=C.UTF-8
 
 set -e
 
+echo "Listing working dir:"
+ls
+echo "Listing ./.git:"
+ls .git
 echo "Installing v2dl3-vegas..."
 pip install --upgrade pip setuptools wheel setuptools_scm 
 pip list
-pip install -e . 
+pip install . 
 
 # ---------- TEST RUNS -----------
 function run_tests() 
