@@ -62,19 +62,17 @@ function run_tests()
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_2 --no_prompt
     v2dl3-vegas $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
 
-    # Coming in King PSF update....
+    echo "-------------------------------"
+    echo "Full-enclosure 1 - Min flags"
+    echo "-------------------------------"
+    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
+    v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
 
-    # echo "-------------------------------"
-    # echo "Full-enclosure 1 - Min flags"
-    # echo "-------------------------------"
-    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
-    #v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
-
-    # echo "-------------------------------"
-    # echo "Full-enclosure 2 - Extra flags"
-    # echo "-------------------------------"
-    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
-    #v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
+    echo "-------------------------------"
+    echo "Full-enclosure 2 - Extra flags"
+    echo "-------------------------------"
+    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
+    v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
 
     echo "-------------------------------"    
     echo "Single event class"
