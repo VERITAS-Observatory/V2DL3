@@ -58,6 +58,12 @@ Install now pyV2DL3:
 pip install .
 ```
 
+On some setups, the following error may occur `LookupError: setuptools-scm was unable to detect version`. In this event, add the cloned git directory using
+
+```bash
+git config --global --add safe.directory
+```
+
 ### Docker recipe
 
 To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-docker/README.md*

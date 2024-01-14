@@ -40,7 +40,6 @@ export LANG=C.UTF-8
 set -e
 
 echo "Installing v2dl3-vegas..."
-git config --global --add safe.directory ./
 pip install --upgrade pip setuptools wheel setuptools_scm 
 pip install . 
 
