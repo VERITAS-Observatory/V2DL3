@@ -40,6 +40,8 @@ export LANG=C.UTF-8
 set -e
 
 echo "Installing v2dl3-vegas..."
+pip install --upgrade pip setuptools wheel setuptools_scm 
+pip list
 pip install . 
 
 # ---------- TEST RUNS -----------

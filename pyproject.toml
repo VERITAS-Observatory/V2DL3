@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages=["pyV2DL3"]
+
+[tool.setuptools_scm]
+write_to = "pyV2DL3/_version.py"
+
+[project]
+name = "v2dl3"
+dynamic = ["version"]
+description = "VERITAS (VEGAS and Eventdisplay) to DL3 Converter"
+readme = "README.md"
+license = { file="LICENSE" }
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+requires-python = "~=3.8"
+dependencies = [
+    "astropy",
+    "click",
+    "numpy",
+    "pkgconfig",
+    "pyyaml",
+    "scipy",
+    "tqdm",
+    "uproot",
+]
+
+[project.optional-dependencies]
+"tests" = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+"documentation" = "https://github.com/VERITAS-Observatory/V2DL3/"
+"repository" = "https://github.com/VERITAS-Observatory/V2DL3/"
+"bug tracker" = "https://github.com/VERITAS-Observatory/V2DL3/issues"
+
+[project.scripts]
+v2dl3-vegas = "pyV2DL3.script.v2dl3_for_vegas:cli"
+v2dl3-generate-index-file = "pyV2DL3.script.generate_index_file:cli"
+v2dl3-eventdisplay = "pyV2DL3.script.v2dl3_for_Eventdisplay:cli"
