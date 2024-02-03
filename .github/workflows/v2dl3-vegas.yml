@@ -75,6 +75,7 @@ jobs:
 
       - name: Install fitsdiff
         run: |
+          sudo apt update
           sudo apt-get install -qq astropy-utils
 
       # A failure on this test simply means that at least one fits from the test batteries
