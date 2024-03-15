@@ -1,5 +1,6 @@
 # Dockerfile to build V2DL3 for Eventdisplay
 FROM mambaorg/micromamba:latest
+WORKDIR /workdir/
 
 RUN micromamba install -y -n base -c conda-forge git
 
@@ -10,7 +11,7 @@ RUN eval "$(micromamba shell hook --shell bash)" && \
 RUN cd V2DL3 && \
     micromamba install -y -n base -f environment-eventdisplay.yml && \
     micromamba clean --all --yes
-ENV PYTHONPATH=$PYTHONPATH:"V2DL3/"
+ENV PYTHONPATH="/workdir/V2DL3/"
 
 SHELL ["/bin/bash", "-c"]
 
