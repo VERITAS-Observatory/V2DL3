@@ -58,7 +58,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}.{{patch}},suffix=-v2dl3-eventdisplay
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-v2dl3-eventdisplay
           flavor: latest=true
 
       - name: Build and push Docker image
