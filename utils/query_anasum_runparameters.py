@@ -1,13 +1,15 @@
 import uproot as up
 
 
-def get_epoch_effective_area(run):
+def get_epoch_effective_area(anasum_file, run):
     '''
     Reads and returns the epoch from the mscw log and the effective area file name
     from the anasum log stored within a anasum.root file.
 
     Parameters
     ----------
+    file: str
+        path and filename of ANASUM file
     run: int
         VERITAS run number
     Returns
@@ -15,7 +17,7 @@ def get_epoch_effective_area(run):
     Tuple
         epoch and effective area
     '''
-    file = up.open(f"./{run}.anasum.root")
+    file = up.open(anasum_file)
     data_list = file['anasumLog;1'].members['fLines']._data
     sub = "reading effective areas from"
     string = str([s for s in data_list if sub in s][0])
@@ -28,3 +30,4 @@ def get_epoch_effective_area(run):
     string = string.split(sep=",")
     epoch = str(string[1].replace(r" is: ", '').replace(r")", ''))
     return epoch, effective_area
+
