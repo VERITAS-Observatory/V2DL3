@@ -1,5 +1,6 @@
 import uproot as up
 
+
 def get_epoch_effective_area(run):
     '''
     Reads and returns the epoch from the mscw log and the effective area file name
