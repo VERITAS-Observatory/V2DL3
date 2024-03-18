@@ -1,4 +1,5 @@
 import uproot as up
+import sys
 
 
 def get_epoch_effective_area(anasum_file, run):
@@ -30,3 +31,25 @@ def get_epoch_effective_area(anasum_file, run):
     string = string.split(sep=",")
     epoch = str(string[1].replace(r" is: ", '').replace(r")", ''))
     return epoch, effective_area
+
+
+def main():
+    '''
+    Main function to execute the script.
+
+    Usage: python query_anasum_runparameters.py <anasum_file> <run_number>
+    '''
+
+if len(sys.argv) != 3:
+    print("Usage: python query_anasum_runparameters.py <anasum_file> <run_number>")
+    sys.exit(1)
+
+anasum_file = sys.argv[1]
+run_number = int(sys.argv[2])
+
+epoch, effective_area = get_epoch_effective_area(anasum_file, run_number)
+print("Epoch:", epoch)
+print("Effective Area:", effective_area)
+
+if __name__ == "__main__":
+    main()
