@@ -1,5 +1,6 @@
-import uproot as up
 import sys
+
+import uproot as up
 
 
 def get_epoch_effective_area(anasum_file, run):
