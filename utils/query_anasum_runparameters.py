@@ -30,4 +30,3 @@ def get_epoch_effective_area(anasum_file, run):
     string = string.split(sep=",")
     epoch = str(string[1].replace(r" is: ", '').replace(r")", ''))
     return epoch, effective_area
-
