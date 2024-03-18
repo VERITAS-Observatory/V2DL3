@@ -40,17 +40,17 @@ def main():
 
     Usage: python query_anasum_runparameters.py <anasum_file> <run_number>
     '''
+    if len(sys.argv) != 3:
+        print("Usage: python query_anasum_runparameters.py <anasum_file> <run_number>")
+        sys.exit(1)
 
-if len(sys.argv) != 3:
-    print("Usage: python query_anasum_runparameters.py <anasum_file> <run_number>")
-    sys.exit(1)
+    anasum_file = sys.argv[1]
+    run_number = int(sys.argv[2])
 
-anasum_file = sys.argv[1]
-run_number = int(sys.argv[2])
+    epoch, effective_area = get_epoch_effective_area(anasum_file, run_number)
+    print("Epoch:", epoch)
+    print("Effective Area:", effective_area)
 
-epoch, effective_area = get_epoch_effective_area(anasum_file, run_number)
-print("Epoch:", epoch)
-print("Effective Area:", effective_area)
 
 if __name__ == "__main__":
     main()
