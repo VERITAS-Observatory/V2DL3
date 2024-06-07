@@ -17,6 +17,7 @@ from pyV2DL3.eventdisplay.util import (
     getRunQuality,
     produce_tel_list,
 )
+from scipy.stats import circmean
 
 logger = logging.getLogger(__name__)
 
@@ -198,12 +199,7 @@ def __get_average_pointing(file, runNumber):
     """
     pointingDataReduced = file[
         f"run_{runNumber}/stereo/pointingDataReduced"].arrays(library="np")
-    avRA = np.rad2deg(
-        np.arctan2(
-            np.sum(np.sin(pointingDataReduced["TelRAJ2000"])),
-            np.sum(np.cos(pointingDataReduced["TelRAJ2000"])),
-        )
-    )
+    avRA = np.rad2deg(circmean(pointingDataReduced["TelRAJ2000"]))
     avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     return avRA, avDec
