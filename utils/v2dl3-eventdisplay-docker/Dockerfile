@@ -1,5 +1,6 @@
 # Dockerfile to build V2DL3 for Eventdisplay
 FROM mambaorg/micromamba:latest
+WORKDIR /workdir/
 
 RUN micromamba install -y -n base -c conda-forge git python="3.11"
 
@@ -14,7 +15,6 @@ RUN cd V2DL3 && \
     micromamba clean --all --yes
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-
 
 RUN python -m pip install --upgrade pip
 
