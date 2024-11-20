@@ -271,6 +271,7 @@ def cli(
             filename_to_obsid,
             datasource_kwargs,
             irfs_to_store,
+            None,
             verbose,
         )
     # Runlist mode
