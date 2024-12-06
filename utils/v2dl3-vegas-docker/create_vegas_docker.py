@@ -5,7 +5,6 @@ import argparse
 import os
 import subprocess
 import sys
-from getpass import getpass
 from shutil import copyfile
 from argparse import RawTextHelpFormatter
 
