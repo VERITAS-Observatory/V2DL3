@@ -42,6 +42,7 @@ set -e
 echo "Installing v2dl3-vegas..."
 python3 -m pip install --upgrade pip setuptools wheel setuptools_scm
 python3 -m pip install .
+v2dl3-vegas --help
 chmod 777 /usr/local/lib/python3.10/dist-packages
 pip list
 pwd
