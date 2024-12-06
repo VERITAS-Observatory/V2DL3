@@ -43,6 +43,11 @@ echo "Installing v2dl3-vegas..."
 python3 -m pip install --upgrade pip setuptools wheel setuptools_scm
 python3 -m pip install .
 chmod 777 /usr/local/lib/python3.10/dist-packages
+pip list
+pwd
+ls -l /usr/local/bin/v* /usr/local/lib/python3.10/dist-packages/
+python3 -c "import sys; print(sys.path) "
+python3 -c "import pyV2DL3; print(pyV2DL3.__file__) "
 
 # ---------- TEST RUNS -----------
 function run_tests() 
@@ -54,10 +59,6 @@ function run_tests()
     echo "-------------------------------"
     echo "Point-like 1 - Min flags"
     echo "-------------------------------"
-    pip list
-    pip3 list
-    python3 -m pip
-    ls /usr/local/bin/v*
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_1 --no_prompt
     v2dl3-vegas --point-like -l runlist.txt $OUTDIR/point-like-1
 
