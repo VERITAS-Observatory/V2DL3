@@ -43,7 +43,6 @@ echo "Installing v2dl3-vegas..."
 pip install --upgrade pip setuptools wheel setuptools_scm 
 pip list
 pip install .
-pip list
 
 # ---------- TEST RUNS -----------
 function run_tests() 
@@ -55,14 +54,18 @@ function run_tests()
     echo "-------------------------------"
     echo "Point-like 1 - Min flags"
     echo "-------------------------------"
+    pip list
+    pip3 list
+    python3 -m pip
+    ls /usr/local/bin/v*
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_1 --no_prompt
-    python3 pyV2DL3/script/v2dl3_for_vegas.py --point-like -l runlist.txt $OUTDIR/point-like-1
+    v2dl3-vegas --point-like -l runlist.txt $OUTDIR/point-like-1
 
     echo "-------------------------------"
     echo "Point-like 2 - Extra flags"
     echo "-------------------------------"
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_2 --no_prompt
-    python3 pyV2DL3/script/v2dl3_for_vegas.py $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
+    v2dl3-vegas $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
 
     # Coming in King PSF update....
 
@@ -70,26 +73,26 @@ function run_tests()
     # echo "Full-enclosure 1 - Min flags"
     # echo "-------------------------------"
     #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
-    #python3 pyV2DL3/script/v2dl3_for_vegas.py --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
+    #v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
 
     # echo "-------------------------------"
     # echo "Full-enclosure 2 - Extra flags"
     # echo "-------------------------------"
     #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
-    #python3 pyV2DL3/script/v2dl3_for_vegas.py $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
+    #v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
 
     echo "-------------------------------"    
     echo "Single event class"
     echo "-------------------------------"
 
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 --no_prompt
-    python3 pyV2DL3/script/v2dl3_for_vegas.py -ec -l runlist.txt $OUTDIR/single-evclass
+    v2dl3-vegas -ec -l runlist.txt $OUTDIR/single-evclass
 
     echo "-------------------------------"
     echo "Multi event class - Extra flags"
     echo "-------------------------------"
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 -e $EA_EVCLASS_2 --no_prompt
-    python3 pyV2DL3/script/v2dl3_for_vegas.py $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
+    v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
 }
 
 run_tests $OUTDIR
