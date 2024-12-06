@@ -50,50 +50,44 @@ python3 -c "import sys; print(sys.path) "
 python3 -c "import pyV2DL3; print(pyV2DL3.__file__) "
 
 # ---------- TEST RUNS -----------
-function run_tests() 
-{
-    # Func arg is base output dir
-    OUTDIR=$1
-    EXTRA_FLAGS="-m --save_msw_msl"
+EXTRA_FLAGS="-m --save_msw_msl"
 
-    echo "-------------------------------"
-    echo "Point-like 1 - Min flags"
-    echo "-------------------------------"
-    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_1 --no_prompt
-    v2dl3-vegas --point-like -l runlist.txt $OUTDIR/point-like-1
+echo "-------------------------------"
+echo "Point-like 1 - Min flags"
+echo "-------------------------------"
+python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_1 --no_prompt
+v2dl3-vegas --point-like -l runlist.txt $OUTDIR/point-like-1
 
-    echo "-------------------------------"
-    echo "Point-like 2 - Extra flags"
-    echo "-------------------------------"
-    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_2 --no_prompt
-    v2dl3-vegas $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
+echo "-------------------------------"
+echo "Point-like 2 - Extra flags"
+echo "-------------------------------"
+python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_POINTLIKE_2 --no_prompt
+v2dl3-vegas $EXTRA_FLAGS --point-like -l runlist.txt $OUTDIR/point-like-2
 
-    # Coming in King PSF update....
+# Coming in King PSF update....
 
-    # echo "-------------------------------"
-    # echo "Full-enclosure 1 - Min flags"
-    # echo "-------------------------------"
-    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
-    #v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
+# echo "-------------------------------"
+# echo "Full-enclosure 1 - Min flags"
+# echo "-------------------------------"
+#python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_1 --no_prompt
+#v2dl3-vegas --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-1
 
-    # echo "-------------------------------"
-    # echo "Full-enclosure 2 - Extra flags"
-    # echo "-------------------------------"
-    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
-    #v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
+# echo "-------------------------------"
+# echo "Full-enclosure 2 - Extra flags"
+# echo "-------------------------------"
+#python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
+#v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
 
-    echo "-------------------------------"    
-    echo "Single event class"
-    echo "-------------------------------"
+echo "-------------------------------"
+echo "Single event class"
+echo "-------------------------------"
 
-    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 --no_prompt
-    v2dl3-vegas -ec -l runlist.txt $OUTDIR/single-evclass
+python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 --no_prompt
+v2dl3-vegas -ec -l runlist.txt $OUTDIR/single-evclass
 
-    echo "-------------------------------"
-    echo "Multi event class - Extra flags"
-    echo "-------------------------------"
-    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 -e $EA_EVCLASS_2 --no_prompt
-    v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
-}
+echo "-------------------------------"
+echo "Multi event class - Extra flags"
+echo "-------------------------------"
+python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 -e $EA_EVCLASS_2 --no_prompt
+v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
 
-run_tests $OUTDIR
