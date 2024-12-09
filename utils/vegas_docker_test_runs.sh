@@ -42,12 +42,6 @@ set -e
 echo "Installing v2dl3-vegas..."
 python3 -m pip install --upgrade pip setuptools wheel setuptools_scm
 python3 -m pip install .
-chmod 777 /usr/local/lib/python3.10/dist-packages
-pip list
-pwd
-ls -l /usr/local/bin/v* /usr/local/lib/python3.10/dist-packages/
-python3 -c "import sys; print(sys.path) "
-python3 -c "import pyV2DL3; print(pyV2DL3.__file__) "
 
 # ---------- TEST RUNS -----------
 function run_tests() 
