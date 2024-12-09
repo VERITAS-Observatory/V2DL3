@@ -1,13 +1,3 @@
-[build-system]
-requires = ["setuptools", "setuptools_scm[toml]"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages=["pyV2DL3"]
-
-[tool.setuptools_scm]
-write_to = "pyV2DL3/_version.py"
-
 [project]
 name = "v2dl3"
 dynamic = ["version"]
@@ -43,6 +33,17 @@ dependencies = [
 "documentation" = "https://github.com/VERITAS-Observatory/V2DL3/"
 "repository" = "https://github.com/VERITAS-Observatory/V2DL3/"
 "bug tracker" = "https://github.com/VERITAS-Observatory/V2DL3/issues"
+
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages=["pyV2DL3", "pyV2DL3.eventdisplay", "pyV2DL3.script", "pyV2DL3.vegas", "pyV2DL3._dev_version", "pyV2DL3.tests"]
+#package-dir={'' = '.'}
+
+[tool.setuptools_scm]
+write_to = "pyV2DL3/_version.py"
 
 [project.scripts]
 v2dl3-vegas = "pyV2DL3.script.v2dl3_for_vegas:cli"
