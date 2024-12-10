@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: 'V2DL3'
 
@@ -62,7 +62,7 @@ jobs:
           flavor: latest=true
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           build-args: BUILD_BRANCH=${{ env.BUILD_BRANCH }}
