@@ -7,8 +7,6 @@ RUN micromamba install -y -n base -c conda-forge git python="3.11"
 RUN eval "$(micromamba shell hook --shell bash)" && \
     micromamba activate && \
     git clone https://github.com/VERITAS-Observatory/V2DL3.git V2DL3/ && \
-    cd V2DL3 && \
-    git checkout pypi-eventdisplay
 
 RUN cd V2DL3 && \
     micromamba install -y -n base -f environment-eventdisplay.yml && \
