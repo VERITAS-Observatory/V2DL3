@@ -28,7 +28,7 @@ pip install .
 ```
 
 > [!NOTE]
-> This This will replaced in near future by a pip install from PyPI.
+> This will replaced in near future by a pip install from PyPI.
 
 All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
 
