@@ -14,8 +14,23 @@ The V2DL3 project tries to share as many tools as possible between VEGAS and [Ev
 Two main steps are required to convert VERITAS data products to DL3 FITS format and use them with gammapy.
 Each of these steps are covered by one of the following tools:
 
-- converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-for-eventdisplay` for Eventdisplay)
+- converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-eventdisplay` for Eventdisplay)
 - `v2dl3-generate-index-file` tool to generate observation index tables
+
+## User installation
+
+Users of V2DL3 can install the package with the following steps:
+
+```bash
+git clone https://github.com/VERITAS-Observatory/V2DL3
+cd V2DL3
+pip install .
+```
+
+> [!NOTE]
+> This will replaced in near future by a pip install from PyPI.
+
+All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
 
 ## V2DL3 for VEGAS
 
@@ -80,7 +95,7 @@ python utils/vegas_runlister.py --help
 
 ## V2DL3 for EventDisplay
 
-Requires data products generated with Eventdisplay version >= 490.
+The pip installation as discussed above is recommended for all users.
 
 ### User Installation
 
@@ -93,11 +108,8 @@ Install dependencies and activate the environment using the [conda package manag
 ```bash
 conda env create -f environment-eventdisplay.yml
 conda activate v2dl3Eventdisplay
-export PYTHONPATH=$PYTHONPATH:"${PWD}"
+pip install -e .
 ```
-
-Note that no pip is required for using the v2dl3 tool with Eventdisplay
-(this will change in future).
 
 ### Converting Eventdisplay data products to DL3
 
