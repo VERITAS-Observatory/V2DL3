@@ -31,17 +31,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install mamba
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-file: environment-eventdisplay.yml
-          create-args: python=${{ matrix.python-version }}
-          init-shell: bash
+      - name: Pip install
+        run: |
+          pip install .[tests]
 
       - name: pytest
         shell: bash -leo pipefail {0}
-        env:
-          PYTHONPATH: .
         run: |
           pytest .
 
@@ -51,16 +46,14 @@ jobs:
 
       - name: Eventdisplay-pointlike
         shell: bash -leo pipefail {0}
-        env:
-          PYTHONPATH: .
         run: |
           # point-like tests
-          python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+          v2dl3-eventdisplay \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --logfile test-pointlike.fits.log \
                   test-pointlike-CI.fits.gz
-          python pyV2DL3/script/compareFitsFiles.py \
+          v2dl3-compareFitsFiles \
                 -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
           cat test-pointlike.log
@@ -72,12 +65,12 @@ jobs:
           PYTHONPATH: .
         run: |
           # full-enclosure tests
-          python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
+          v2dl3-eventdisplay --full-enclosure \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --logfile test-full-enclosure.fits.log \
                   test-full-enclosure-CI.fits.gz
-          python pyV2DL3/script/compareFitsFiles.py \
+          v2dl3-compareFitsFiles \
                 -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
                 -d test-full-enclosure.log
           cat test-full-enclosure.log
@@ -89,13 +82,13 @@ jobs:
           PYTHONPATH: .
         run: |
           # point-like tests (with DB)
-          python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+          v2dl3-eventdisplay \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --db_fits_file ./64080.db.fits.gz \
                   --logfile test-pointlike-db.fits.log \
                   test-pointlike-db-CI.fits.gz
-          python pyV2DL3/script/compareFitsFiles.py \
+          v2dl3-compareFitsFiles \
                 -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
                 -d test-pointlike-db.log
           cat test-pointlike-db.log
@@ -107,13 +100,13 @@ jobs:
           PYTHONPATH: .
         run: |
           # point-like tests with event selection
-          python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+          v2dl3-eventdisplay \
                -f ./64080.allevents.anasum.root \
                   ./effectiveArea.root \
                   --evt_filter eventfilter.yml \
                   --logfile test-pointlike-all.fits.log \
                   test-pointlike-all-CI.fits.gz
-          python pyV2DL3/script/compareFitsFiles.py \
+          v2dl3-compareFitsFiles \
                 -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
                 -d test-pointlike-all.log
           cat test-pointlike-all.log
@@ -125,13 +118,13 @@ jobs:
           PYTHONPATH: .
         run: |
           # full-enclosure tests with event selection
-          python pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
+          v2dl3-eventdisplay --full-enclosure \
                -f ./64080.allevents.anasum.root \
                   ./effectiveArea.root \
                   --evt_filter eventfilter.yml \
                   --logfile test-full-enclosure-all.fits.log \
                   test-full-enclosure-all-CI.fits.gz
-          python pyV2DL3/script/compareFitsFiles.py \
+          v2dl3-compareFitsFiles \
                 -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
                 -d test-full-enclosure-all.log
           cat test-full-enclosure-all.log
