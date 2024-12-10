@@ -1,6 +1,6 @@
 import numpy as np
-from pyV2DL3.eventdisplay.IrfExtractor import find_closest_az
-from pyV2DL3.eventdisplay.IrfExtractor import find_nearest
+
+from pyV2DL3.eventdisplay.IrfExtractor import find_closest_az, find_nearest
 
 
 def test_find_nearest():

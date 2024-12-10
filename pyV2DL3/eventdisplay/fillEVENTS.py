@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import uproot
 from astropy.time import Time
+from scipy.stats import circmean
 
 from pyV2DL3.constant import (
     VTS_REFERENCE_HEIGHT,
@@ -17,7 +18,6 @@ from pyV2DL3.eventdisplay.util import (
     getRunQuality,
     produce_tel_list,
 )
-from scipy.stats import circmean
 
 logger = logging.getLogger(__name__)
 

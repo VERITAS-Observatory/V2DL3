@@ -1,10 +1,11 @@
-import ROOT
 import logging
-import numpy as np
 from ctypes import c_float
 
-from pyV2DL3.vegas.util import getCuts
+import numpy as np
+import ROOT
+
 from pyV2DL3.vegas.load_vegas import VEGASStatus
+from pyV2DL3.vegas.util import getCuts
 
 logger = logging.getLogger(__name__)
 

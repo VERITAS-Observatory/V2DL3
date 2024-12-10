@@ -1,10 +1,9 @@
-from bisect import bisect_left
 import logging
+from bisect import bisect_left
 
 import numpy as np
 import ROOT
 from scipy.interpolate import RegularGridInterpolator
-
 
 logger = logging.getLogger(__name__)
 

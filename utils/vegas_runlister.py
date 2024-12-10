@@ -2,7 +2,6 @@ import argparse
 import os
 from pathlib import Path
 
-
 parser = argparse.ArgumentParser(
     description="""
     Create a runlist for v2dl3-vegas.
