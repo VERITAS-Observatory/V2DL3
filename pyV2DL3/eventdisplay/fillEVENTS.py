@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import uproot
 from astropy.time import Time
+from scipy.stats import circmean
 
 from pyV2DL3.constant import (
     VTS_REFERENCE_HEIGHT,
@@ -198,12 +199,7 @@ def __get_average_pointing(file, runNumber):
     """
     pointingDataReduced = file[
         f"run_{runNumber}/stereo/pointingDataReduced"].arrays(library="np")
-    avRA = np.rad2deg(
-        np.arctan2(
-            np.sum(np.sin(pointingDataReduced["TelRAJ2000"])),
-            np.sum(np.cos(pointingDataReduced["TelRAJ2000"])),
-        )
-    )
+    avRA = np.rad2deg(circmean(pointingDataReduced["TelRAJ2000"]))
     avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     return avRA, avDec
@@ -217,9 +213,8 @@ def __read_quality_flag_from_log(file, runNumber):
     try:
         return getRunQuality(file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines"))
     except KeyError:
-        logging.error("Eventdisplay logfile not found in anasum root file")
-        logging.error("Please make sure to use Eventdisplay >= 486")
-        raise
+        logging.info("Eventdisplay logfile not found in anasum root file. Quality flag set to 0")
+    return 0
 
 
 def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference):

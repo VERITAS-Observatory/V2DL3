@@ -40,10 +40,11 @@ export LANG=C.UTF-8
 set -e
 
 echo "Installing v2dl3-vegas..."
-pip install . 
+python3 -m pip install --upgrade pip setuptools wheel setuptools_scm
+python3 -m pip install .
 
 # ---------- TEST RUNS -----------
-function run_tests() 
+function run_tests()
 {
     # Func arg is base output dir
     OUTDIR=$1
@@ -75,7 +76,7 @@ function run_tests()
     #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_FULL_ENCLOSURE_2 --no_prompt
     #v2dl3-vegas $EXTRA_FLAGS --full-enclosure -l runlist.txt $OUTDIR/full-enclosure-2
 
-    echo "-------------------------------"    
+    echo "-------------------------------"
     echo "Single event class"
     echo "-------------------------------"
 

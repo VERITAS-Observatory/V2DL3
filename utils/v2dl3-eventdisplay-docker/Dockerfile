@@ -1,17 +1,15 @@
 # Dockerfile to build V2DL3 for Eventdisplay
-FROM mambaorg/micromamba:latest
+FROM python:3.11-slim
+WORKDIR /workdir/
 
-RUN micromamba install -y -n base -c conda-forge git
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN eval "$(micromamba shell hook --shell bash)" && \
-    micromamba activate && \
-    git clone --depth 1 https://github.com/VERITAS-Observatory/V2DL3.git V2DL3/
+RUN git clone https://github.com/VERITAS-Observatory/V2DL3.git V2DL3
 
 RUN cd V2DL3 && \
-    micromamba install -y -n base -f environment-eventdisplay.yml && \
-    micromamba clean --all --yes
-ENV PYTHONPATH=$PYTHONPATH:"V2DL3/"
-
-SHELL ["/bin/bash", "-c"]
+    pip install --no-cache-dir .
 
 RUN mkdir data/

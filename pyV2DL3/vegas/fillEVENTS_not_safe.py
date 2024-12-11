@@ -1,19 +1,19 @@
 import logging
 from copy import deepcopy
 
-from astropy.time import Time
-from astropy.coordinates import SkyCoord
 import astropy.units as units
 import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.vegas.util import decodeConfigMask
-from pyV2DL3.vegas.util import getGTArray
-from pyV2DL3.vegas.util import getTimeCut
-from pyV2DL3.vegas.util import mergeTimeCut
-from pyV2DL3.vegas.util import produceTelList
-
-# from pyV2DL3.vegas.irfloader import get_irf_not_safe
+from pyV2DL3.vegas.util import (
+    decodeConfigMask,
+    getGTArray,
+    getTimeCut,
+    mergeTimeCut,
+    produceTelList,
+)
 
 import ROOT
 
@@ -336,7 +336,7 @@ Applies the Energy Bias Correction for Experimental Bias (might not be necessary
 as gammapy already has the migration matrix which it uses for energy reconstruction
 but including here just in case and making it easy to turn off)
 
-Paramters:
+Parameters:
     energy -- Stage 5 energy of the Events (in TeV)
     effective_area_files -- The Effective Area
 

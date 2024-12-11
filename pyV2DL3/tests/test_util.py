@@ -1,6 +1,6 @@
-from pyV2DL3.eventdisplay.util import getGTI
-from pyV2DL3.eventdisplay.util import getRunQuality
 import numpy as np
+
+from pyV2DL3.eventdisplay.util import getGTI, getRunQuality
 
 
 def test_getRunQuality():

@@ -1,11 +1,11 @@
 ### Dockerfile for building an ubuntu image with VEGAS build
 
 # Use Ubuntu base image
-FROM arm64v8/ubuntu:18.04
+FROM arm64v8/ubuntu:22.04
 
 # environment variables
 ENV BOOST_V 1.64.0
-ENV ROOT_V 6.13.08
+ENV ROOT_V 6.26.14
 ENV TZ=America \
     DEBIAN_FRONTEND=noninteractive
 
@@ -13,8 +13,8 @@ ENV TZ=America \
 RUN mkdir software
 
 # Add files from outside - ADD automatically tars files
-ADD VBF-0.3.4.tar.gz /software/
-ADD VDB-4.3.2.tar.gz /software/
+COPY VBF /software/VBF
+COPY VDB /software/VDB
 ADD root_v${ROOT_V}.source.tar.gz /software/
 
 # Install ROOT prerequisites using apt-get
@@ -22,8 +22,8 @@ RUN apt-get -y update
 
 # ROOT packages
 RUN apt-get -y --fix-missing install autotools-dev autoconf autoconf-archive automake binutils \
-ca-certificates cmake curl dpkg-dev g++-7 gcc-7 git \ 
-libcfitsio-dev libgsl-dev libjpeg-dev libmysqlclient-dev libpng-dev \ 
+ca-certificates cmake curl dpkg-dev g++ gcc git rsync vim \
+libcfitsio-dev gsl-bin libgsl-dev libjpeg-dev libmysqlclient-dev libpng-dev \
 libssl-dev libx11-dev libxext-dev libxft-dev libxpm-dev \
 locales make pkg-config python3-dev python3-pip python3-numpy wget
 
@@ -39,7 +39,7 @@ RUN mkdir tarballs ROOT_build install
 
 # Install ROOT
 WORKDIR ROOT_build
-RUN cmake -Dgsl_shared=YES -Droofit=YES ../root-${ROOT_V}/
+RUN cmake -Droofit=YES -Dmathmore=ON ../root-${ROOT_V}/
 RUN cmake --build . -- -j8
 RUN cmake --build . --target install
 
@@ -57,20 +57,19 @@ RUN wget --directory-prefix=tarballs https://sourceforge.net/projects/boost/file
 RUN tar -zxf tarballs/boost_1_64_0.tar.gz
 
 # VBF
-WORKDIR /software/VBF-0.3.4
-RUN ./configure CXXFLAGS="-g -O2 -std=c++98" --prefix=/software/install --build=aarch64-unknown-linux-gnu
+WORKDIR /software/VBF
+RUN ./configure --prefix=/software/install
 RUN make && make install
 
 # VDB
-#RUN tar -zxvf tarballs/VDB-4.3.2.tar.gz
-WORKDIR /software/VDB-4.3.2
-RUN ./configure CXXFLAGS="-g -O2 -std=c++98" --prefix=/software/install --with-boost-incdir=/software/boost_1_64_0 --build=aarch64-unknown-linux-gnu
+WORKDIR /software/VDB
+RUN ./configure --prefix=/software/install --with-boost-incdir=/software/boost_1_64_0
 RUN make && make install
 
 # Update paths again
 ENV PATH "${PATH}:/software/install/bin"
 ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:/software/install/lib"
-ENV PKG_CONFIG_PATH /software/VBF-0.3.4:/software/VDB-4.3.2
+ENV PKG_CONFIG_PATH /software/VBF:/software/VDB
 
 # Link the boost include directory into the vegas source tree
 RUN ln -s /software/boost_1_64_0/boost /usr/local/include/
@@ -86,7 +85,7 @@ RUN mkdir /software/vegas-build /software/vegas-install
 # Build VEGAS
 COPY vegas/ /software/vegas
 WORKDIR /software/vegas-build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(which gcc-7) -DCMAKE_CXX_COMPILER=$(which g++-7) -DCMAKE_INSTALL_PREFIX=/software/vegas-install /software/vegas
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_INSTALL_PREFIX=/software/vegas-install /software/vegas
 RUN cmake --build . -- -j8
 RUN cmake --build . --target install
 
@@ -105,8 +104,8 @@ RUN cd showerReconstruction2/macros && root -l -b -q
 RUN cd resultsExtractor/macros && root -l -b -q
 
 # remove VERITAS source files
-RUN find /software/VBF-0.3.4/ -name "*.cpp" -exec rm {} \; && find /software/VBF-0.3.4/ -name "*.h" -exec rm {} \;
-RUN find /software/VDB-4.3.2/ -name "*.cpp" -exec rm {} \; && find /software/VDB-4.3.2/ -name "*.h" -exec rm {} \;
+RUN find /software/VBF/ -name "*.cpp" -exec rm {} \; && find /software/VBF/ -name "*.h" -exec rm {} \;
+RUN find /software/VDB/ -name "*.cpp" -exec rm {} \; && find /software/VDB/ -name "*.h" -exec rm {} \;
 RUN rm -rf /software/vegas-source/
 
 # V2DL3
