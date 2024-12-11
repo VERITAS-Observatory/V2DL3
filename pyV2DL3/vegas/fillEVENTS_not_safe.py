@@ -7,7 +7,6 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.vegas.irfloader import get_irf_not_safe
 from pyV2DL3.vegas.util import (
     decodeConfigMask,
     getGTArray,
@@ -15,6 +14,8 @@ from pyV2DL3.vegas.util import (
     mergeTimeCut,
     produceTelList,
 )
+
+import ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,10 @@ def __fillEVENTS_not_safe__(
     # Load header ,array info and selected event tree ( vegas > v2.5.7)
     runHeader = vegasFileIO.loadTheRunHeader()
     selectedEventsTree = vegasFileIO.loadTheCutEventTree()
+    cuts = vegasFileIO.loadTheCutsInfo()
+    arrayInfo = vegasFileIO.loadTheArrayInfo()
     qStatsData = vegasFileIO.loadTheQStatsData()
     pixelData = vegasFileIO.loadThePixelStatusData()
-    arrayInfo = vegasFileIO.loadTheArrayInfo(0)
-    cuts = vegasFileIO.loadTheCutsInfo()
 
     # Calculate time references
     startTime = runHeader.getStartTime()
@@ -83,6 +84,7 @@ def __fillEVENTS_not_safe__(
         "altArr": [],
         "energyArr": [],
         "nTelArr": [],
+        "fNoise": [],
     }
 
     # Arrays exclusive to event class mode
@@ -96,7 +98,6 @@ def __fillEVENTS_not_safe__(
         event_groups.append(deepcopy(event_arrays))
 
     logger.debug("Start filling events ...")
-
     for ev in selectedEventsTree:
         # Event reconstruction method
         if reco_type == 1:
@@ -180,6 +181,17 @@ def __fillEVENTS_not_safe__(
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
 
+        avNoise = 0
+        nTels = 0
+        for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
+            avNoise += qStatsData.getCameraAverageTraceVar(
+                telID - 1, windowSizeForNoise, reco.fTime, pixelData, arrayInfo
+            )
+            nTels += 1
+
+        avNoise /= nTels
+        this_event_group["fNoise"].append(avNoise)
+
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
     # https://en.wikipedia.org/wiki/Mean_of_circular_quantities
@@ -246,35 +258,32 @@ def __fillEVENTS_not_safe__(
         evt_dict["DEC_OBJ"] = np.rad2deg(runHeader.getSourceDec())
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
-        if event_class_mode:
+
+        if corr_EB:
+            offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
+                SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
+            )
+            offset = offset.degree
+            # This is a problem but I don't know if it's VEGAS or V2DL3
+            # The azimuth and zenith need to be used in the previous event
+            # So this means that the first event has no reference....
+            eList = np.array([arr_dict["energyArr"][0]])
+            eList = np.append(
+                eList,
+                energyBiasCorr(
+                    arr_dict["energyArr"],
+                    arr_dict["azArr"],
+                    arr_dict["altArr"],
+                    arr_dict["fNoise"],
+                    offset,
+                    effective_area_files[event_class_idx],
+                    irf_to_store,
+                    psf_king_params,
+                )[1:],
+            ).flatten()
+            evt_dict["ENERGY"] = eList
+        else:
             evt_dict["ENERGY"] = arr_dict["energyArr"]
-
-    avNoise = 0
-    nTels = 0
-    for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
-        avNoise += qStatsData.getCameraAverageTraceVarTimeIndpt(
-            telID - 1, windowSizeForNoise, pixelData, arrayInfo
-        )
-        nTels += 1
-
-    avNoise /= nTels
-    if corr_EB:
-        offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
-            SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
-        )
-        offset = offset.degree
-        evt_dict["ENERGY"] = energyBiasCorr(
-            arr_dict["energyArr"],
-            avAz,
-            (90.0 - avAlt),
-            avNoise,
-            offset,
-            effective_area_files[event_class_idx],
-            irf_to_store,
-            psf_king_params,
-        )
-    else:
-        evt_dict["ENERGY"] = arr_dict["energyArr"]
 
     return (
         {
@@ -336,6 +345,7 @@ Parameters:
 
 
 """
+# from pprint import pprint
 
 
 def energyBiasCorr(
@@ -349,33 +359,56 @@ def energyBiasCorr(
     psf_king_params,
 ):
     logger.debug("Using Energy Bias Correction")
-    axis_dict = effective_area_file.axis_dict
+    # axis_dict = effective_area_file.axis_dict
     manager = effective_area_file.manager
-    offset_index = axis_dict["AbsoluteOffset"]
-    __, ebias_dict, __ = get_irf_not_safe(
-        manager,
-        offset_index,
-        azimuth,
-        zenith,
-        noise,
-        irf_to_store["point-like"],
-        psf_king=psf_king_params,
-    )
+    energyCorr = []
 
-    energyCorr = np.zeros(len(energy))
-    correction = 1.0
-    for i in range(len(energy)):
-        e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
-        offset_near = np.argmin(np.abs(offset_index - offset[i]))
-        mig_near = np.argmax(ebias_dict["Data"][offset_near, :, e_near])
-        correction = (
-            (
-                ebias_dict["MigrationHigh"][mig_near]
-                - ebias_dict["MigrationLow"][mig_near]
-            )
-            / 2
-        ) + ebias_dict["MigrationLow"][mig_near]
-        if correction < 1e-14:
-            correction = 1.0  # This correction should never be negative or zero
-        energyCorr[i] = (energy[i]) / correction
+    for i in range(0, len(energy)):
+        shift = (
+            i - 1
+        )  # this is the kludge I don't know why this needs to be done it does not make sense
+        effectiveAreaParameters = ROOT.VAEASimpleParameterData()
+        effectiveAreaParameters.fAzimuth = azimuth[shift]
+        effectiveAreaParameters.fZenith = 90 - zenith[shift]
+        effectiveAreaParameters.fNoise = noise[shift]
+        # effectiveAreaParameters.fOffset = offset[i]
+        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
+            effectiveAreaParameters
+        )
+
+        correction = manager.getCorrectionForExperimentalBias(
+            effectiveAreaParameters, energy[i] * 1000
+        )
+        logger.debug(f"Correction = {correction}, Original E = {energy[i]*1000}")
+        energytemp = energy[i] / correction
+        energyCorr.append(energytemp)
+
     return energyCorr
+
+    # offset_index = axis_dict["AbsoluteOffset"]
+    # __, ebias_dict, __ = get_irf_not_safe(
+    #  manager,
+    #  offset_index,
+    #  azimuth,
+    #  zenith,
+    #  noise,
+    #  irf_to_store["point-like"],
+    #    psf_king=psf_king_params,
+    # )
+
+    # energyCorr = np.zeros(len(energy))
+    # correction = 1.0
+    # for i in range(len(energy)):
+    #   e_near = np.argwhere(ebias_dict["ELow"] > energy[i])[0][0]
+    #   offset_near = np.argmin(np.abs(offset_index - offset[i]))
+    #  mig_near = np.argmax(ebias_dict["Data"][offset_near, :, e_near])
+    #  correction = (
+    #      (
+    #          ebias_dict["MigrationHigh"][mig_near]
+    #          - ebias_dict["MigrationLow"][mig_near]
+    #       )      #       / 2
+    #   ) + ebias_dict["MigrationLow"][mig_near]
+    #    if correction < 1e-14:
+    #        correction = 1.0  # This correction should never be negative or zero
+    #    energyCorr[i] = (energy[i]) / correction
+    # return energyCorr
