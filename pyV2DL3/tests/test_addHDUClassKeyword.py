@@ -1,5 +1,6 @@
-from astropy.io import fits
 import numpy as np
+from astropy.io import fits
+
 import pyV2DL3.addHDUClassKeyword
 
 

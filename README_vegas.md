@@ -9,7 +9,7 @@ Events which fall outside the FoV defined in your EA file's cuts parameters will
 Use `-r 2` to choose ITM reconstruction instead of standard. If you're using a King PSF, make sure your parameters file is for the appropriate reconstruction type.
 
 ## Full Enclosure Analysis
-`--full-enclosure` 
+`--full-enclosure`
 
 v2dl3-vegas now supports full-enclosure via King PSF. Point-like remains default.
 

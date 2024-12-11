@@ -2,8 +2,8 @@
 #
 # compare two fits files and write
 # differences into a file
-from astropy.io import fits
 import click
+from astropy.io import fits
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 

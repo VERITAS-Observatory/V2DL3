@@ -1,19 +1,19 @@
 import logging
 from copy import deepcopy
 
-from astropy.time import Time
-from astropy.coordinates import SkyCoord
 import astropy.units as units
 import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
 
 from pyV2DL3.constant import VTS_REFERENCE_MJD
-from pyV2DL3.vegas.util import decodeConfigMask
-from pyV2DL3.vegas.util import getGTArray
-from pyV2DL3.vegas.util import getTimeCut
-from pyV2DL3.vegas.util import mergeTimeCut
-from pyV2DL3.vegas.util import produceTelList
-
-# from pyV2DL3.vegas.irfloader import get_irf_not_safe
+from pyV2DL3.vegas.util import (
+    decodeConfigMask,
+    getGTArray,
+    getTimeCut,
+    mergeTimeCut,
+    produceTelList,
+)
 
 import ROOT
 
@@ -292,7 +292,7 @@ def __fillEVENTS_not_safe__(
             effective_area_files[event_class_idx],
             irf_to_store,
             psf_king_params,
-        )[1:]).flatten()
+        )[1:],).flatten()
         evt_dict["ENERGY"] = eList
     else:
         evt_dict["ENERGY"] = arr_dict["energyArr"]
@@ -351,7 +351,7 @@ Applies the Energy Bias Correction for Experimental Bias (might not be necessary
 as gammapy already has the migration matrix which it uses for energy reconstruction
 but including here just in case and making it easy to turn off)
 
-Paramters:
+Parameters:
     energy -- Stage 5 energy of the Events (in TeV)
     effective_area_files -- The Effective Area
 
@@ -376,7 +376,9 @@ def energyBiasCorr(
     energyCorr = []
 
     for i in range(0, len(energy)):
-        shift = i - 1  # this is the kludge I don't know why this needs to be done it does not make sense
+        shift = (
+            i - 1
+        )  # this is the kludge I don't know why this needs to be done it does not make sense
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
         effectiveAreaParameters.fAzimuth = azimuth[shift]
         effectiveAreaParameters.fZenith = 90 - zenith[shift]

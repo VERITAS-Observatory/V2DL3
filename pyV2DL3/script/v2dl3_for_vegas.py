@@ -5,7 +5,6 @@ import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
 
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
@@ -161,11 +160,10 @@ def cli(
         print("Logging level INFO")
 
     logging.debug("Start importing ROOT")
-    from pyV2DL3.genHDUList import genHDUlist
-    from pyV2DL3.genHDUList import loadROOTFiles
-    from pyV2DL3.vegas.root_lib_util import (
+    from pyV2DL3.genHDUList import genHDUlist, loadROOTFiles
+    from pyV2DL3.vegas.root_lib_util import (  # Lundy- I don't like that this is where these are imported
         cpp_print_context,
-    )  # Lundy- I don't like that this is where these are imported
+    )
 
     # Store in a dict the IRFs to be stored within a file.
     # By default we will only store point-like IRFs.
@@ -380,10 +378,12 @@ Returns:
 
 
 def runlist_to_file_pairs(runlist, event_class_mode, output):
-    from pyV2DL3.vegas.parseSt6RunList import parseRunlistStrs
-    from pyV2DL3.vegas.parseSt6RunList import RunlistParsingError
-    from pyV2DL3.vegas.parseSt6RunList import RunlistValidationError
-    from pyV2DL3.vegas.parseSt6RunList import validateRunlist
+    from pyV2DL3.vegas.parseSt6RunList import (
+        RunlistParsingError,
+        RunlistValidationError,
+        parseRunlistStrs,
+        validateRunlist,
+    )
 
     with open(runlist) as f:
         lines = f.readlines()
