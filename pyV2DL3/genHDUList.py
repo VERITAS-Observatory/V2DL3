@@ -28,7 +28,7 @@ def genPrimaryHDU():
 
 def loadROOTFiles(data_file, effective_area_file, file_type, **kwargs):
     """
-    Load event lists, event header, and instrument reponse functions
+    Load event lists, event header, and instrument response functions
     from VEGAS / Eventdisplay ROOT files.
 
     """

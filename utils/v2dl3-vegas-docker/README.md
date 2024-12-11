@@ -1,4 +1,4 @@
-The contents of this directory are modified and streamlined from the VEGAS docker shifter, optimized for v2dl3-vegas CI testing. It is also suitable as a means to run v2dl3-vegas yourself without the heavy prerequesite software setup.
+The contents of this directory are modified and streamlined from the VEGAS docker shifter, optimized for v2dl3-vegas CI testing. It is also suitable as a means to run v2dl3-vegas yourself without the heavy prerequisite software setup.
 
 It is recommended to install gammapy somewhere else which allows for the latest versions of gammapy and python.
 
@@ -10,7 +10,7 @@ It is recommended to install gammapy somewhere else which allows for the latest 
 - VBF 0.3.4
 - VDB 4.3.2
 - VEGAS version chosen by user (script arg)
-- latest V2DL3 main branch installed to base enviornment
+- latest V2DL3 main branch installed to base environment
 
 #### Dockerfile_vegas_v2dl3_arm64
 - Same as above but for ARM architecture
@@ -55,4 +55,3 @@ branchName [String] The commit of VEGAS to be built in the image. Can be specifi
 
   --builddir BUILDDIR   [String] The directory in which to copy files and build image  (default is current directory)
 ```
-

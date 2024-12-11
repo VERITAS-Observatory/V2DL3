@@ -1,6 +1,4 @@
-from pyV2DL3.constant import HDUCLASS
-from pyV2DL3.constant import HDUDOC
-from pyV2DL3.constant import HDUVERS
+from pyV2DL3.constant import HDUCLASS, HDUDOC, HDUVERS
 
 
 def addHDUClassKeyword(hdu, class1, class2=None, class3=None, class4=None):

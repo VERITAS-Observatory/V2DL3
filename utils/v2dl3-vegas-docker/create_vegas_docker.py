@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+
 import argparse
 import os
 import subprocess
 import sys
-from shutil import copyfile
 from argparse import RawTextHelpFormatter
+from shutil import copyfile
 
 
 def eprint(*args, **kwargs):
@@ -176,7 +177,7 @@ if not os.path.isfile("Dockerfile"):
     sys.exit(1)
 
 if not args.suppress_build_image:
-    # first we need to make sure that there isnt a tag of the same name
+    # first we need to make sure that there is not a tag of the same name
     cmd = ["docker", "images", "-q", ("{0:s}".format(fulltag))]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     imageID = proc.communicate()[0]
