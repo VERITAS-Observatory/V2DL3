@@ -203,11 +203,13 @@ def cli(
         filename_to_obsid,
         datasource_kwargs,
         irfs_to_store,
+        st6_config,
         verbose,
     ):
         logging.info(f"Processing file: {st5_str}")
         logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
         fname_base = os.path.splitext(os.path.basename(st5_str))[0]
+        datasource_kwargs.update({"st6_configs" : st6_config})
         datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
@@ -267,12 +269,14 @@ def cli(
             filename_to_obsid,
             datasource_kwargs,
             irfs_to_store,
+            None,
             verbose,
         )
     # Runlist mode
     else:
         file_pairs = runlist_to_file_pairs(runlist, event_class_mode, output)
-        for st5_str, ea_file in file_pairs:
+        for st5_str, ea_file, st6_config in file_pairs:
+
             flist, failed_list, num_event_groups = processFilePair(
                 st5_str,
                 ea_file,
@@ -283,6 +287,7 @@ def cli(
                 filename_to_obsid,
                 datasource_kwargs,
                 irfs_to_store,
+                st6_config,
                 verbose,
             )
 
@@ -406,6 +411,9 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
 
     eas = rl_dict["EA"]
     st5s = rl_dict["RUNLIST"]
+    configs = None
+    if "CONFIG" in rl_dict.keys():
+        configs = rl_dict["CONFIG"]
 
     file_pairs = []
     for runlist_id in st5s.keys():
@@ -413,7 +421,12 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
             raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
 
         ea_files = [EffectiveAreaFile(ea) for ea in eas[runlist_id]]
-        file_pairs.extend([(st5_file, ea_files) for st5_file in st5s[runlist_id]])
+        if "CONFIG" in rl_dict.keys():
+            file_pairs.extend([(st5_file, ea_files, configs[runlist_id]) for st5_file in st5s[runlist_id]])
+        else:
+            file_pairs.extend(
+                [(st5_file, ea_files, configs) for st5_file in st5s[runlist_id]]
+            )
 
     return file_pairs
 

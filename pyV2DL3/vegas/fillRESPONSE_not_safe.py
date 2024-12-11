@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def __fillRESPONSE_not_safe__(
-    effective_area_file, azimuth, zenith, noise, irf_to_store, psf_king_params=None
+    effective_area_file, azimuth, zenith, noise, irf_to_store, psf_king_params=None, st6_configs=None
 ):
     response_dict = {}
     ea_final_data, ebias_final_data, abias_final_data = getIRF(
@@ -19,7 +19,7 @@ def __fillRESPONSE_not_safe__(
         irf_to_store["point-like"],
         psf_king_params=psf_king_params,
     )
-    minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise)
+    minEnergy, maxEnergy = effective_area_file.get_safe_energy(azimuth, zenith, noise, st6_configs=st6_configs)
     response_dict["LO_THRES"] = minEnergy
     response_dict["HI_THRES"] = maxEnergy
 

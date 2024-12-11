@@ -32,6 +32,7 @@ def __fillEVENTS_not_safe__(
     save_msw_msl=False,
     corr_EB=False,
     psf_king_params=None,
+    st6_configs=None
 ):
     if corr_EB and event_class_mode:
         raise Exception("Currently Energy Bias and multiple EAs not supported")
@@ -259,31 +260,42 @@ def __fillEVENTS_not_safe__(
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
 
-        if corr_EB:
-            offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
-                SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
-            )
-            offset = offset.degree
-            # This is a problem but I don't know if it's VEGAS or V2DL3
-            # The azimuth and zenith need to be used in the previous event
-            # So this means that the first event has no reference....
-            eList = np.array([arr_dict["energyArr"][0]])
-            eList = np.append(
-                eList,
-                energyBiasCorr(
-                    arr_dict["energyArr"],
-                    arr_dict["azArr"],
-                    arr_dict["altArr"],
-                    arr_dict["fNoise"],
-                    offset,
-                    effective_area_files[event_class_idx],
-                    irf_to_store,
-                    psf_king_params,
-                )[1:],
-            ).flatten()
-            evt_dict["ENERGY"] = eList
-        else:
-            evt_dict["ENERGY"] = arr_dict["energyArr"]
+    avNoise = 0
+    nTels = 0
+    for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
+        avNoise += qStatsData.getCameraAverageTraceVarTimeIndpt(
+            telID - 1, windowSizeForNoise, pixelData, arrayInfo
+        )
+        nTels += 1
+
+    avNoise /= nTels
+
+    if st6_configs is not None:
+        split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
+        if "EA_ApplyEnergyCorrectionForExperimentalBias" in split_configs.keys():
+            corr_EB = bool(split_configs["EA_ApplyEnergyCorrectionForExperimentalBias"])
+    if corr_EB:
+        offset = SkyCoord(avRA * units.deg, avDec * units.deg).separation(
+            SkyCoord(arr_dict["raArr"] * units.deg, arr_dict["decArr"] * units.deg)
+        )
+        offset = offset.degree
+        # This is a problem but I don't know if it's VEGAS or V2DL3
+        # The azimuth and zenith need to be used in the previous event
+        # So this means that the first event has no reference....
+        eList = np.array([arr_dict["energyArr"][0]])
+        eList = np.append(eList, energyBiasCorr(
+            arr_dict["energyArr"],
+            arr_dict["azArr"],
+            arr_dict["altArr"],
+            arr_dict["fNoise"],
+            offset,
+            effective_area_files[event_class_idx],
+            irf_to_store,
+            psf_king_params,
+        )[1:],).flatten()
+        evt_dict["ENERGY"] = eList
+    else:
+        evt_dict["ENERGY"] = arr_dict["energyArr"]
 
     return (
         {
@@ -372,9 +384,7 @@ def energyBiasCorr(
         effectiveAreaParameters.fZenith = 90 - zenith[shift]
         effectiveAreaParameters.fNoise = noise[shift]
         # effectiveAreaParameters.fOffset = offset[i]
-        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
-            effectiveAreaParameters
-        )
+        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(effectiveAreaParameters)
 
         correction = manager.getCorrectionForExperimentalBias(
             effectiveAreaParameters, energy[i] * 1000
