@@ -11,7 +11,7 @@ The FITS output follows the data formats for gamma-ray astronomy as defined in o
 
 The V2DL3 project tries to share as many tools as possible between VEGAS and [Eventdisplay](https://github.com/VERITAS-Observatory/EventDisplay_v4), especially those used for writing the FITS files.
 
-Two main steps are required to convert VERITAS data products to DL3 FITS format and use them with gammapy.
+Two steps are required to convert VERITAS data products to DL3 FITS format and use them with gammapy.
 Each of these steps are covered by one of the following tools:
 
 - converter of event lists and instrument response functions to DL3 (`v2dl3-vegas` for VEGAS, `v2dl3-eventdisplay` for Eventdisplay)
@@ -38,7 +38,7 @@ All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) a
 - Requirements are listed in the ```environment-vegas.yml``` file.
 - Alternatively, a script which builds a Docker image with the latest V2DL3 and the prerequisite software for v2dl3-vegas is available. See *utils/v2dl3-vegas-docker/README.md*
 
-### Installation
+### Developer Installation (VEGAS)
 
 Use the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to install the dependencies:
 
@@ -97,11 +97,7 @@ python utils/vegas_runlister.py --help
 
 The pip installation as discussed above is recommended for all users.
 
-### User Installation
-
-A simple installation using pypip (pip) is in preparation. For now, please follow the developer installation instructions.
-
-### Developer Installation
+### Developer Installation (Eventdisplay)
 
 Install dependencies and activate the environment using the [conda package manager](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html):
 
@@ -113,7 +109,7 @@ pip install -e .
 
 ### Converting Eventdisplay data products to DL3
 
-Run `python pyV2DL3/script/v2dl3_for_Eventdisplay.py --help` to see all options.
+Run `v2dl3-eventdisplay --help` to see all options.
 
 Convert an anasum output file to DL3.
 The following input is required:
@@ -124,7 +120,7 @@ The following input is required:
 Example for point-like analysis:
 
 ```bash
-python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+v2dl3-eventdisplay \
     -f 54809.anasum.root [Effective Area File] \
      ./output_dir/54809.anasum.fits
 ```
@@ -132,7 +128,7 @@ python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
 Example for full-enclosure analysis:
 
 ```bash
-python pyV2DL3/script/v2dl3_for_Eventdisplay.py \
+v2dl3-eventdisplay \
      --full-enclosure \
     -f 64080.anasum.root [Effective Area File] \
      ./output_dir/64080.anasum.fits
@@ -171,19 +167,14 @@ ENERGY: [1, 10]
 
 Generate observation index and HDU tables for DL3 data storage are required to use with *gammapy* in for reading and analysis of the generated DL3 data.
 This steps is independent of VEGAS or Eventdisplay.
-The two index files are generated with the tool `generate_index_file.py`.
+The two index files are generated with the tool `v2dl3-generate-index-file` (check all options with `v2dl3-generate-index-file --help`).
 
 The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
 
 - [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
 - [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
 
-To use `generate_index_file.py`, run:
-
-- `generate_index_file --help` when using VEGAS
-- `python pyV2DL3/script/generate_index_file.py --help` when using Eventdisplay
-
-## Contributing and Developing Code
+## Contributing to V2DL3 and Developing Code
 
 Your contribution is welcome!
 
@@ -193,6 +184,7 @@ A few remarks when contributing code:
 - put package specific code into the [pyV2DL3/vegas](pyV2DL3/vegas) and [pyV2DL3/eventdisplay](pyV2DL3/eventdisplay) directories. As different environments are used for both packages, do not put any imports to vegas/eventdisplay in modules in pyV2DL3
 
 To ensure readability, we try follow the Python [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide.
+Best to install the [precommit](https://pre-commit.com/) tool to check the code style before committing.
 
 Functions and classes should contain a docstring with a short description.
 
