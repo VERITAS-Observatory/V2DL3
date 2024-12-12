@@ -7,10 +7,10 @@ channels:
   - astropy
   - conda-forge
 dependencies:
-  - astropy>=4.0
+  - astropy-base
   - click
   - flake8
-  - numpy>=1.13
+  - numpy
   - pre-commit
   - pyflakes
   - pytest
