@@ -1,13 +1,13 @@
 # V2DL3 Docker file for Eventdisplay
 
-## Using V2DL3 with the docker image
+## Using V2DL3 with docker
 
 Docker requires explicit binding of paths into the image. Replace `data_path`
 in the following command accordingly.
 
 ```bash
 docker run --rm -it -v "<data_path>":/data vts-v2dl3 \
-    python V2DL3/pyV2DL3/script/v2dl3_for_Eventdisplay.py --help
+           v2dl3-eventdisplay --help
 ```
 
 Run the image and provide a bash environment:
@@ -18,8 +18,9 @@ docker run --rm -it -v "<data_path>:/data vts-v2dl3 bash
 
 ## Building the Image
 
-Note that this Dockerfile is prepared for a Github Action workflow.
-V2DL3 source code is expected to be in the current directory.
+Docker packages are prepared for each release with a Github Action workflow, see the package registry [here](https://github.com/VERITAS-Observatory/V2DL3/pkgs/container/v2dl3).
+
+To build images locally:
 
 ```bash
 docker build -t vts-v2dl3 .
