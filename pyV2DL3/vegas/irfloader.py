@@ -58,8 +58,6 @@ def get_axes_edges(az, az_index, ze, ze_index, noise, noise_index):
                 break
     if (noise_low < 0) or (noise_high < 0):
         raise Exception("Unexpected error: Noise range could not be determined")
-    print(noise)
-    print(noise_low,noise_high)
 
     return az_low, az_high, ze_low, ze_high, noise_low, noise_high
 
@@ -245,9 +243,9 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
         az, axis_dict["Azimuth"], ze, axis_dict["Zenith"], noise, axis_dict["Noise"]
     )
     if noise > noise_high:
-        noise=noise_high
+        noise = noise_high
     if noise < noise_low:
-        noise=noise_low
+        noise = noise_low
     irf_data = []
     offset_index = axis_dict["AbsoluteOffset"]
     for az_i, az_val in [(0, az_low), (1, az_high)]:
