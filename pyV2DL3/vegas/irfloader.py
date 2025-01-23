@@ -81,10 +81,9 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
                 effectiveAreaParameters
             )
             eb_dl3 = manager.getEnergyBias_DL3(effectiveAreaParameters, False)
-
         if not ea_dl3:
             continue
-
+        
         # Get Ebias
         n_bins_x = eb_dl3.GetNbinsX()
         n_bins_y = eb_dl3.GetNbinsY()
@@ -143,32 +142,43 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
         # Get ABias
         if not pointlike and not psf_king:
-            a = np.array(
+
+            x_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
+            y_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsY()
+        
+            
+            
+            x_edges = np.array(
                 [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i)
-                    for i in range(
-                        1,
-                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
-                        + 1,
-                    )
-                ]
-            )
-            e = np.array(
-                [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinLowEdge(i)
-                    for i in range(
-                        1,
-                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
-                        + 2,
-                    )
+                    manager.getAngularBias_DL3(effectiveAreaParameters).GetXaxis().GetBinLowEdge(i)
+                    for i in range(1, x_n_bins + 2,)
                 ]
             )
 
-            eLow = np.power(10, [e[0][:-1]])[0]
-            eHigh = np.power(10, [e[0][1:]])[0]
+            y_edges = np.array(
+                [
+                    manager.getAngularBias_DL3(effectiveAreaParameters).GetYaxis().GetBinLowEdge(i)
+                    for i in range(1, y_n_bins + 2,)
+                ]
+            )
+            
+            a = np.zeros((x_n_bins, y_n_bins))
+            for i in range(1, x_n_bins + 1):
+                for j in range(1, y_n_bins + 1):
+                    bin_content = manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i, j)
+                    a[i - 1, j - 1] = bin_content
+            
+            
+            e = np.vstack((x_n_bins, y_n_bins))
 
-            bLow = np.power(10, [e[1][:-1]])[0]
-            bHigh = np.power(10, [e[1][1:]])[0]
+
+            
+            # Apply power of 10 transformation
+            eLow = np.power(10, x_edges[:-1])
+            eHigh = np.power(10, x_edges[1:])
+            bLow = np.power(10, y_edges[:-1])
+            bHigh = np.power(10, y_edges[1:])
+
 
             ac = []
             for aa in a:
