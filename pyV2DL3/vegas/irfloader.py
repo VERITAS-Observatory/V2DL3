@@ -145,9 +145,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
             x_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
             y_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsY()
-        
-            
-            
+
             x_edges = np.array(
                 [
                     manager.getAngularBias_DL3(effectiveAreaParameters).GetXaxis().GetBinLowEdge(i)
@@ -161,25 +159,22 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
                     for i in range(1, y_n_bins + 2,)
                 ]
             )
-            
+
             a = np.zeros((x_n_bins, y_n_bins))
             for i in range(1, x_n_bins + 1):
                 for j in range(1, y_n_bins + 1):
                     bin_content = manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i, j)
                     a[i - 1, j - 1] = bin_content
             
-            
-            e = np.vstack((x_n_bins, y_n_bins))
+            e = np.vstack((x_edges, y_edges))
 
-
-            
             # Apply power of 10 transformation
             eLow = np.power(10, x_edges[:-1])
             eHigh = np.power(10, x_edges[1:])
             bLow = np.power(10, y_edges[:-1])
             bHigh = np.power(10, y_edges[1:])
 
-
+            a = a.transpose()
             ac = []
             for aa in a:
                 if np.sum(aa) > 0:
