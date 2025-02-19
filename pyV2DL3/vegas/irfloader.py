@@ -175,24 +175,21 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
             bHigh = np.power(10, y_edges[1:])
 
             a = a.transpose()
+            counts_map = a
             ac = []
-            for aa in a:
-                if np.sum(aa) > 0:
-                    # As the unit is sr^-1 we need to convert y bin size into radian
-                    ab = (
-                        aa
-                        / np.deg2rad(bHigh - bLow)
-                        / np.sum(aa)
-                        / np.pi
-                        / np.deg2rad(bHigh + bLow)
-                    )
+            for i in range(len(counts_map)):
+                energy_slice = a[:, i]
+                if np.sum(energy_slice) > 0:
+                    norm_counts = energy_slice / np.sum(energy_slice)
+                    dr_rad = np.deg2rad(bHigh - bLow)
+                    dP_dr = norm_counts / dr_rad
+                    r_rad = np.deg2rad(0.5 * (bHigh + bLow))
+                    psf_density = dP_dr / (2 * np.pi * r_rad)
+                    ac.append(psf_density)
                 else:
-                    ab = aa
-                try:
-                    ac = np.vstack((ac, ab))
-                except ValueError:
-                    ac = ab
+                    ac.append(energy_slice * np.nan)
 
+            ac = np.array(ac)
             ac = ac.transpose()
             abias_energy_low = eLow
             abias_energy_high = eHigh
@@ -401,11 +398,10 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
         )
 
         # Build Interpolator
-        for irf in irf_data:
-            abias_data = irf["ABias_Dict"]["Data"]
-            abias_array[index[0], index[1], index[2]][
-                offset_index_low:offset_index_high
-            ] = abias_data
+        for i in range(len(irf_data)):
+            abias_data = irf_data[i]["ABias_Dict"]["Data"]
+            inidices = [[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]]
+            abias_array[inidices[i][0], inidices[i][1], inidices[i][2], offset_index_low:offset_index_high] = abias_data
 
         abias_interpolator = RegularGridInterpolator(inter_axis, abias_array)
 
