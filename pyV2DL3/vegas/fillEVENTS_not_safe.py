@@ -269,6 +269,7 @@ def __fillEVENTS_not_safe__(
         nTels += 1
 
     avNoise /= nTels
+    evt_dict["NSBLEVEL"] = avNoise
 
     if st6_configs is not None:
         split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
