@@ -181,6 +181,7 @@ def fill_effective_area(
 ):
     """Effective areas"""
 
+    print("FFF set irf", irf_name)
     irf_interpolator.set_irf(irf_name, **kwargs)
 
     ea_final = []

@@ -1,6 +1,7 @@
 import logging
 import sys
 
+import awkward as ak
 import numpy as np
 import uproot
 
@@ -49,7 +50,7 @@ def load_parameter(parameter_name, fast_eff_area, az_mask=None):
 def find_closest_az(azimuth, azMins, azMaxs):
     """find closest azimuth bin
 
-    note the different conventions for azimuth:
+    Note the different conventions for azimuth:
     - anasum file (0..360)
     - EA (-180..180)
 
@@ -67,20 +68,24 @@ def get_empty_ndarray(data_dimension):
     return np.zeros(tuple(data_dimension))
 
 
+def _get_az_mask(azimuth, fast_eff_area):
+    """Return azimuth mask for given azimuth angle"""
+    _, azMaxs = load_parameter("azMax", fast_eff_area)
+    _, azMins = load_parameter("azMin", fast_eff_area)
+    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
+    print("AZIMUTH", az_bin_to_store, azimuth)
+    return fast_eff_area["az"].array(library="np") == az_bin_to_store
+
+
 def extract_irf_1d(filename, irf_name, azimuth=None):
-    """extract 1D IRF from effective area file
+    """
+    Extract 1D IRF from effective area file
 
     return a multidimensional array
     """
 
     fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
-
-    # select az bin and define az mask
-    _, azMaxs = load_parameter("azMax", fast_eff_area)
-    _, azMins = load_parameter("azMin", fast_eff_area)
-    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
-    az_mask = fast_eff_area["az"].array(library="np") == az_bin_to_store
-
+    az_mask = _get_az_mask(azimuth, fast_eff_area)
     energies = fast_eff_area["e0"].array(library="np")[az_mask]
     irf = fast_eff_area[irf_name].array(library="np")[az_mask]
 
@@ -89,6 +94,9 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
     all_Woffs, woffs = load_parameter("Woff", fast_eff_area, az_mask)
 
     data = get_empty_ndarray([len(irf[0]), len(pedvars), len(zds), len(woffs)])
+    print("EEFF", len(irf[0]), len(pedvars), len(zds), len(woffs), len(irf))
+    print("VVVV", pedvars, zds, woffs, len(irf), len(all_pedvars), len(all_zds), len(all_Woffs))
+    print("ZZZZ", irf[0])
 
     for i in range(len(irf)):
         try:
@@ -103,7 +111,13 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
             logging.error("Entry number ", i)
             raise
 
-    axes = {'energies': energies[0], 'pedvars': pedvars, 'zeniths': zds, 'woffs': woffs}
+    axes = {
+        'energies': energies[0],
+        'pedvars': pedvars,
+        'zeniths': zds,
+        'woffs': woffs
+    }
+    print("DDDD", data.shape)
 
     return data, axes
 
@@ -123,18 +137,32 @@ def read_irf_axis(xy, fast_eff_area, irf_name, az_mask):
 
 
 def extract_irf_2d(filename, irf_name, azimuth=None):
-    """extract 2D IRF from effective area file
+    """
+    Extract 2D IRF from effective area file.
 
-    return a multidimensional array
+    Returns a multidimensional array with axes:
+
+    - irf_dimension_1
+    - irf_dimension_2
+    - pedvars
+    - zeniths
+    - woffs
+
+    For azimuth, select the azimuth bin closest to the given azimuth angle.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the effective area file.
+    irf_name : str
+        Name of the IRF to extract (e.g., 'eff' or 'hEsysMCRelative2D').
+    azimuth : float, optional
+        Azimuth angle in degrees.
+
     """
 
     fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
-
-    # select az bin and define az mask
-    _, azMaxs = load_parameter("azMax", fast_eff_area)
-    _, azMins = load_parameter("azMin", fast_eff_area)
-    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
-    az_mask = fast_eff_area["az"].array(library="np") == az_bin_to_store
+    az_mask = _get_az_mask(azimuth, fast_eff_area)
 
     # IRF axes and values
     irf_dimension_1 = read_irf_axis("x", fast_eff_area, irf_name, az_mask)
@@ -188,3 +216,39 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
 
     irf_fn = extract_irf_1d if irf1d else extract_irf_2d
     return irf_fn(filename, irf_name, azimuth)
+
+
+def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
+    """Extract IRF for KNeighborsRegressor"""
+
+    fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
+    az_mask = _get_az_mask(azimuth, fast_eff_area)
+
+    e0 = fast_eff_area["e0"].array()[az_mask]
+    ze = np.cos(np.radians(fast_eff_area["ze"].array()[az_mask]))
+    pedvar = fast_eff_area["pedvar"].array()[az_mask]
+    woff = fast_eff_area["Woff"].array()[az_mask]
+    print("kNN-000", len(ak.flatten(e0)), len(ze), len(pedvar), len(woff))
+    ze_b, pedvar_b, woff_b = ak.broadcast_arrays(e0, pedvar, ze, woff)[1:]
+
+    values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name].array()[az_mask]))
+
+    print("kNN-AAA", ak.flatten(ze_b), ak.flatten(pedvar_b), ak.flatten(woff_b), ak.flatten(e0))
+
+    # Stack and flatten directly
+    coords = np.vstack([
+        ak.to_numpy(ak.flatten(pedvar_b)),  # pedvar
+        ak.to_numpy(ak.flatten(ze_b)),  # ze
+        ak.to_numpy(ak.flatten(woff_b)),  # woff
+        ak.to_numpy(ak.flatten(e0)),  # e0
+    ]).T
+
+    print("NNNN", coords.shape, values.shape)
+
+    return coords, values
+
+
+#    if irf1d:
+#        ze, pedvar, woff, az = ak.broadcast_arrays(
+#            e0, ze, pedvar, woff, az
+#        )[1:]
