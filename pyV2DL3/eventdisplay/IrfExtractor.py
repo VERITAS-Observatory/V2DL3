@@ -73,7 +73,6 @@ def _get_az_mask(azimuth, fast_eff_area):
     _, azMaxs = load_parameter("azMax", fast_eff_area)
     _, azMins = load_parameter("azMin", fast_eff_area)
     az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
-    print("AZIMUTH", az_bin_to_store, azimuth)
     return fast_eff_area["az"].array(library="np") == az_bin_to_store
 
 
@@ -220,35 +219,46 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
 
 def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
     """Extract IRF for KNeighborsRegressor"""
-
     fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
     az_mask = _get_az_mask(azimuth, fast_eff_area)
 
-    e0 = fast_eff_area["e0"].array()[az_mask]
+    # Get parameters
     ze = np.cos(np.radians(fast_eff_area["ze"].array()[az_mask]))
     pedvar = fast_eff_area["pedvar"].array()[az_mask]
     woff = fast_eff_area["Woff"].array()[az_mask]
-    print("kNN-000", len(ak.flatten(e0)), len(ze), len(pedvar), len(woff))
-    ze_b, pedvar_b, woff_b = ak.broadcast_arrays(e0, pedvar, ze, woff)[1:]
 
-    values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name].array()[az_mask]))
+    if irf1d:
+        # 1D IRF case
+        e0 = fast_eff_area["e0"].array()[az_mask]
+        ze_b, pedvar_b, woff_b = ak.broadcast_arrays(e0, ze, pedvar, woff)[1:]
+        coords = np.vstack([
+            ak.to_numpy(ak.flatten(pedvar_b)),
+            ak.to_numpy(ak.flatten(ze_b)),
+            ak.to_numpy(ak.flatten(woff_b)),
+            ak.to_numpy(ak.flatten(e0)),
+        ]).T
+        values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name].array()[az_mask]))
+    else:
+        # 2D IRF case
+        irf_axis_x = read_irf_axis("x", fast_eff_area, irf_name, az_mask)
+        irf_axis_y = read_irf_axis("y", fast_eff_area, irf_name, az_mask)
+        values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name + "_value"].array()[az_mask]))
 
-    print("kNN-AAA", ak.flatten(ze_b), ak.flatten(pedvar_b), ak.flatten(woff_b), ak.flatten(e0))
+        ze_rep = np.repeat(ak.to_numpy(ze), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
+        pedvar_rep = np.repeat(ak.to_numpy(pedvar), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
+        woff_rep = np.repeat(ak.to_numpy(woff), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
 
-    # Stack and flatten directly
-    coords = np.vstack([
-        ak.to_numpy(ak.flatten(pedvar_b)),  # pedvar
-        ak.to_numpy(ak.flatten(ze_b)),  # ze
-        ak.to_numpy(ak.flatten(woff_b)),  # woff
-        ak.to_numpy(ak.flatten(e0)),  # e0
-    ]).T
+        irf_dim1 = np.tile(irf_axis_x, len(irf_axis_y))
+        irf_dim1 = np.tile(irf_dim1, len(ze))
+        irf_dim2 = np.tile(irf_axis_y, len(irf_axis_x))
+        irf_dim2 = np.tile(irf_dim2, len(ze))
 
-    print("NNNN", coords.shape, values.shape)
+        coords = np.vstack([
+            pedvar_rep.flatten(),
+            ze_rep.flatten(),
+            woff_rep.flatten(),
+            irf_dim1.flatten(),
+            irf_dim2.flatten(),
+        ]).T
 
     return coords, values
-
-
-#    if irf1d:
-#        ze, pedvar, woff, az = ak.broadcast_arrays(
-#            e0, ze, pedvar, woff, az
-#        )[1:]

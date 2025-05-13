@@ -22,8 +22,7 @@ class IrfInterpolator:
         self.irf_name = ""
         self.azimuth = azimuth
         self.interpolator = None
-        self.kNN = None
-        self.interpolator_name = "RegularGridInterpolator"
+        self.interpolator_name = "KNeighborsRegressor"
 
         if os.path.isfile(filename):
             self.filename = filename
@@ -39,8 +38,6 @@ class IrfInterpolator:
         ):
             self.irf_name = irf_name
             self._load_irf(**kwargs)
-            if irf_name in self.implemented_irf_names_1d:
-                self._load_irf_for_knn(**kwargs)
         else:
             logging.error(
                 "The irf you entered: {} is either wrong or not implemented.".format(
@@ -69,12 +66,21 @@ class IrfInterpolator:
         coords, values = extract_irf_for_knn(
             self.filename,
             self.irf_name,
-            irf1d=(self.irf_name in self.implemented_irf_names_1d),
+            irf1d=self.irf_name in self.implemented_irf_names_1d,
             azimuth=self.azimuth,
         )
-        self.kNN = KNeighborsRegressor(
-            n_neighbors=5, weights="distance")
-        self.kNN.fit(coords, values)
+        self.interpolator = KNeighborsRegressor(n_neighbors=5, weights="distance")
+        self.interpolator.fit(coords, values)
+
+        # Set irf_axes based on the coordinates
+        if self.irf_name in self.implemented_irf_names_1d:
+            self.irf_axes = [np.unique(coords[:, 3])]  # energy axis
+        else:
+            self.irf_axes = [
+                np.unique(coords[:, 3]),  # x dimension
+                np.unique(coords[:, 4])   # y dimension
+            ]
+        logging.debug(str(("IRF axes:", self.irf_axes)))
 
     def _load_irf_for_regular_grid_interpolator(self, **kwargs):
         """Load IRFs from file for RegularGridInterpolator"""
@@ -118,11 +124,6 @@ class IrfInterpolator:
         else:
             extrapolation = kwargs.get("force_extrapolation", False)
 
-        print("AAA", self.irf_axes, extrapolation)
-        print("IRF data shape:", self.irf_data.shape)
-        for i, axis_len in enumerate(self.irf_data.shape):
-            print(f"Axis {i} length: {axis_len}")
-
         if extrapolation:
             self.interpolator = RegularGridInterpolator(
                 self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
@@ -131,7 +132,6 @@ class IrfInterpolator:
 
     def interpolate(self, coordinate):
         coordinate[1] = np.cos(np.radians(coordinate[1]))
-        print("INTERPOLATE COORDINATE", coordinate, self.azimuth)
         for c in coordinate:
             logging.debug("Interpolating coordinates: {0:.2f}".format(c))
 
@@ -159,15 +159,19 @@ class IrfInterpolator:
 
     def _interpolate_2d(self, coordinate, irf_axes):
         """Interpolate IRF for 2D IRFs."""
-        print("2222", self.irf_name, irf_axes[0], irf_axes[1])
-        print("INTERPOLATE 2D COORDINATE", coordinate, self.azimuth)
+        xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
+        xx_flat = xx.flatten()
+        yy_flat = yy.flatten()
+
         try:
             if self.interpolator_name == "KNeighborsRegressor":
-                interpolated_irf = self.kNN.predict(
-                    np.array([[coordinate[0], coordinate[1], e, w] for e, w in zip(irf_axes[0], irf_axes[1])])
-                )
+                predict_coords = np.array([
+                    [coordinate[0], coordinate[1], coordinate[2], x, y]
+                    for x, y in zip(xx_flat, yy_flat)
+                ])
+                interpolated_irf = self.interpolator.predict(predict_coords)
+                interpolated_irf = interpolated_irf.reshape(xx.shape)
             else:
-                xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
                 interpolated_irf = self.interpolator((xx, yy, *coordinate))
         except ValueError:
             raise ValueError("IRF interpolation failed for axis %s", self.irf_name)
@@ -175,16 +179,14 @@ class IrfInterpolator:
 
     def _interpolate_1d(self, coordinate, irf_axis):
         """Interpolate IRF for 1D IRFs (energy axis only)."""
-        print("1111", self.irf_name, self.irf_axes)
-        print("INTERPOLATE 1D COORDINATE", coordinate, self.azimuth)
         try:
             if self.interpolator_name == "KNeighborsRegressor":
-                interpolated_irf = self.kNN.predict(
+                interpolated_irf = self.interpolator.predict(
                     np.array([[coordinate[0], coordinate[1], coordinate[2], e] for e in irf_axis])
                 )
             else:
                 interpolated_irf = self.interpolator((irf_axis, *coordinate))
         except ValueError:
             raise ValueError("IRF interpolation failed for axis %s", self.irf_name)
-        print("INTERPOLATED IRF", interpolated_irf)
+
         return interpolated_irf, [irf_axis]
