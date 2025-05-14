@@ -11,7 +11,7 @@ from pyV2DL3.eventdisplay.util import WrongIrf, duplicate_dimensions
 
 
 class IrfInterpolator:
-    def __init__(self, filename, azimuth):
+    def __init__(self, filename, azimuth, interpolator_name):
         self.implemented_irf_names_1d = ["eff", "Rec_eff", "effNoTh2", "Rec_effNoTh2"]
         self.implemented_irf_names_2d = [
             "hEsysMCRelative2D",
@@ -22,7 +22,13 @@ class IrfInterpolator:
         self.irf_name = ""
         self.azimuth = azimuth
         self.interpolator = None
-        self.interpolator_name = "KNeighborsRegressor"
+        self.interpolator_name = interpolator_name
+        if interpolator_name not in ["KNeighborsRegressor", "RegularGridInterpolator"]:
+            raise ValueError(
+                "The interpolator you entered: {} is either wrong or not implemented.".format(
+                    interpolator_name
+                )
+            )
 
         if os.path.isfile(filename):
             self.filename = filename
@@ -72,7 +78,6 @@ class IrfInterpolator:
         self.interpolator = KNeighborsRegressor(n_neighbors=5, weights="distance")
         self.interpolator.fit(coords, values)
 
-        # Set irf_axes based on the coordinates
         if self.irf_name in self.implemented_irf_names_1d:
             self.irf_axes = [np.unique(coords[:, 3])]  # energy axis
         else:
