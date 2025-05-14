@@ -143,7 +143,7 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
     - zeniths
     - woffs
 
-    For azimuth, select the azimuth bin closest to the given azimuth angle.
+    For azimuth, select the bin closest to the given azimuth angle.
 
     Parameters
     ----------
