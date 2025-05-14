@@ -159,7 +159,7 @@ class IrfInterpolator:
 
     def _interpolate_2d(self, coordinate, irf_axes):
         """Interpolate IRF for 2D IRFs."""
-        xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1])
+        xx, yy = np.meshgrid(self.irf_axes[0], self.irf_axes[1], indexing='xy')
         xx_flat = xx.flatten()
         yy_flat = yy.flatten()
 

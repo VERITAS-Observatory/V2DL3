@@ -93,9 +93,6 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
     all_Woffs, woffs = load_parameter("Woff", fast_eff_area, az_mask)
 
     data = get_empty_ndarray([len(irf[0]), len(pedvars), len(zds), len(woffs)])
-    print("EEFF", len(irf[0]), len(pedvars), len(zds), len(woffs), len(irf))
-    print("VVVV", pedvars, zds, woffs, len(irf), len(all_pedvars), len(all_zds), len(all_Woffs))
-    print("ZZZZ", irf[0])
 
     for i in range(len(irf)):
         try:
@@ -116,7 +113,6 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
         'zeniths': zds,
         'woffs': woffs
     }
-    print("DDDD", data.shape)
 
     return data, axes
 
@@ -228,7 +224,6 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
     woff = fast_eff_area["Woff"].array()[az_mask]
 
     if irf1d:
-        # 1D IRF case
         e0 = fast_eff_area["e0"].array()[az_mask]
         ze_b, pedvar_b, woff_b = ak.broadcast_arrays(e0, ze, pedvar, woff)[1:]
         coords = np.vstack([
@@ -239,7 +234,6 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
         ]).T
         values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name].array()[az_mask]))
     else:
-        # 2D IRF case
         irf_axis_x = read_irf_axis("x", fast_eff_area, irf_name, az_mask)
         irf_axis_y = read_irf_axis("y", fast_eff_area, irf_name, az_mask)
         values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name + "_value"].array()[az_mask]))
@@ -248,10 +242,9 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
         pedvar_rep = np.repeat(ak.to_numpy(pedvar), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
         woff_rep = np.repeat(ak.to_numpy(woff), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
 
-        irf_dim1 = np.tile(irf_axis_x, len(irf_axis_y))
-        irf_dim1 = np.tile(irf_dim1, len(ze))
-        irf_dim2 = np.tile(irf_axis_y, len(irf_axis_x))
-        irf_dim2 = np.tile(irf_dim2, len(ze))
+        xx, yy = np.meshgrid(irf_axis_x, irf_axis_y, indexing='xy')
+        irf_dim1 = np.tile(xx.flatten(), len(ze))
+        irf_dim2 = np.tile(yy.flatten(), len(ze))
 
         coords = np.vstack([
             pedvar_rep.flatten(),
