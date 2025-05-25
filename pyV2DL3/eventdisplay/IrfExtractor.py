@@ -238,9 +238,9 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
         irf_axis_y = read_irf_axis("y", fast_eff_area, irf_name, az_mask)
         values = ak.to_numpy(ak.flatten(fast_eff_area[irf_name + "_value"].array()[az_mask]))
 
-        ze_rep = np.repeat(ak.to_numpy(ze), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
-        pedvar_rep = np.repeat(ak.to_numpy(pedvar), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
-        woff_rep = np.repeat(ak.to_numpy(woff), len(irf_axis_x)*len(irf_axis_y)).astype(np.float32)
+        ze_rep = np.repeat(ak.to_numpy(ze), len(irf_axis_x) * len(irf_axis_y)).astype(np.float32)
+        pedvar_rep = np.repeat(ak.to_numpy(pedvar), len(irf_axis_x) * len(irf_axis_y)).astype(np.float32)
+        woff_rep = np.repeat(ak.to_numpy(woff), len(irf_axis_x) * len(irf_axis_y)).astype(np.float32)
 
         xx, yy = np.meshgrid(irf_axis_x, irf_axis_y, indexing='xy')
         irf_dim1 = np.tile(xx.flatten(), len(ze))
