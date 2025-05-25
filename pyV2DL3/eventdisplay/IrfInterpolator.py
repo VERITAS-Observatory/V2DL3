@@ -159,7 +159,7 @@ class IrfInterpolator:
         elif self.irf_name in self.implemented_irf_names_1d:
             return self._interpolate_1d(coordinate, self.irf_axes[0])
         else:
-            logging.error("The requested %s" " is not available.", self.irf_name)
+            logging.error(f"The requested {self.irf_name} is not available.")
             raise WrongIrf
 
     def _interpolate_2d(self, coordinate, irf_axes):
