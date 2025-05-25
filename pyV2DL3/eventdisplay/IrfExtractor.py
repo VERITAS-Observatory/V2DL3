@@ -217,9 +217,8 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
     fast_eff_area = uproot.open(filename)["fEffAreaH2F"]
     az_mask = _get_az_mask(azimuth, fast_eff_area)
 
-    # Get parameters
-    # TOD - check 1/cos(ze)
-    ze = np.cos(np.radians(fast_eff_area["ze"].array()[az_mask]))
+    # TODO
+    ze = 1./np.cos(np.radians(fast_eff_area["ze"].array()[az_mask]))
     pedvar = fast_eff_area["pedvar"].array()[az_mask]
     woff = fast_eff_area["Woff"].array()[az_mask]
 

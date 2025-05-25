@@ -111,7 +111,8 @@ class IrfInterpolator:
                 )
 
             if axis == 'zeniths':
-                irf_axes['zeniths'] = np.cos(np.radians(irf_axes['zeniths']))[::-1]
+                # TODO
+                irf_axes['zeniths'] = 1./np.cos(np.radians(irf_axes['zeniths']))[::-1]
                 zenith_axis = i
                 logging.debug("zenith axis index: {}".format(zenith_axis))
 
@@ -136,7 +137,8 @@ class IrfInterpolator:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def interpolate(self, coordinate):
-        coordinate[1] = np.cos(np.radians(coordinate[1]))
+        # TODO
+        coordinate[1] = 1./np.cos(np.radians(coordinate[1]))
         for c in coordinate:
             logging.debug("Interpolating coordinates: {0:.2f}".format(c))
 
