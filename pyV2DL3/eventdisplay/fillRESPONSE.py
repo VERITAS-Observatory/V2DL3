@@ -356,7 +356,7 @@ def __fill_response__(
         clk = click.get_current_context()
         interpolator_name = clk.params["interpolator_name"]
     else:
-        interpolator_name = kwargs.get("fuzzy_boundary", "KNeighborsRegressor")
+        interpolator_name = kwargs.get("interpolator_name", "KNeighborsRegressor")
 
     # IRF interpolator
     irf_interpolator = IrfInterpolator(effective_area, azimuth, interpolator_name)

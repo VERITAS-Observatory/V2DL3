@@ -179,7 +179,7 @@ class IrfInterpolator:
             else:
                 interpolated_irf = self.interpolator((xx, yy, *coordinate))
         except ValueError:
-            raise ValueError("IRF interpolation failed for axis %s", self.irf_name)
+            raise ValueError(f"IRF interpolation failed for axis {self.irf_name}")
         return interpolated_irf, [irf_axes[0], irf_axes[1]]
 
     def _interpolate_1d(self, coordinate, irf_axis):
@@ -192,6 +192,6 @@ class IrfInterpolator:
             else:
                 interpolated_irf = self.interpolator((irf_axis, *coordinate))
         except ValueError:
-            raise ValueError("IRF interpolation failed for axis %s", self.irf_name)
+            raise ValueError(f"IRF interpolation failed for axis {self.irf_name}")
 
         return interpolated_irf, [irf_axis]

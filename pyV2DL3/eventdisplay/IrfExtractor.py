@@ -103,8 +103,7 @@ def extract_irf_1d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf[i]
         except Exception:
-            logging.error("Unexpected error:", sys.exc_info()[0])
-            logging.error("Entry number ", i)
+            logging.error(f"At entry number {i} unexpected error: {sys.exc_info()[0]}")
             raise
 
     axes = {
@@ -219,6 +218,7 @@ def extract_irf_for_knn(filename, irf_name, irf1d=False, azimuth=None):
     az_mask = _get_az_mask(azimuth, fast_eff_area)
 
     # Get parameters
+    # TOD - check 1/cos(ze)
     ze = np.cos(np.radians(fast_eff_area["ze"].array()[az_mask]))
     pedvar = fast_eff_area["pedvar"].array()[az_mask]
     woff = fast_eff_area["Woff"].array()[az_mask]
