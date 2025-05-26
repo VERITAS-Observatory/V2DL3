@@ -144,7 +144,7 @@ This takes into account that extrapolation of the IRF zenith axis is applied to 
 
 Further options are:
 
-- `--interpolator_name [KNeighborsRegressor|RegularGridInterpolator]`: select the interpolator used to interpolate the IRFs at run parameters values outside the IRF axes range. The default is `KNeighborsRegressor`, which allows to robustly interpolate from a irregular grid of IRFS.
+- `--interpolator_name [KNeighborsRegressor|RegularGridInterpolator]`: select the interpolator used to interpolate the IRFs values. The default is `KNeighborsRegressor`, which allows to robustly interpolate from a irregular grid of IRFS.
 - `--save_multiplicity`: write telescope multiplicity as `EVENTTYPE` keyword.
 - `--instrument_epoch [epoch]`: write instrument epoch as `INSTRUME` keyword.
 - `--db_fits_file [db_fits_file]`: copy run information (e.g., weather, L3 rates) from DB fits file into header information. Requires access to DB fits files.
