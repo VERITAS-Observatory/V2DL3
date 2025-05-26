@@ -62,11 +62,11 @@ class IrfInterpolator:
         )
 
         if self.interpolator_name == "KNeighborsRegressor":
-            self._load_irf_for_knn(**kwargs)
+            self._load_irf_for_knn()
         else:
             self._load_irf_for_regular_grid_interpolator(**kwargs)
 
-    def _load_irf_for_knn(self, **kwargs):
+    def _load_irf_for_knn(self):
         """Load IRFs from file for KNeighborsRegressor"""
 
         coords, values = extract_irf_for_knn(
