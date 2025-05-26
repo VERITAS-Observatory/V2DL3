@@ -5,6 +5,8 @@ import click
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler
 
 from pyV2DL3.eventdisplay.IrfExtractor import extract_irf, extract_irf_for_knn
 from pyV2DL3.eventdisplay.util import WrongIrf, duplicate_dimensions
@@ -75,7 +77,9 @@ class IrfInterpolator:
             irf1d=self.irf_name in self.implemented_irf_names_1d,
             azimuth=self.azimuth,
         )
-        self.interpolator = KNeighborsRegressor(n_neighbors=5, weights="distance")
+        self.interpolator = make_pipeline(
+            MinMaxScaler(), KNeighborsRegressor(n_neighbors=5, weights='distance')
+        )
         self.interpolator.fit(coords, values)
 
         if self.irf_name in self.implemented_irf_names_1d:
