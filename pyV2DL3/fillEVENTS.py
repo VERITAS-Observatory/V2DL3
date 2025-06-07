@@ -80,7 +80,11 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     hdu1.header.set("EQUINOX", constant.EQUINOX, "base equinox")
     hdu1.header.set(
         "CREATOR",
-        "pyV2DL3 v{}::{}".format(version.__version__, datasource.get_source_name()),
+        "pyV2DL3 v{}::{} {}".format(
+            version.__version__,
+            datasource.get_source_name(),
+            datasource.get_version(),
+        ),
     )
     hdu1.header.set("ORIGIN", "VERITAS Collaboration", "Data from VERITAS")
     hdu1.header.set("TELESCOP", "VERITAS")

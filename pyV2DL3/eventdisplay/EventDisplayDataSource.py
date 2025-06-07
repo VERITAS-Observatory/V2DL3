@@ -1,5 +1,7 @@
 import logging
+import re
 
+import uproot
 import yaml
 
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
@@ -22,6 +24,9 @@ class EventDisplayDataSource(VtsDataSource):
         self.__gti__ = None
         self.__zenith__ = 0
         self.__pedvar__ = 0
+
+    def get_version(self):
+        return self._fill_data_source_version()
 
     def __fill_evt__(self, **kwargs):
         evt_filter = self.__fill_event_filter(kwargs.get("evt_filter", None))
@@ -69,3 +74,23 @@ class EventDisplayDataSource(VtsDataSource):
             self.__irf_to_store__,
             **kwargs
         )
+
+    def _fill_data_source_version(self):
+        """
+        Get Eventdisplay version from log entry in anasum file.
+
+        Returns
+        -------
+        str
+            Version string of the Eventdisplay data source, e.g. "v490.7"
+        """
+        file = uproot.open(self.__evt_file__)
+        try:
+            data_list = file['anasumLog;1'].members['fLines']._data
+        except uproot.exceptions.KeyInFileError:
+            logging.warning(f"No anasum log found in {self.__evt_file__}")
+            return "0.0.0"
+        sub = "VERITAS Analysis Summary"
+        version_string = str([s for s in data_list if sub in s][0])
+        match = re.search(r'version\s+([^\)]+)', version_string)
+        return match.group(1) if match else "0.0.0"
