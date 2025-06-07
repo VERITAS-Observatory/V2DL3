@@ -3,6 +3,7 @@ import logging
 from astropy.io import fits
 
 import pyV2DL3.constant as constant
+import pyV2DL3.version as version
 from pyV2DL3.addHDUClassKeyword import addHDUClassKeyword
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     hdu1.header.set("EQUINOX", constant.EQUINOX, "base equinox")
     hdu1.header.set(
         "CREATOR",
-        "pyV2DL3 v{}::{}".format(constant.VERSION, datasource.get_source_name()),
+        "pyV2DL3 v{}::{}".format(version.__version__, datasource.get_source_name()),
     )
     hdu1.header.set("ORIGIN", "VERITAS Collaboration", "Data from VERITAS")
     hdu1.header.set("TELESCOP", "VERITAS")
