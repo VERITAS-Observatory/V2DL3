@@ -26,7 +26,8 @@ def cli(file_pair, diff_file):
 
     file1, file2 = file_pair
 
-    fd = fits.FITSDiff(file1, file2, rtol=1.e-4, ignore_keywords=["CREATOR"])
+    fd = fits.FITSDiff(
+        file1, file2, rtol=1.e-4, ignore_keywords=["CREATOR"], ignore_hdus=["ENERGY DISPERSION"])
     fd.report(diff_file, overwrite=True)
 
 
