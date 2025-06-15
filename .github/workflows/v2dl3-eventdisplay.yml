@@ -53,6 +53,7 @@ jobs:
                   ./effectiveArea.root \
                   --logfile test-pointlike.fits.log \
                   test-pointlike-CI.fits.gz
+          diff test-pointlike.fits.log  ED-pointlike-CI.log
           v2dl3-compareFitsFiles \
                 -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
                 -d test-pointlike.log
