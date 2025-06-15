@@ -28,6 +28,7 @@ dependencies = [
   "numpy",
   "pkgconfig",
   "pyyaml",
+  "scikit-learn",
   "scipy",
   "tqdm",
   "uproot",

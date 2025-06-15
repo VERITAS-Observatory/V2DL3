@@ -14,5 +14,5 @@
 
 set -e
 
-wget --no-verbose https://syncandshare.desy.de/index.php/s/qmxtgEC753L9LG6/download/github-CI.tar.gz
+wget --no-verbose https://syncandshare.desy.de/index.php/s/9P3eaCbqZf7SrdK/download/github-CI.tar.gz
 tar -xvzf github-CI.tar.gz
