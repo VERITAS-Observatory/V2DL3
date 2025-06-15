@@ -78,7 +78,7 @@ class IrfInterpolator:
             azimuth=self.azimuth,
         )
         self.interpolator = make_pipeline(
-            MinMaxScaler(), KNeighborsRegressor(n_neighbors=5, weights='distance', algorithm='brute')
+            MinMaxScaler(), KNeighborsRegressor(n_neighbors=5, weights='distance')
         )
         self.interpolator.fit(coords, values)
 
