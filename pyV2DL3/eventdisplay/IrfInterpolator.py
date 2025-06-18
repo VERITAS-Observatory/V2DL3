@@ -3,7 +3,7 @@ import os.path
 
 import click
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import RegularGridInterpolator, LinearNDInterpolator, RBFInterpolator
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
@@ -25,7 +25,8 @@ class IrfInterpolator:
         self.azimuth = azimuth
         self.interpolator = None
         self.interpolator_name = interpolator_name
-        if interpolator_name not in ["KNeighborsRegressor", "RegularGridInterpolator"]:
+        if interpolator_name not in ["KNeighborsRegressor", "RegularGridInterpolator", 
+                                   "LinearNDInterpolator", "RBFInterpolator"]:
             raise ValueError(
                 "The interpolator you entered: {} is either wrong or not implemented.".format(
                     interpolator_name
@@ -65,6 +66,10 @@ class IrfInterpolator:
 
         if self.interpolator_name == "KNeighborsRegressor":
             self._load_irf_for_knn()
+        elif self.interpolator_name == "LinearNDInterpolator":
+            self._load_irf_for_linear_nd_interpolator()
+        elif self.interpolator_name == "RBFInterpolator":
+            self._load_irf_for_rbf_interpolator()
         else:
             self._load_irf_for_regular_grid_interpolator(**kwargs)
 
@@ -89,6 +94,95 @@ class IrfInterpolator:
                 np.unique(coords[:, 3]),  # x dimension
                 np.unique(coords[:, 4])   # y dimension
             ]
+        logging.debug(str(("IRF axes:", self.irf_axes)))
+        
+    def _load_irf_for_rbf_interpolator(self):
+        """Load IRFs from file for RBFInterpolator with performance optimizations"""
+        
+        coords, values = extract_irf_for_knn(
+            self.filename,
+            self.irf_name,
+            irf1d=self.irf_name in self.implemented_irf_names_1d,
+            azimuth=self.azimuth,
+        )
+        
+        # Store the original coordinates for later use
+        self.coords = coords
+        self.values = values
+        
+        # Scale coordinates to improve numerical stability and performance
+        from sklearn.preprocessing import MinMaxScaler
+        self.scaler = MinMaxScaler()
+        scaled_coords = self.scaler.fit_transform(coords)
+        
+        # Store axes for later use
+        if self.irf_name in self.implemented_irf_names_1d:
+            self.irf_axes = [np.unique(coords[:, 3])]  # energy axis
+            
+            # For 1D IRFs, use a kernel that works well with degree=0
+            self.interpolator = RBFInterpolator(
+                scaled_coords, 
+                values,
+                neighbors=10,
+                kernel='linear', 
+                epsilon=2.0,     
+                degree=-1, 
+            )
+        else:
+            x_axis = np.unique(coords[:, 3])
+            y_axis = np.unique(coords[:, 4])
+            self.irf_axes = [x_axis, y_axis]
+            xx, yy = np.meshgrid(x_axis, y_axis, indexing='xy')
+            self.mesh_points = np.array([[
+                0, 0, 0, x, y] for x, y in zip(xx.flatten(), yy.flatten())])
+            
+            # For 2D IRFs, use more robust settings to avoid singular matrix
+            self.interpolator = RBFInterpolator(
+                scaled_coords, 
+                values,
+                neighbors=8, 
+                kernel='cubic',    # More stable than thin_plate_spline
+                epsilon=3.0,       # Higher epsilon for better conditioning
+                degree=-1,         # No polynomial term, more stable
+            )
+        
+        logging.debug(str(("IRF axes:", self.irf_axes)))
+        
+    def _load_irf_for_linear_nd_interpolator(self):
+        """Load IRFs from file for LinearNDInterpolator with performance optimizations"""
+        
+        coords, values = extract_irf_for_knn(
+            self.filename,
+            self.irf_name,
+            irf1d=self.irf_name in self.implemented_irf_names_1d,
+            azimuth=self.azimuth,
+        )
+        
+        # Store the original coordinates for later use
+        self.coords = coords
+        self.values = values
+        
+        # OPTIMIZATION 1: Use rescaled coordinates
+        # Scale coordinates to improve numerical stability and performance
+        from sklearn.preprocessing import MinMaxScaler
+        self.scaler = MinMaxScaler()
+        scaled_coords = self.scaler.fit_transform(coords)
+        
+        # OPTIMIZATION 2: Cache meshgrid
+        if self.irf_name in self.implemented_irf_names_1d:
+            self.irf_axes = [np.unique(coords[:, 3])]  # energy axis
+        else:
+            x_axis = np.unique(coords[:, 3])
+            y_axis = np.unique(coords[:, 4])
+            self.irf_axes = [x_axis, y_axis]
+            # Pre-compute the meshgrid for faster interpolation
+            xx, yy = np.meshgrid(x_axis, y_axis, indexing='xy')
+            self.mesh_points = np.array([[
+                0, 0, 0, x, y] for x, y in zip(xx.flatten(), yy.flatten())])
+        
+        # Create the interpolator with optimized parameters
+        self.interpolator = LinearNDInterpolator(scaled_coords, values, fill_value=0)
+        
         logging.debug(str(("IRF axes:", self.irf_axes)))
 
     def _load_irf_for_regular_grid_interpolator(self, **kwargs):
@@ -180,6 +274,27 @@ class IrfInterpolator:
                 ])
                 interpolated_irf = self.interpolator.predict(predict_coords)
                 interpolated_irf = interpolated_irf.reshape(xx.shape)
+            elif self.interpolator_name in ["LinearNDInterpolator", "RBFInterpolator"]:
+                # Scale the input coordinates if using RBF or LinearND
+                if hasattr(self, 'scaler'):
+                    # Build coordinate array for all points to predict
+                    predict_coords = np.array([
+                        [coordinate[0], coordinate[1], coordinate[2], x, y]
+                        for x, y in zip(xx_flat, yy_flat)
+                    ])
+                    # Scale the coordinates
+                    predict_coords = self.scaler.transform(predict_coords)
+                    # Apply interpolation
+                    interpolated_irf = self.interpolator(predict_coords)
+                    interpolated_irf = interpolated_irf.reshape(xx.shape)
+                else:
+                    # Fallback if scaler is not available
+                    predict_coords = np.array([
+                        [coordinate[0], coordinate[1], coordinate[2], x, y]
+                        for x, y in zip(xx_flat, yy_flat)
+                    ])
+                    interpolated_irf = self.interpolator(predict_coords)
+                    interpolated_irf = interpolated_irf.reshape(xx.shape)
             else:
                 interpolated_irf = self.interpolator((xx, yy, *coordinate))
         except ValueError:
@@ -193,6 +308,17 @@ class IrfInterpolator:
                 interpolated_irf = self.interpolator.predict(
                     np.array([[coordinate[0], coordinate[1], coordinate[2], e] for e in irf_axis])
                 )
+            elif self.interpolator_name in ["LinearNDInterpolator", "RBFInterpolator"]:
+                # Scale the input coordinates if using RBF or LinearND
+                if hasattr(self, 'scaler'):
+                    predict_coords = np.array([[coordinate[0], coordinate[1], coordinate[2], e] 
+                                              for e in irf_axis])
+                    predict_coords = self.scaler.transform(predict_coords)
+                    interpolated_irf = self.interpolator(predict_coords)
+                else:
+                    predict_coords = np.array([[coordinate[0], coordinate[1], coordinate[2], e] 
+                                              for e in irf_axis])
+                    interpolated_irf = self.interpolator(predict_coords)
             else:
                 interpolated_irf = self.interpolator((irf_axis, *coordinate))
         except ValueError:

@@ -89,7 +89,7 @@ value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair."
 )
 @click.option(
     "--interpolator_name",
-    type=click.Choice(["KNeighborsRegressor", "RegularGridInterpolator"]),
+    type=click.Choice(["KNeighborsRegressor", "RegularGridInterpolator", "LinearNDInterpolator", "RBFInterpolator"]),
     help="Name of the interpolator to be used for IRF interpolation",
     default="KNeighborsRegressor",
 )
