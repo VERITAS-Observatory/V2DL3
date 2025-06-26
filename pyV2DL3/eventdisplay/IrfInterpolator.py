@@ -204,7 +204,44 @@ class IrfInterpolator:
             azimuth=self.azimuth,
         )
         
-        # flag to determine if bin filling should be applied
+        # Check if we should artificially zero out a slice for testing
+        zero_out_slice = kwargs.get("zero_out_slice", None)
+        if zero_out_slice is not None:
+            # Determine offset dimension based on IRF type and dimensionality
+            if self.irf_name in ["eff", "Rec_eff", "effNoTh2", "Rec_effNoTh2"]:
+                # For effective area, offset is always the last dimension
+                offset_dim = irf_data.ndim - 1
+                logging.info(f"Effective area IRF: Using dimension {offset_dim} as offset dimension")
+            else:
+                # For other IRF types, follow standard convention
+                offset_dim = 2 if irf_data.ndim > 2 else 1
+                logging.info(f"Standard IRF: Using dimension {offset_dim} as offset dimension")
+            
+            if 0 <= zero_out_slice < irf_data.shape[offset_dim]:
+                # Create slice indices
+                idx = [slice(None)] * irf_data.ndim
+                idx[offset_dim] = zero_out_slice
+                
+                # Store the original values for logging
+                before_zero = irf_data[tuple(idx)].copy()
+                nonzero_count = np.sum(before_zero > 0)
+                nonzero_max = np.max(before_zero) if nonzero_count > 0 else 0
+                
+                # Zero out the slice
+                irf_data[tuple(idx)] = 0
+                
+                # Verify the zero-out worked
+                after_zero = irf_data[tuple(idx)]
+                if np.sum(after_zero > 0) > 0:
+                    logging.error(f"ERROR: Failed to zero out offset slice {zero_out_slice}")
+                else:
+                    logging.info(f"TEST MODE: Successfully zeroed out offset slice {zero_out_slice}")
+                    logging.info(f"  Zeroed {nonzero_count} values (max was {nonzero_max:.2f})")
+                    
+                # For debugging: show IRF shape
+                logging.info(f"IRF data shape: {irf_data.shape}")
+
+        # Flag to determine if bin filling should be applied
         fill_empty_bins = kwargs.get("fill_empty_bins", True)
         
         # Fill empty bins within the data hull before interpolation if enabled
@@ -254,89 +291,176 @@ class IrfInterpolator:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
 
     def _fill_empty_bins(self, data):
-        """Fill empty bins while preserving natural energy cutoffs"""
+        """Fill empty bins using an average energy profile as a template"""
         from scipy.ndimage import binary_dilation, gaussian_filter
-        from scipy.interpolate import NearestNDInterpolator
-
+    
         # Create a copy of the data for filling
         filled_data = data.copy()
         
         # =====================================================================
-        # PHASE 0: IDENTIFY ENERGY BOUNDARIES TO PRESERVE
+        # PHASE 0: CREATE AVERAGE ENERGY PROFILE TO DETERMINE VALID RANGES
         # =====================================================================
-        print("Phase 0: Identifying energy boundaries to preserve")
+        print("Phase 0: Creating average energy profile to determine valid ranges")
         
-        # Zero mask for high-energy regions that should stay zero
-        energy_boundary_mask = np.zeros_like(filled_data, dtype=bool)
+        # Determine offset dimension based on IRF type and dimensionality - FIXED!
+        if self.irf_name in ["eff", "Rec_eff", "effNoTh2", "Rec_effNoTh2"]:
+            # For effective area, offset is always the last dimension
+            offset_dim = data.ndim - 1
+            print(f"  Effective area IRF: Using dimension {offset_dim} as offset dimension")
+        else:
+            # For other IRF types, follow standard convention
+            offset_dim = 2 if data.ndim > 2 else 1
+            print(f"  Standard IRF: Using dimension {offset_dim} as offset dimension")
+            
         energy_dim = 0  # Energy is always the first dimension
+        
+        # Create boundary mask for regions that should stay as zeros
+        boundary_mask = np.zeros_like(filled_data, dtype=bool)
         
         # Calculate threshold for identifying significant values
         data_max = np.max(data)
-        low_value_threshold = data_max * 0.001  # 0.1% of max value
-        print(f"  Using threshold of {low_value_threshold:.2f} for energy boundary detection")
+        significance_threshold = data_max * 0.01  # 1% of max value
+        print(f"  Using threshold of {significance_threshold:.2f} for boundary detection")
         
-        # Loop through parameter space to find valid energy ranges
-        for idx in np.ndindex(*[data.shape[d] for d in range(1, data.ndim)]):
-            energy_idx = tuple([slice(None)] + list(idx))
-            energy_profile = data[energy_idx]
+        # Create a combined energy profile by averaging across all offset slices
+        # First, create a mask of where values are significant
+        # For each non-offset dimension, find the valid energy range
+        
+        # Collect valid energy ranges across all non-zeroed slices
+        valid_energy_points = np.zeros(data.shape[energy_dim])
+        valid_energy_counts = np.zeros(data.shape[energy_dim])
+        
+        # Loop through all offset slices
+        for offset_pos in range(data.shape[offset_dim]):
+            # Skip completely zeroed slices (like our test slice)
+            offset_idx = [slice(None)] * data.ndim
+            offset_idx[offset_dim] = offset_pos
+            offset_slice = data[tuple(offset_idx)]
             
-            # Find highest energy with significant value
-            significant_indices = np.where(energy_profile > low_value_threshold)[0]
-            if len(significant_indices) > 0:
-                max_valid_energy = significant_indices.max()
+            if np.max(offset_slice) <= 0:
+                print(f"  Skipping offset {offset_pos} (all zeros)")
+                continue
                 
-                # Mark all higher energy bins as boundary zeros
-                for e in range(max_valid_energy + 1, data.shape[energy_dim]):
-                    boundary_idx = tuple([e] + list(idx))
-                    energy_boundary_mask[boundary_idx] = True
-
-        print(f"  Identified {np.sum(energy_boundary_mask)} high-energy boundary zeros to preserve")
+            # Loop through all combinations of other dimensions (excluding energy and offset)
+            other_dims = [d for d in range(1, data.ndim) if d != offset_dim]
+            other_shapes = [data.shape[d] for d in other_dims]
+            
+            for idx in np.ndindex(*other_shapes):
+                # Convert flat index to multi-dimensional index for the other dimensions
+                full_idx = [slice(None)] * data.ndim  # Start with all slices
+                full_idx[offset_dim] = offset_pos     # Set offset dimension
+                
+                # Set other dimensions (excluding energy and offset)
+                dim_counter = 0
+                for d in other_dims:
+                    full_idx[d] = idx[dim_counter]
+                    dim_counter += 1
+                    
+                # Get energy profile for this specific combination
+                energy_profile = data[tuple(full_idx)]
+                
+                # Find where values are significant
+                significant_mask = energy_profile > significance_threshold
+                
+                # Add to our running total
+                valid_energy_points += significant_mask.astype(float)
+                valid_energy_counts += 1.0
+    
+        # Calculate the average profile (percentage of slices where each energy bin is valid)
+        if np.sum(valid_energy_counts) > 0:
+            avg_energy_profile = valid_energy_points / valid_energy_counts
+            
+            # Print the average profile for debugging
+            print("  Average energy profile (% of slices where energy is valid):")
+            for e in range(len(avg_energy_profile)):
+                if e % 5 == 0:  # Print every 5th bin to avoid too much output
+                    print(f"    Energy bin {e}: {avg_energy_profile[e]:.1%}")
+            
+            # Determine energy threshold - consider an energy bin valid if it's 
+            # significant in at least 20% of the valid slices
+            valid_energy_threshold = 0.20
+            energy_validity_mask = avg_energy_profile >= valid_energy_threshold
+            
+            # Find the energy range where bins are consistently valid
+            valid_energy_indices = np.where(energy_validity_mask)[0]
+            
+            if len(valid_energy_indices) > 0:
+                min_valid_energy = valid_energy_indices.min()
+                max_valid_energy = valid_energy_indices.max()
+                
+                print(f"  Global valid energy range: {min_valid_energy} to {max_valid_energy}")
+                
+                # Apply this valid energy range to all slices
+                # Mark energies outside this range as boundary (should stay zero)
+                for idx in np.ndindex(*[data.shape[d] for d in range(1, data.ndim)]):
+                    # Mark lower energy bins as boundary
+                    for e in range(0, min_valid_energy):
+                        boundary_idx = tuple([e] + list(idx))
+                        boundary_mask[boundary_idx] = True
+                        
+                    # Mark higher energy bins as boundary
+                    for e in range(max_valid_energy + 1, data.shape[energy_dim]):
+                        boundary_idx = tuple([e] + list(idx))
+                        boundary_mask[boundary_idx] = True
+            else:
+                print("  WARNING: No valid energy range found")
+        else:
+            print("  WARNING: No valid slices found for energy profile")
+        
+        print(f"  Identified {np.sum(boundary_mask)} boundary zeros to preserve")
         
         # =====================================================================
         # PHASE 1: LINEAR SLICE INTERPOLATION (RESPECTING ENERGY BOUNDARIES)
         # =====================================================================
         print("Phase 1: Filling empty or partially filled slices (respecting energy boundaries)")
         
-        # Process dimensions in reverse order (offset first, energy last)
-        for dim in range(data.ndim-1, 0, -1):  # Skip energy dimension
-            if data.shape[dim] < 3:
-                continue
-                
-            print(f"Processing dimension {dim}")
+        # Skip if offset dimension is too small
+        if data.shape[offset_dim] < 3:
+            print(f"Offset dimension {offset_dim} has fewer than 3 points, skipping slice interpolation")
+            return filled_data
             
-            # Look at each interior slice
-            for pos in range(1, data.shape[dim]-1):
-                idx = [slice(None)] * data.ndim
-                idx[dim] = pos
-                slice_data = filled_data[tuple(idx)]
+        print(f"Processing offset dimension {offset_dim}")
+        
+        # Look at each interior offset slice
+        for pos in range(1, data.shape[offset_dim]-1):
+            idx = [slice(None)] * data.ndim
+            idx[offset_dim] = pos
+            slice_data = filled_data[tuple(idx)]
+            
+            # Get neighboring slices
+            left_idx = [slice(None)] * data.ndim
+            left_idx[offset_dim] = pos - 1
+            left_slice = filled_data[tuple(left_idx)]
+            
+            right_idx = [slice(None)] * data.ndim
+            right_idx[offset_dim] = pos + 1
+            right_slice = filled_data[tuple(right_idx)]
+            
+            # Get energy boundary mask for this slice
+            slice_boundary_mask = boundary_mask[tuple(idx)]
+            
+            # Only fill zeros that aren't part of the energy boundary
+            fillable_zeros = (slice_data == 0) & ~slice_boundary_mask
+            zero_ratio = np.sum(fillable_zeros) / slice_data.size
+            
+            # Check if this is likely an artificially zeroed slice (high zero ratio)
+            is_artificial_zero = zero_ratio > 0.5  # Over 50% zeros suggests artificial zeroing
+            
+            if zero_ratio > 0:
+                if is_artificial_zero:
+                    print(f"  Offset slice {pos} has {zero_ratio:.1%} fillable zeros - likely artificially zeroed")
+                else:
+                    print(f"  Offset slice {pos} has {zero_ratio:.1%} fillable zeros")
                 
-                # Get neighboring slices
-                left_idx = [slice(None)] * data.ndim
-                left_idx[dim] = pos - 1
-                left_slice = filled_data[tuple(left_idx)]
+                # Only fill zeros that have valid values on both sides
+                min_valid_value = data_max * 0.001  # 0.1% of maximum as minimum valid value
+                both_valid = (left_slice > min_valid_value) & (right_slice > min_valid_value) & fillable_zeros
                 
-                right_idx = [slice(None)] * data.ndim
-                right_idx[dim] = pos + 1
-                right_slice = filled_data[tuple(right_idx)]
-                
-                # Get energy boundary mask for this slice
-                slice_boundary_mask = energy_boundary_mask[tuple(idx)]
-                
-                # Only fill zeros that aren't part of the energy boundary
-                fillable_zeros = (slice_data == 0) & ~slice_boundary_mask
-                zero_ratio = np.sum(fillable_zeros) / slice_data.size
-                
-                if zero_ratio > 0:
-                    print(f"  Slice {dim}:{pos} has {zero_ratio:.1%} fillable zeros")
-                    
-                    # Only fill zeros that have valid values on both sides
-                    both_valid = (left_slice > 0) & (right_slice > 0) & fillable_zeros
-                    
-                    if np.any(both_valid):
-                        # Simple linear interpolation
-                        filled_data[tuple(idx)][both_valid] = 0.5 * left_slice[both_valid] + 0.5 * right_slice[both_valid]
-                        print(f"    Interpolated {np.sum(both_valid)} zeros with both neighbors")
-
+                if np.any(both_valid):
+                    # Simple linear interpolation
+                    filled_data[tuple(idx)][both_valid] = 0.5 * left_slice[both_valid] + 0.5 * right_slice[both_valid]
+                    print(f"    Interpolated {np.sum(both_valid)} zeros with both neighbors")
+    
         return filled_data
 
     def interpolate(self, coordinate):

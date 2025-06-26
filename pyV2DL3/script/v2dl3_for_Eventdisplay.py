@@ -98,6 +98,12 @@ value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair."
     default=True,
     help="Fill empty IRF bins before interpolation"
 )
+@click.option(
+    "--zero-out-slice",
+    type=int,
+    default=None,
+    help="TEST ONLY: Zero out a specific offset slice to test interpolation"
+)
 def cli(
     file_pair,
     full_enclosure,
@@ -114,6 +120,7 @@ def cli(
     db_fits_file,
     interpolator_name,
     fill_empty_bins,
+    zero_out_slice,
 ):
     """Convert Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
@@ -155,7 +162,7 @@ def cli(
 
     datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(evt_filter=evt_filter, db_fits_file=db_fits_file, fill_empty_bins=fill_empty_bins)
+    datasource.fill_data(evt_filter=evt_filter, db_fits_file=db_fits_file, fill_empty_bins=fill_empty_bins, zero_out_slice=zero_out_slice)
     hdulist = genHDUlist(
         datasource,
         save_multiplicity=save_multiplicity,
