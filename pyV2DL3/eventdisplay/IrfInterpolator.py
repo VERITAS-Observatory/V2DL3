@@ -243,10 +243,12 @@ class IrfInterpolator:
 
         # Flag to determine if bin filling should be applied
         fill_empty_bins = kwargs.get("fill_empty_bins", True)
-        
+
         # Fill empty bins within the data hull before interpolation if enabled
         if fill_empty_bins:
             logging.info("Filling empty IRF bins before interpolation")
+            logging.warning("WARNING: Filling empty bins is not the standard method and introduces additional "
+                           "systematic uncertainties (approximately 10%) due to linear interpolation")
             irf_data = self._fill_empty_bins(irf_data)
         else:
             logging.info("Using original IRF data without filling empty bins")
