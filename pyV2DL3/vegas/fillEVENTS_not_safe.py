@@ -384,7 +384,9 @@ def energyBiasCorr(
         effectiveAreaParameters.fAzimuth = azimuth[shift]
         effectiveAreaParameters.fZenith = 90 - zenith[shift]
         effectiveAreaParameters.fNoise = noise[shift]
-        # effectiveAreaParameters.fOffset = offset[i]
+        
+        effectiveAreaParameters.fOffset = offset[shift]
+        
         effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(effectiveAreaParameters)
 
         correction = manager.getCorrectionForExperimentalBias(
