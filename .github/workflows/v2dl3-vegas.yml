@@ -45,13 +45,15 @@ jobs:
 
       - name: Install main branch and generate control outputs
         run: |
+          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
+          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
           cp ../vegas_docker_test_runs_static.sh vegas_docker_test_runs_static.sh
           docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
           cd $DOCKER_WORKSPACE \
           && bash vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
           "
           cp -r $CONTROL_DIR ../$CONTROL_DIR
-          
+
      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout new branch
         uses: actions/checkout@v4
@@ -60,8 +62,6 @@ jobs:
       # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
       - name: Install new branch and generate .fits outputs
         run: |
-          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
-          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
           docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
           cd $DOCKER_WORKSPACE \
           && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
