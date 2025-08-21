@@ -32,27 +32,10 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout new branch
-        uses: actions/checkout@v4
-
       - name: Pull docker image
         run: |
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
           docker pull $DOCKER_IMAGE
-
-      # Runs "utils/vegas_docker_test.runs.sh" within the docker image.
-      # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
-      - name: Install new branch and generate .fits outputs
-        run: |
-          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
-          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
-          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
-          cd $DOCKER_WORKSPACE \
-          && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
-          "
-          cp -r $NEW_DIR ../$NEW_DIR
-          sudo rm -rf $GITHUB_WORKSPACE/*
 
       - name: Checkout main branch
         uses: actions/checkout@v4
@@ -67,6 +50,23 @@ jobs:
           && bash vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
           "
           cp -r $CONTROL_DIR ../$CONTROL_DIR
+          
+     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout new branch
+        uses: actions/checkout@v4
+
+      # Runs "utils/vegas_docker_test.runs.sh" within the docker image.
+      # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
+      - name: Install new branch and generate .fits outputs
+        run: |
+          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
+          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
+          docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
+          cd $DOCKER_WORKSPACE \
+          && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
+          "
+          cp -r $NEW_DIR ../$NEW_DIR
+          sudo rm -rf $GITHUB_WORKSPACE/* 
 
       - name: Install fitsdiff
         run: |
