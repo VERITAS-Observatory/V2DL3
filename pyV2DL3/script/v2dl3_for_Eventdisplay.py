@@ -4,18 +4,29 @@ import os
 import click
 
 from pyV2DL3.genHDUList import genHDUlist, loadROOTFiles
+from pyV2DL3.version import __version__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 IRF_AXIS = ["zenith", "pedvar"]
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(f'pyV2DL3 version {__version__}')
+    ctx.exit()
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--version', '-v', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True,
+              help='Show version and exit.')
 @click.option(
     "--file_pair",
     "-f",
     nargs=2,
     type=click.Path(exists=True),
-    help="anasum file (<file 1>) and " "the corresponding effective area (<file 2>).",
+    help="anasum file (<file 1>) and the corresponding effective area (<file 2>).",
 )
 @click.option(
     "--full-enclosure",
