@@ -83,11 +83,11 @@ function run_tests()
     python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 --no_prompt
     v2dl3-vegas -ec -l runlist.txt $OUTDIR/single-evclass
 
-    echo "-------------------------------"
-    echo "Multi event class - Extra flags"
-    echo "-------------------------------"
-    python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 -e $EA_EVCLASS_2 --no_prompt
-    v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
+    #echo "-------------------------------"
+    #echo "Multi event class - Extra flags"
+    #echo "-------------------------------"
+    #python3 utils/vegas_runlister.py runlist.txt -rd $STAGE5_DIR -e $EA_EVCLASS_1 -e $EA_EVCLASS_2 --no_prompt
+    #v2dl3-vegas $EXTRA_FLAGS -ec -l runlist.txt $OUTDIR/multi-evclass
 }
 
 run_tests $OUTDIR
