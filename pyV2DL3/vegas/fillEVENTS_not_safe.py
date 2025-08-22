@@ -249,7 +249,7 @@ def __fillEVENTS_not_safe__(
         evt_dict["LIVETIME"] = (
             runHeader.getLiveTimeFrac(True) * real_live_time
         )  # True to suppress error warnings
-        evt_dict["DEADC"] = evt_dict["LIVETIME"] / evt_dict["ONTIME"]
+        evt_dict["DEADC"] = runHeader.getLiveTimeFrac(True)
         evt_dict["OBJECT"] = runHeader.getSourceId()
         evt_dict["RA_PNT"] = avRA
         evt_dict["DEC_PNT"] = avDec
