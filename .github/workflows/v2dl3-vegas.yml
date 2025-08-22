@@ -38,15 +38,22 @@ jobs:
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
           docker pull $DOCKER_IMAGE
 
+      - name: Checkout new branch
+        uses: actions/checkout@v4
+
+      - name: Copy Scripts from New Branch
+        run: |
+          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
+          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
+
       - name: Checkout main branch
         uses: actions/checkout@v5
         with:
           ref: main
 
+
       - name: Install main branch and generate control outputs
         run: |
-          cp utils/vegas_docker_test_runs.sh ../vegas_docker_test_runs_static.sh
-          cp utils/compare_fits_dirs.sh ../compare_fits_dirs.sh
           cp ../vegas_docker_test_runs_static.sh vegas_docker_test_runs_static.sh
           docker run -p 80:80 -v $GITHUB_WORKSPACE:/$DOCKER_WORKSPACE $DOCKER_IMAGE /bin/bash -c "\
           cd $DOCKER_WORKSPACE \
