@@ -126,7 +126,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     )
 
     hdu1.header.set(
-        "DEADC   ", evt_dict["DEADC"], "Average dead time correction"
+        "DEADC   ", evt_dict["DEADC"], "Average dead time correction (LIVETIME/ONTIME)"
     )
 
     hdu1.header.set("OBJECT  ", evt_dict["OBJECT"], "observed object")
