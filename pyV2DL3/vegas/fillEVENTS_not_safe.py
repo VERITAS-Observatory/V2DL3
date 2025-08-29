@@ -16,7 +16,7 @@ from pyV2DL3.vegas.util import (
 )
 
 import ROOT
-
+import ctypes
 logger = logging.getLogger(__name__)
 
 windowSizeForNoise = 7
@@ -210,13 +210,33 @@ def __fillEVENTS_not_safe__(
     avNonNegativeNoises /= nNonNegativeNoises
 
     if nNonNegativeNoises == 0:
-        logger.error(f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use.")
+        logger.error(f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use.")    
 
     else:
         for i, fNoise in enumerate(this_event_group["fNoise"]):
             if fNoise <= 0: #replace negative noises with average
                 this_event_group["fNoise"][i] = avNonNegativeNoises
 
+    # If the high voltage was turned off for part of a time slice, the noise in that timeslice will be artificially low. 
+    # It should therefore be excluded via cutting the entire time slice in Stage 5.
+    # This checks for the number of pixels excluded.
+    ntels = runHeader.pfRunDetails.fTels
+    isSuppressed = ctypes.c_bool(False)
+    n_suppressed_all_tels = 0
+    for tel_i in range(ntels):
+        n_PMT = 0
+        n_suppressed = 0
+        tel_info = arrayInfo.telescope(tel_i)
+        for chan_i in range(499):
+            if tel_info.channel(chan_i).hasPMT():
+                n_PMT += 1
+                retcode = pixelData.getSuppressedTimeIndpt(tel_i, chan_i, isSuppressed)
+                if isSuppressed.value:
+                    n_suppressed += 1
+                    isSuppressed.value = False
+        n_suppressed_all_tels += n_suppressed
+    if n_suppressed_all_tels > 200: # Total pixels suppressed across all telescopes
+        logger.warning(f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: This will make noise artificially low. Ensure you cut the entire timeslice this occurred in.")
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
