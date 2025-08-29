@@ -216,7 +216,6 @@ def __fillEVENTS_not_safe__(
         for i, fNoise in enumerate(this_event_group["fNoise"]):
             if fNoise <= 0: #replace negative noises with average
                 this_event_group["fNoise"][i] = avNonNegativeNoises
-        logger.info(f"Successfully replaced negative noises for run {runHeader.getRunNumber()} with average noise for the run {avNonNegativeNoises:.3f}")
 
 
     avAlt = np.mean(avAlt)
