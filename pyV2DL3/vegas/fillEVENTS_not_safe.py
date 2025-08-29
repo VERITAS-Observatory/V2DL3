@@ -182,16 +182,42 @@ def __fillEVENTS_not_safe__(
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
 
-        avNoise = 0
+        avNoise = 0 # Average Noise of telescopes for 1 event (i.e. not average of events)
         nTels = 0
         for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
-            avNoise += qStatsData.getCameraAverageTraceVar(
+            Noise = qStatsData.getCameraAverageTraceVar(
                 telID - 1, windowSizeForNoise, reco.fTime, pixelData, arrayInfo
             )
-            nTels += 1
-
-        avNoise /= nTels
+            if Noise > 0:
+                avNoise += Noise
+                nTels += 1
+        if nTels == 0:
+           avNoise = -100
+           logger.warning(f"Warning! {runHeader.getRunNumber()} has no (time dependent) noise found for this event. Will use average of other events in this run.")
+        else:
+            if 0 < nTels < 4:
+                logger.warning(f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} telescopes for this event. Using average of other {nTels} telescopes.")
+            avNoise /= nTels
         this_event_group["fNoise"].append(avNoise)
+
+    # Since avNoise set to -100 if no telescopes, need to replace the -100 values with the average for the run.
+    nNonNegativeNoises = 0
+    avNonNegativeNoises = 0
+    for fNoise in this_event_group["fNoise"]:
+        if fNoise > 0:
+           nNonNegativeNoises += 1
+           avNonNegativeNoises += fNoise
+    avNonNegativeNoises /= nNonNegativeNoises
+
+    if nNonNegativeNoises == 0:
+        logger.error(f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use.")
+
+    else:
+        for i, fNoise in enumerate(this_event_group["fNoise"]):
+            if fNoise <= 0: #replace negative noises with average
+                this_event_group["fNoise"][i] = avNonNegativeNoises
+        logger.info(f"Successfully replaced negative noises for run {runHeader.getRunNumber()} with average noise for the run {avNonNegativeNoises:.3f}")
+
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
