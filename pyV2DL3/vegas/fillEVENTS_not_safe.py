@@ -182,7 +182,7 @@ def __fillEVENTS_not_safe__(
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
 
-        avNoise = 0 # Average Noise of telescopes for 1 event (i.e. not average of events)
+        avNoise = 0
         nTels = 0
         for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
             Noise = qStatsData.getCameraAverageTraceVar(
