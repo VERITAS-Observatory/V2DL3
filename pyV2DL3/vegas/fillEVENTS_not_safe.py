@@ -314,6 +314,8 @@ def __fillEVENTS_not_safe__(
         nTels += 1
 
     avNoise /= nTels
+    if avNoise <= 0:
+        logger.warning(f"Time independent noise of {avNoise} found for Run {runHeader.getRunNumber()}.")
 
     if st6_configs is not None:
         split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
