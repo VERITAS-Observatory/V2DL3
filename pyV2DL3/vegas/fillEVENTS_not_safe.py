@@ -17,6 +17,7 @@ from pyV2DL3.vegas.util import (
 
 import ROOT
 import ctypes
+
 logger = logging.getLogger(__name__)
 
 windowSizeForNoise = 7
@@ -32,7 +33,7 @@ def __fillEVENTS_not_safe__(
     save_msw_msl=False,
     corr_EB=False,
     psf_king_params=None,
-    st6_configs=None
+    st6_configs=None,
 ):
     if corr_EB and event_class_mode:
         raise Exception("Currently Energy Bias and multiple EAs not supported")
@@ -192,11 +193,15 @@ def __fillEVENTS_not_safe__(
                 avNoise += Noise
                 nTels += 1
         if nTels == 0:
-           avNoise = -100
-           logger.warning(f"Warning! {runHeader.getRunNumber()} has no (time dependent) noise found for this event. Will use average of other events in this run.")
+            avNoise = -100
+            logger.warning(
+                f"Warning! {runHeader.getRunNumber()} has no (time dependent) noise found for this event. Will use average of other events in this run."
+            )
         else:
             if 0 < nTels < 4:
-                logger.warning(f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} telescopes for this event. Using average of other {nTels} telescopes.")
+                logger.warning(
+                    f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} telescopes for this event. Using average of other {nTels} telescopes."
+                )
             avNoise /= nTels
         this_event_group["fNoise"].append(avNoise)
 
@@ -205,19 +210,21 @@ def __fillEVENTS_not_safe__(
     avNonNegativeNoises = 0
     for fNoise in this_event_group["fNoise"]:
         if fNoise > 0:
-           nNonNegativeNoises += 1
-           avNonNegativeNoises += fNoise
+            nNonNegativeNoises += 1
+            avNonNegativeNoises += fNoise
     avNonNegativeNoises /= nNonNegativeNoises
 
     if nNonNegativeNoises == 0:
-        logger.error(f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use.")    
+        logger.error(
+            f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
+        )
 
     else:
         for i, fNoise in enumerate(this_event_group["fNoise"]):
-            if fNoise <= 0: #replace negative noises with average
+            if fNoise <= 0:  # replace negative noises with average
                 this_event_group["fNoise"][i] = avNonNegativeNoises
 
-    # If the high voltage was turned off for part of a time slice, the noise in that timeslice will be artificially low. 
+    # If the high voltage was turned off for part of a time slice, the noise in that timeslice will be artificially low.
     # It should therefore be excluded via cutting the entire time slice in Stage 5.
     # This checks for the number of pixels excluded.
     ntels = runHeader.pfRunDetails.fTels
@@ -235,8 +242,10 @@ def __fillEVENTS_not_safe__(
                     n_suppressed += 1
                     isSuppressed.value = False
         n_suppressed_all_tels += n_suppressed
-    if n_suppressed_all_tels > 200: # Total pixels suppressed across all telescopes
-        logger.warning(f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: This will make noise artificially low. Ensure you cut the entire timeslice this occurred in.")
+    if n_suppressed_all_tels > 200:  # Total pixels suppressed across all telescopes
+        logger.warning(
+            f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: This will make noise artificially low. Ensure you cut the entire timeslice this occurred in."
+        )
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -315,7 +324,9 @@ def __fillEVENTS_not_safe__(
 
     avNoise /= nTels
     if avNoise <= 0:
-        logger.warning(f"Time independent noise of {avNoise} found for Run {runHeader.getRunNumber()}.")
+        logger.warning(
+            f"Time independent noise of {avNoise} found for Run {runHeader.getRunNumber()}."
+        )
 
     if st6_configs is not None:
         split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
@@ -330,16 +341,19 @@ def __fillEVENTS_not_safe__(
         # The azimuth and zenith need to be used in the previous event
         # So this means that the first event has no reference....
         eList = np.array([arr_dict["energyArr"][0]])
-        eList = np.append(eList, energyBiasCorr(
-            arr_dict["energyArr"],
-            arr_dict["azArr"],
-            arr_dict["altArr"],
-            arr_dict["fNoise"],
-            offset,
-            effective_area_files[event_class_idx],
-            irf_to_store,
-            psf_king_params,
-        )[1:],).flatten()
+        eList = np.append(
+            eList,
+            energyBiasCorr(
+                arr_dict["energyArr"],
+                arr_dict["azArr"],
+                arr_dict["altArr"],
+                arr_dict["fNoise"],
+                offset,
+                effective_area_files[event_class_idx],
+                irf_to_store,
+                psf_king_params,
+            )[1:],
+        ).flatten()
         evt_dict["ENERGY"] = eList
     else:
         evt_dict["ENERGY"] = arr_dict["energyArr"]
@@ -431,7 +445,9 @@ def energyBiasCorr(
         effectiveAreaParameters.fZenith = 90 - zenith[shift]
         effectiveAreaParameters.fNoise = noise[shift]
         # effectiveAreaParameters.fOffset = offset[i]
-        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(effectiveAreaParameters)
+        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
+            effectiveAreaParameters
+        )
 
         correction = manager.getCorrectionForExperimentalBias(
             effectiveAreaParameters, energy[i] * 1000
