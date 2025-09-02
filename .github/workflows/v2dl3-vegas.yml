@@ -41,7 +41,7 @@ jobs:
 
      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout new branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Runs "utils/vegas_docker_test.runs.sh" within the docker image.
       # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
