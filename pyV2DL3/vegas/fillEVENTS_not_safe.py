@@ -195,12 +195,14 @@ def __fillEVENTS_not_safe__(
         if nTels == 0:
             avNoise = -100
             logger.warning(
-                f"Warning! {runHeader.getRunNumber()} has no (time dependent) noise found for this event. Will use average of other events in this run."
+                f"Warning! {runHeader.getRunNumber()} has no (time dependent) noise found for this event. "
+                "Will use average of other events in this run."
             )
         else:
             if 0 < nTels < 4:
                 logger.warning(
-                    f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} telescopes for this event. Using average of other {nTels} telescopes."
+                    f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} "
+                    f"telescopes for this event. Using average of other {nTels} telescopes."
                 )
             avNoise /= nTels
         this_event_group["fNoise"].append(avNoise)
@@ -216,7 +218,7 @@ def __fillEVENTS_not_safe__(
 
     if nNonNegativeNoises == 0:
         logger.error(
-            f"Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
+            "Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
         )
 
     else:
@@ -237,14 +239,15 @@ def __fillEVENTS_not_safe__(
         for chan_i in range(499):
             if tel_info.channel(chan_i).hasPMT():
                 n_PMT += 1
-                retcode = pixelData.getSuppressedTimeIndpt(tel_i, chan_i, isSuppressed)
+                pixelData.getSuppressedTimeIndpt(tel_i, chan_i, isSuppressed)
                 if isSuppressed.value:
                     n_suppressed += 1
                     isSuppressed.value = False
         n_suppressed_all_tels += n_suppressed
     if n_suppressed_all_tels > 200:  # Total pixels suppressed across all telescopes
         logger.warning(
-            f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: This will make noise artificially low. Ensure you cut the entire timeslice this occurred in."
+            f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: " 
+            "This will make noise artificially low. Ensure you cut the entire timeslice this occurred in."
         )
 
     avAlt = np.mean(avAlt)
