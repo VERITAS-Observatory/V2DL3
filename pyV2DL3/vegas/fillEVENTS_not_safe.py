@@ -244,7 +244,9 @@ def __fillEVENTS_not_safe__(
                     n_suppressed += 1
                     isSuppressed.value = False
         n_suppressed_all_tels += n_suppressed
-    if n_suppressed_all_tels > 200:  # Total pixels suppressed across all telescopes
+   n_suppresed_pixel_thresh = 200 # Total pixels suppressed across all telescopes
+    ...
+    if n_suppressed_all_tels > n_suppresed_pixel_thresh: 
         logger.warning(
             f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: "
             "This will make noise artificially low. Ensure you cut the entire timeslice this occurred in."
