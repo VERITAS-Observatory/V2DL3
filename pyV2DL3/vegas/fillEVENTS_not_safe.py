@@ -63,6 +63,9 @@ def __fillEVENTS_not_safe__(
         - Time(startTime.getString(), format="iso", scale="utc")
     ) / 2.0
 
+    # Threshold for total pixels suppressed across all telescopes to cause warning.
+    n_suppresed_pixel_thresh = 200
+
     # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
     num_event_groups = len(effective_area_files)
@@ -244,8 +247,6 @@ def __fillEVENTS_not_safe__(
                     n_suppressed += 1
                     isSuppressed.value = False
         n_suppressed_all_tels += n_suppressed
-   n_suppresed_pixel_thresh = 200 # Total pixels suppressed across all telescopes
-    ...
     if n_suppressed_all_tels > n_suppresed_pixel_thresh: 
         logger.warning(
             f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: "
