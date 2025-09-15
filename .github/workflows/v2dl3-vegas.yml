@@ -54,7 +54,7 @@ jobs:
           && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
           "
           cp -r $NEW_DIR ../$NEW_DIR
-          sudo rm -rf $GITHUB_WORKSPACE/* 
+          sudo rm -rf $GITHUB_WORKSPACE/*
 
       - name: Checkout main branch
         uses: actions/checkout@v5

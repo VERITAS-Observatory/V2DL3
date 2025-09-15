@@ -3,9 +3,7 @@ import os.path
 
 import click
 import numpy as np
-from scipy.interpolate import (
-    RegularGridInterpolator,
-)
+from scipy.interpolate import RegularGridInterpolator
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
