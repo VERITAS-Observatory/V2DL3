@@ -174,7 +174,6 @@ class IrfInterpolator:
 
         # OPTIMIZATION 1: Use rescaled coordinates
         # Scale coordinates to improve numerical stability and performance
-        from sklearn.preprocessing import MinMaxScaler
         self.scaler = MinMaxScaler()
         scaled_coords = self.scaler.fit_transform(coords)
 
