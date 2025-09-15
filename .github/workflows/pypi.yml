@@ -1,14 +1,18 @@
+---
 # Derived from https://github.com/cta-observatory/project-template-python-pure/blob/main/.github/workflows/pypi.yml
 name: Deploy to PyPi
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: pypi-release
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v5
 
@@ -27,8 +31,8 @@ jobs:
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_test_token }}
+        # with:
+          # user: __token__
+          # password: ${{ secrets.pypi_test_token }}
           # remove next line for actual publishing to real pypi
-          repository_url: https://test.pypi.org/legacy/
+          # repository_url: https://test.pypi.org/legacy/
