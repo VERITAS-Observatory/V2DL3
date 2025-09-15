@@ -32,14 +32,16 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout new branch
-        uses: actions/checkout@v4
 
       - name: Pull docker image
         run: |
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_TOKEN
           docker pull $DOCKER_IMAGE
+
+
+     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout new branch
+        uses: actions/checkout@v5
 
       # Runs "utils/vegas_docker_test.runs.sh" within the docker image.
       # First copies out the test scripts from the new branch so that they aren't overwritten by the main branch pull
@@ -52,10 +54,10 @@ jobs:
           && bash utils/vegas_docker_test_runs.sh OUTDIR=$NEW_DIR \
           "
           cp -r $NEW_DIR ../$NEW_DIR
-          sudo rm -rf $GITHUB_WORKSPACE/*
+          sudo rm -rf $GITHUB_WORKSPACE/* 
 
       - name: Checkout main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
 
@@ -67,7 +69,6 @@ jobs:
           && bash vegas_docker_test_runs_static.sh OUTDIR=$CONTROL_DIR \
           "
           cp -r $CONTROL_DIR ../$CONTROL_DIR
-
       - name: Install fitsdiff
         run: |
           sudo apt-get install -qq astropy-utils
