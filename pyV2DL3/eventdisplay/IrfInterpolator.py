@@ -25,11 +25,12 @@ class IrfInterpolator:
         self.azimuth = azimuth
         self.interpolator = None
         self.interpolator_name = interpolator_name
+        self.irf_axes = None
+        self.irf_data = None
         if interpolator_name not in ["KNeighborsRegressor", "RegularGridInterpolator"]:
             raise ValueError(
-                "The interpolator you entered: {} is either wrong or not implemented.".format(
-                    interpolator_name
-                )
+                f"The interpolator you entered: {interpolator_name}"
+                 " is either wrong or not implemented."
             )
 
         if os.path.isfile(filename):
@@ -55,20 +56,15 @@ class IrfInterpolator:
             self.irf_name = irf_name
             self._load_irf(**kwargs)
         else:
-            logging.error(
-                "The irf you entered: {} is either wrong or not implemented.".format(
-                    irf_name
-                )
-            )
+            logging.error(f"The irf you entered: {irf_name} is either wrong or not implemented.")
             raise WrongIrf
 
     def _load_irf(self, **kwargs):
         """Load IRFs from effective area file"""
 
         logging.info(
-            "Extracting IRFs of type: {0} for azimuth {1} deg".format(
-                self.irf_name, np.array2string(self.azimuth, precision=2)
-            )
+            f"Extracting IRFs of type: {self.irf_name}"
+             f" for azimuth {np.array2string(self.azimuth, precision=2)} deg"
         )
 
         if self.interpolator_name == "KNeighborsRegressor":
@@ -99,7 +95,6 @@ class IrfInterpolator:
             ]
         logging.debug(str(("IRF axes:", self.irf_axes)))
 
-
     def _load_irf_for_regular_grid_interpolator(self, **kwargs):
         """Load IRFs from file for RegularGridInterpolator with optional bin filling"""
 
@@ -127,7 +122,7 @@ class IrfInterpolator:
             if axis == 'zeniths':
                 irf_axes['zeniths'] = 1. / np.cos(np.radians(irf_axes['zeniths']))[::-1]
                 zenith_axis = i
-                logging.debug("zenith axis index: {}".format(zenith_axis))
+                logging.debug(f"zenith axis index: {zenith_axis}")
 
         if zenith_axis is None:
             logging.error("zenith axis not found in irf_axes")
@@ -135,7 +130,7 @@ class IrfInterpolator:
 
         self.irf_data = np.flip(irf_data, axis=zenith_axis)
         self.irf_axes = list(irf_axes.values())
-        logging.debug(str(("IRF axes:", irf_axes)))
+        logging.debug(f"IRF axes: {irf_axes}")
 
         if kwargs.get("use_click", True):
             clk = click.get_current_context()
@@ -148,7 +143,6 @@ class IrfInterpolator:
                 self.irf_axes, self.irf_data, bounds_error=False, fill_value=None)
         else:
             self.interpolator = RegularGridInterpolator(self.irf_axes, self.irf_data)
-
 
     def interpolate(self, coordinate):
         coordinate[1] = 1. / np.cos(np.radians(coordinate[1]))
@@ -191,8 +185,6 @@ class IrfInterpolator:
                 ])
                 interpolated_irf = self.interpolator.predict(predict_coords)
                 interpolated_irf = interpolated_irf.reshape(xx.shape)
-
-
             else:
                 interpolated_irf = self.interpolator((xx, yy, *coordinate))
         except ValueError:
@@ -206,17 +198,6 @@ class IrfInterpolator:
                 interpolated_irf = self.interpolator.predict(
                     np.array([[coordinate[0], coordinate[1], coordinate[2], e] for e in irf_axis])
                 )
-            elif self.interpolator_name in ["LinearNDInterpolator", "RBFInterpolator"]:
-                # Scale the input coordinates if using RBF or LinearND
-                if hasattr(self, 'scaler'):
-                    predict_coords = np.array([[coordinate[0], coordinate[1], coordinate[2], e]
-                                              for e in irf_axis])
-                    predict_coords = self.scaler.transform(predict_coords)
-                    interpolated_irf = self.interpolator(predict_coords)
-                else:
-                    predict_coords = np.array([[coordinate[0], coordinate[1], coordinate[2], e]
-                                              for e in irf_axis])
-                    interpolated_irf = self.interpolator(predict_coords)
             else:
                 interpolated_irf = self.interpolator((irf_axis, *coordinate))
         except ValueError:
