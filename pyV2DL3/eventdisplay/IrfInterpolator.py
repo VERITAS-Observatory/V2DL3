@@ -30,7 +30,7 @@ class IrfInterpolator:
         if interpolator_name not in ["KNeighborsRegressor", "RegularGridInterpolator"]:
             raise ValueError(
                 f"The interpolator you entered: {interpolator_name}"
-                 " is either wrong or not implemented."
+                " is either wrong or not implemented."
             )
 
         if os.path.isfile(filename):
@@ -64,7 +64,7 @@ class IrfInterpolator:
 
         logging.info(
             f"Extracting IRFs of type: {self.irf_name}"
-             f" for azimuth {np.array2string(self.azimuth, precision=2)} deg"
+            f" for azimuth {np.array2string(self.azimuth, precision=2)} deg"
         )
 
         if self.interpolator_name == "KNeighborsRegressor":

@@ -93,7 +93,6 @@ value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair."
     help="Name of the interpolator to be used for IRF interpolation",
     default="KNeighborsRegressor",
 )
-
 def cli(
     file_pair,
     full_enclosure,
