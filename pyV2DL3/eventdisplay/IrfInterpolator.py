@@ -426,7 +426,7 @@ class IrfInterpolator:
         print(f"Processing offset dimension {offset_dim}")
 
         # Look at each interior offset slice
-        for pos in range(1, data.shape[offset_dim]-1):
+        for pos in range(1, data.shape[offset_dim] - 1):
             idx = [slice(None)] * data.ndim
             idx[offset_dim] = pos
             slice_data = filled_data[tuple(idx)]
