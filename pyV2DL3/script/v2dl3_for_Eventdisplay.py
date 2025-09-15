@@ -89,21 +89,11 @@ value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair."
 )
 @click.option(
     "--interpolator_name",
-    type=click.Choice(["KNeighborsRegressor", "RegularGridInterpolator", "LinearNDInterpolator", "RBFInterpolator"]),
+    type=click.Choice(["KNeighborsRegressor", "RegularGridInterpolator"]),
     help="Name of the interpolator to be used for IRF interpolation",
     default="KNeighborsRegressor",
 )
-@click.option(
-    "--fill-empty-bins/--no-fill-empty-bins",
-    default=True,
-    help="Fill empty IRF bins before interpolation"
-)
-@click.option(
-    "--zero-out-slice",
-    type=int,
-    default=None,
-    help="TEST ONLY: Zero out a specific offset slice to test interpolation"
-)
+
 def cli(
     file_pair,
     full_enclosure,
@@ -118,9 +108,7 @@ def cli(
     force_extrapolation,
     fuzzy_boundary,
     db_fits_file,
-    interpolator_name,
-    fill_empty_bins,
-    zero_out_slice,
+    interpolator_name
 ):
     """Convert Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
@@ -157,7 +145,6 @@ def cli(
         for key, value in fuzzy_boundary:
             logging.info("Fuzzy boundary setting for %s axis: %s", key, value)
     logging.info("IRF interpolator name: %s", interpolator_name)
-    logging.info("Fill empty IRF bins: %s", fill_empty_bins)
     logging.info("Database FITS file: %s", db_fits_file)
 
     datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
@@ -165,8 +152,6 @@ def cli(
     datasource.fill_data(
         evt_filter=evt_filter,
         db_fits_file=db_fits_file,
-        fill_empty_bins=fill_empty_bins,
-        zero_out_slice=zero_out_slice
     )
     hdulist = genHDUlist(
         datasource,
