@@ -162,7 +162,12 @@ def cli(
 
     datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(evt_filter=evt_filter, db_fits_file=db_fits_file, fill_empty_bins=fill_empty_bins, zero_out_slice=zero_out_slice)
+    datasource.fill_data(
+        evt_filter=evt_filter,
+        db_fits_file=db_fits_file,
+        fill_empty_bins=fill_empty_bins,
+        zero_out_slice=zero_out_slice
+    )
     hdulist = genHDUlist(
         datasource,
         save_multiplicity=save_multiplicity,
