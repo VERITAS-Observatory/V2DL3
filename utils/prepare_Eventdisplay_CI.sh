@@ -1,6 +1,8 @@
 #!/bin/bash
 # Prepare Eventdisplay CI files for integration tests
 #
+# kNNInterpolator results are OS depending. Generate
+# the files below on a linux machine.
 
 PDIR=$(pwd)
 
