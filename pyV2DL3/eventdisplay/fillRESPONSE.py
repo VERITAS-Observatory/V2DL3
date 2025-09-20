@@ -352,8 +352,14 @@ def __fill_response__(
 
     response_dict = {}
 
+    if kwargs.get("use_click", True):
+        clk = click.get_current_context()
+        interpolator_name = clk.params["interpolator_name"]
+    else:
+        interpolator_name = kwargs.get("interpolator_name", "KNeighborsRegressor")
+
     # IRF interpolator
-    irf_interpolator = IrfInterpolator(effective_area, azimuth)
+    irf_interpolator = IrfInterpolator(effective_area, azimuth, interpolator_name)
 
     # Extract camera offsets available from the effective areas file.
     fast_eff_area = uproot.open(effective_area)["fEffAreaH2F"]

@@ -1,8 +1,10 @@
+import ctypes
 import logging
 from copy import deepcopy
 
 import astropy.units as units
 import numpy as np
+import ROOT
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
@@ -14,9 +16,6 @@ from pyV2DL3.vegas.util import (
     mergeTimeCut,
     produceTelList,
 )
-
-import ROOT
-import ctypes
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +203,8 @@ def __fillEVENTS_not_safe__(
         else:
             if 0 < nTels < 4:
                 logger.warning(
-                    f"Warning {runHeader.getRunNumber()} is missing (time dependent) noise for {4-nTels} "
+                    f"Warning {runHeader.getRunNumber()} is missing (time dependent) "
+                    f"noise for {4 - nTels} "
                     f"telescopes for this event. Using average of other {nTels} telescopes."
                 )
             avNoise /= nTels
@@ -458,7 +458,7 @@ def energyBiasCorr(
         correction = manager.getCorrectionForExperimentalBias(
             effectiveAreaParameters, energy[i] * 1000
         )
-        logger.debug(f"Correction = {correction}, Original E = {energy[i]*1000}")
+        logger.debug(f"Correction = {correction}, Original E = {energy[i] * 1000}")
         energytemp = energy[i] / correction
         energyCorr.append(energytemp)
 
