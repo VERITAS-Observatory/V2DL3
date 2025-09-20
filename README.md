@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://github.com/VERITAS-Observatory/V2DL3/blob/main/LICENSE)
 [![DOI](https://zenodo.org/badge/138582622.svg)](https://zenodo.org/badge/latestdoi/138582622)
+[![PyPI version](https://badge.fury.io/py/v2dl3.svg)](https://badge.fury.io/py/v2dl3)
 
 V2DL3 is a tool to convert [VERITAS](https://veritas.sao.arizona.edu/) data products to DL3 FITS format, allowing to use e.g. the [gammapy science tools](https://gammapy.org/) for  the high-level analysis.
 
