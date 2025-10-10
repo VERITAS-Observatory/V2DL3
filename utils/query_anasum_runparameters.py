@@ -1,47 +1,37 @@
+"""
+Query anasum file for run parameters (epoch and effective area file name).
+
+Reads log information stored in anasum.root file and extracts run parameters.
+
+"""
 import sys
 
 import uproot as up
 
 
 def get_epoch_effective_area(anasum_file, run):
-    '''
-    Reads and returns the epoch from the mscw log and the effective area file name
-    from the anasum log stored within a anasum.root file.
+    """Return epoch and effective area from an anasum.root file."""
+    f = up.open(anasum_file)
 
-    Parameters
-    ----------
-    file: str
-        path and filename of ANASUM file
-    run: int
-        VERITAS run number
-    Returns
-    -------
-    Tuple
-        epoch and effective area
-    '''
-    file = up.open(anasum_file)
-    data_list = file['anasumLog;1'].members['fLines']._data
-    sub = "reading effective areas from"
-    string = str([s for s in data_list if sub in s][0])
-    string = string.replace(r"reading effective areas from ", '')
-    effective_area = string.strip(' \n\t')
-    effective_area = effective_area[effective_area.find("effArea"):]
-    data_list = file[f'run_{run};1/stereo/mscwTableLog;1'].members['fLines']._data
-    sub = "Evaluating instrument epoch"
-    string = str([s for s in data_list if sub in s][0])
-    string = string.split(sep=",")
-    epoch = str(string[1].replace(r" is: ", '').replace(r")", ''))
+    # Effective area
+    lines = f['anasumLog;1'].members['fLines']._data
+    eff_line = next(s for s in lines if "reading effective areas from" in s)
+    eff = eff_line.split("reading effective areas from", 1)[1].strip()
+    effective_area = eff[eff.find("effArea"):]
+
+    # Epoch
+    lines = f[f'run_{run};1/stereo/mscwTableLog;1'].members['fLines']._data
+    epoch_line = next(s for s in lines if "Evaluating instrument epoch" in s)
+    epoch = epoch_line.split("is:", 1)[1].split(")")[0].strip()
+
     return epoch, effective_area
 
 
 def main():
-    '''
-    Main function to execute the script.
+    """Query anasum file for run parameters (epoch and effective area file name)."""
 
-    Usage: python query_anasum_runparameters.py <anasum_file> <run_number>
-    '''
     if len(sys.argv) != 3:
-        print("Usage: python query_anasum_runparameters.py <anasum_file> <run_number>")
+        print("Usage: v2dl3-eventdisplay-query-runparameters <anasum_file> <run_number>")
         sys.exit(1)
 
     anasum_file = sys.argv[1]
