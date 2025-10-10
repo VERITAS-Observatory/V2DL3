@@ -15,13 +15,17 @@ def get_epoch_effective_area(anasum_file, run):
 
     # Effective area
     lines = f['anasumLog;1'].members['fLines']._data
-    eff_line = next(s for s in lines if "reading effective areas from" in s)
+    eff_line = next((s for s in lines if "reading effective areas from" in s), None)
+    if eff_line is None:
+        raise ValueError("Could not find 'reading effective areas from' in anasumLog;1")
     eff = eff_line.split("reading effective areas from", 1)[1].strip()
     effective_area = eff[eff.find("effArea"):]
 
     # Epoch
     lines = f[f'run_{run};1/stereo/mscwTableLog;1'].members['fLines']._data
-    epoch_line = next(s for s in lines if "Evaluating instrument epoch" in s)
+    epoch_line = next((s for s in lines if "Evaluating instrument epoch" in s), None)
+    if epoch_line is None:
+        raise ValueError("Could not find 'Evaluating instrument epoch' in mscwTableLog;1")
     epoch = epoch_line.split("is:", 1)[1].split(")")[0].strip()
 
     return epoch, effective_area
