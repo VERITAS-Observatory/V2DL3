@@ -191,28 +191,13 @@ jobs:
             mv test-full-enclosure-all.fits.log ED-full-enclosure-all-CI.log
           fi
 
-      - name: Upload generated reference files
-        if: env.GENERATE_REFERENCE == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: eventdisplay-reference-files-python-${{ matrix.python-version }}
-          path: |
-            64080.anasum.root
-            effectiveArea.root
-            64080.db.fits.gz
-            64080.allevents.anasum.root
-            eventfilter.yml
-            ED-*.fits.gz
-            ED-*.log
-          retention-days: 30
-
       - name: Create reference archive
         if: env.GENERATE_REFERENCE == 'true'
         run: |
           echo "Creating reference archive..."
           # Only create archive if at least one file exists
           if ls *.root *.gz *.log *.yml 1> /dev/null 2>&1; then
-            tar -cvzf github-CI-reference.tar.gz *.root *.gz *.log *.yml
+            tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml
             echo "Archive created successfully"
           else
             echo "Warning: No files found to archive" >&2
@@ -223,5 +208,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eventdisplay-reference-archive-python-${{ matrix.python-version }}
-          path: github-CI-reference.tar.gz
+          path: github-CI.tar.gz
           retention-days: 1
