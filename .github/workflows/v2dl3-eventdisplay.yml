@@ -40,9 +40,31 @@ jobs:
         run: |
           pytest .
 
-      - name: download test data
+      - name: Cache test data
+        id: cache-test-data
+        uses: actions/cache@v4
+        with:
+          path: |
+            64080.anasum.root
+            effectiveArea.root
+            64080.db.fits.gz
+            64080.allevents.anasum.root
+            eventfilter.yml
+            ED-*.fits.gz
+          key: eventdisplay-test-data-v1
+
+      - name: Download test data
+        if: steps.cache-test-data.outputs.cache-hit != 'true'
+        env:
+          TEST_DATA_URL: ${{ secrets.EVENTDISPLAY_TEST_DATA_URL }}
         run: |
-          ./utils/download_Eventdisplay_test_data.sh
+          if [ -z "$TEST_DATA_URL" ]; then
+            echo "Error: EVENTDISPLAY_TEST_DATA_URL secret not set"
+            exit 1
+          fi
+          wget --no-verbose "$TEST_DATA_URL" -O github-CI.tar.gz
+          tar -xvzf github-CI.tar.gz
+          rm github-CI.tar.gz
 
       - name: Eventdisplay-pointlike
         shell: bash -leo pipefail {0}
