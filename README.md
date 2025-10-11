@@ -150,6 +150,10 @@ Further options are:
 - `--db_fits_file [db_fits_file]`: copy run information (e.g., weather, L3 rates) from DB fits file into header information. Requires access to DB fits files.
 - `--evt_filter [filter_file]`: apply an event filter defined in a yaml or json file (examples below).
 
+### Eventdisplay CI
+
+Test files for the Eventdisplay CI can be generated using the manual workflow of the [v2dl3-eventdisplay.yml](.github/workflows/v2dl3-eventdisplay.yml) GitHub action.
+
 #### Event filter examples
 
 Selects all events with `IsGamma == 1` (relevant only for anasum files produced with the `WRITE_ALL_EVENTS` set to 1).
