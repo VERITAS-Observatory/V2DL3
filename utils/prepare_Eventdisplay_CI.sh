@@ -5,51 +5,53 @@
 # the files below on a linux machine.
 
 PDIR=$(pwd)
+RUNID=64080
 
 echo "Preparing test data in ./test-eventdisplay-CI"
 mkdir -p test-eventdisplay-CI
 cd test-eventdisplay-CI || exit
-../download_Eventdisplay_test_data.sh
+wget https://syncandshare.desy.de/index.php/s/9P3eaCbqZf7SrdK/download/github-CI.tar.gz
+tar -xvzf github-CI.tar.gz
 rm -f ED-*.fits.gz ED-*.log *.tar.gz
 
 # point-like tests
-python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py \
-    -f ./64080.anasum.root \
+v2dl3-eventdisplay \
+    -f ./${RUNID}.anasum.root \
         ./effectiveArea.root \
         --logfile ED-pointlike-CI.log \
         ED-pointlike-CI.fits.gz
 
 # full-enclosure tests
-python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
-    -f ./64080.anasum.root \
+v2dl3-eventdisplay --full-enclosure \
+    -f ./${RUNID}.anasum.root \
        ./effectiveArea.root \
        --logfile ED-fullenclosure-CI.log \
        ED-fullenclosure-CI.fits.gz
 
 # point-like tests with DB
-python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py \
-    -f ./64080.anasum.root \
+v2dl3-eventdisplay \
+    -f ./${RUNID}.anasum.root \
         ./effectiveArea.root \
-        --db_fits_file ./64080.db.fits.gz \
+        --db_fits_file ./${RUNID}.db.fits.gz \
         --logfile ED-pointlike-db-CI.log \
         ED-pointlike-db-CI.fits.gz
 
 # point-like tests with event filter
-python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py \
-    -f ./64080.allevents.anasum.root \
+v2dl3-eventdisplay \
+    -f ./${RUNID}.allevents.anasum.root \
        ./effectiveArea.root \
        --evt_filter eventfilter.yml \
        --logfile ED-pointlike-all-CI.log \
        ED-pointlike-all-CI.fits.gz
 
 # full-enclosure tests with event selection
-python ../../pyV2DL3/script/v2dl3_for_Eventdisplay.py --full-enclosure \
-     -f ./64080.allevents.anasum.root \
+v2dl3-eventdisplay --full-enclosure \
+     -f ./${RUNID}.allevents.anasum.root \
         ./effectiveArea.root \
         --evt_filter eventfilter.yml \
         --logfile ED-full-enclosure-all-CI.log \
         ED-full-enclosure-all-CI.fits.gz
 
-tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml
+tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml 2>/dev/null || true
 
 cd ${PDIR} || exit
