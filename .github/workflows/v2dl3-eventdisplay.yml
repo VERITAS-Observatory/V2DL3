@@ -5,7 +5,6 @@ on:
   pull_request:
     paths-ignore:
       - 'utils/**vegas**'
-      - 'utils/compare_fits_dirs.sh'
       - '.github/v2dl3-vegas.yml'
       - '.git*'
       - 'CITATION.cff'
@@ -13,13 +12,23 @@ on:
       - 'LICENSE'
       - 'README.md'
       - 'setup.py'
+  workflow_dispatch:
+    inputs:
+      generate_reference:
+        description: 'Generate reference files instead of testing'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GENERATE_REFERENCE: ${{ github.event.inputs.generate_reference || false }}
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
 
     steps:
       - uses: actions/checkout@v5
@@ -40,92 +49,207 @@ jobs:
         run: |
           pytest .
 
-      - name: download test data
+      - name: Cache test data
+        id: cache-test-data
+        uses: actions/cache@v4
+        with:
+          path: |
+            64080.anasum.root
+            effectiveArea.root
+            64080.db.fits.gz
+            64080.allevents.anasum.root
+            eventfilter.yml
+            ED-*.fits.gz
+          key: eventdisplay-test-data-v1
+
+      - name: Download test data
+        if: steps.cache-test-data.outputs.cache-hit != 'true'
+        env:
+          TEST_DATA_URL: ${{ secrets.EVENTDISPLAY_TEST_DATA_URL }}
         run: |
-          ./utils/download_Eventdisplay_test_data.sh
+          if [ -z "$TEST_DATA_URL" ]; then
+            echo "Error: EVENTDISPLAY_TEST_DATA_URL secret not set"
+            exit 1
+          fi
+          wget --no-verbose "$TEST_DATA_URL" -O github-CI.tar.gz
+          tar -xvzf github-CI.tar.gz
+          rm github-CI.tar.gz
 
       - name: Eventdisplay-pointlike
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         run: |
           # point-like tests
-          v2dl3-eventdisplay \
-               -f ./64080.anasum.root \
-                  ./effectiveArea.root \
-                  --logfile test-pointlike.fits.log \
-                  test-pointlike-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
-                -d test-pointlike.log
-          cat test-pointlike.log
-          grep -q "No differences found" test-pointlike.log
+          if [ "$GENERATE_REFERENCE" = "true" ]; then
+            # Generate reference files
+            v2dl3-eventdisplay \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --logfile ED-pointlike-CI.log \
+                    ED-pointlike-CI.fits.gz
+          else
+            # Run tests comparing against reference
+            v2dl3-eventdisplay \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --logfile test-pointlike.fits.log \
+                    test-pointlike-CI.fits.gz
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
+                  -d test-pointlike.log
+            cat test-pointlike.log
+            grep -q "No differences found" test-pointlike.log
+          fi
 
       - name: Eventdisplay-full-enclosure
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
         run: |
           # full-enclosure tests
-          v2dl3-eventdisplay --full-enclosure \
-               -f ./64080.anasum.root \
-                  ./effectiveArea.root \
-                  --logfile test-full-enclosure.fits.log \
-                  test-full-enclosure-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
-                -d test-full-enclosure.log
-          cat test-full-enclosure.log
-          grep -q "No differences found" test-full-enclosure.log
+          if [ "$GENERATE_REFERENCE" = "true" ]; then
+            # Generate reference files
+            v2dl3-eventdisplay --full-enclosure \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --logfile ED-fullenclosure-CI.log \
+                    ED-fullenclosure-CI.fits.gz
+          else
+            # Run tests comparing against reference
+            v2dl3-eventdisplay --full-enclosure \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --logfile test-full-enclosure.fits.log \
+                    test-full-enclosure-CI.fits.gz
+            v2dl3-compareFitsFiles \
+                  -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
+                  -d test-full-enclosure.log
+            cat test-full-enclosure.log
+            grep -q "No differences found" test-full-enclosure.log
+          fi
 
       - name: Eventdisplay-pointlike-DB
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
         run: |
           # point-like tests (with DB)
-          v2dl3-eventdisplay \
-               -f ./64080.anasum.root \
-                  ./effectiveArea.root \
-                  --db_fits_file ./64080.db.fits.gz \
-                  --logfile test-pointlike-db.fits.log \
-                  test-pointlike-db-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
-                -d test-pointlike-db.log
-          cat test-pointlike-db.log
-          grep -q "No differences found" test-pointlike-db.log
+          if [ "$GENERATE_REFERENCE" = "true" ]; then
+            # Generate reference files
+            v2dl3-eventdisplay \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --db_fits_file ./64080.db.fits.gz \
+                    --logfile ED-pointlike-db-CI.log \
+                    ED-pointlike-db-CI.fits.gz
+          else
+            # Run tests comparing against reference
+            v2dl3-eventdisplay \
+                 -f ./64080.anasum.root \
+                    ./effectiveArea.root \
+                    --db_fits_file ./64080.db.fits.gz \
+                    --logfile test-pointlike-db.fits.log \
+                    test-pointlike-db-CI.fits.gz
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
+                  -d test-pointlike-db.log
+            cat test-pointlike-db.log
+            grep -q "No differences found" test-pointlike-db.log
+          fi
 
       - name: Eventdisplay-pointlike-select
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
         run: |
           # point-like tests with event selection
-          v2dl3-eventdisplay \
-               -f ./64080.allevents.anasum.root \
-                  ./effectiveArea.root \
-                  --evt_filter eventfilter.yml \
-                  --logfile test-pointlike-all.fits.log \
-                  test-pointlike-all-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
-                -d test-pointlike-all.log
-          cat test-pointlike-all.log
-          grep -q "No differences found" test-pointlike-all.log
+          if [ "$GENERATE_REFERENCE" = "true" ]; then
+            # Generate reference files
+            v2dl3-eventdisplay \
+                 -f ./64080.allevents.anasum.root \
+                    ./effectiveArea.root \
+                    --evt_filter eventfilter.yml \
+                    --logfile ED-pointlike-all-CI.log \
+                    ED-pointlike-all-CI.fits.gz
+          else
+            # Run tests comparing against reference
+            v2dl3-eventdisplay \
+                 -f ./64080.allevents.anasum.root \
+                    ./effectiveArea.root \
+                    --evt_filter eventfilter.yml \
+                    --logfile test-pointlike-all.fits.log \
+                    test-pointlike-all-CI.fits.gz
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
+                  -d test-pointlike-all.log
+            cat test-pointlike-all.log
+            grep -q "No differences found" test-pointlike-all.log
+          fi
 
       - name: Eventdisplay-full-enclosure-select
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
         run: |
           # full-enclosure tests with event selection
-          v2dl3-eventdisplay --full-enclosure \
-               -f ./64080.allevents.anasum.root \
-                  ./effectiveArea.root \
-                  --evt_filter eventfilter.yml \
-                  --logfile test-full-enclosure-all.fits.log \
-                  test-full-enclosure-all-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
-                -d test-full-enclosure-all.log
-          cat test-full-enclosure-all.log
-          grep -q "No differences found" test-full-enclosure-all.log
+          if [ "$GENERATE_REFERENCE" = "true" ]; then
+            # Generate reference files
+            v2dl3-eventdisplay --full-enclosure \
+                 -f ./64080.allevents.anasum.root \
+                    ./effectiveArea.root \
+                    --evt_filter eventfilter.yml \
+                    --logfile ED-full-enclosure-all-CI.log \
+                    ED-full-enclosure-all-CI.fits.gz
+          else
+            # Run tests comparing against reference
+            v2dl3-eventdisplay --full-enclosure \
+                 -f ./64080.allevents.anasum.root \
+                    ./effectiveArea.root \
+                    --evt_filter eventfilter.yml \
+                    --logfile test-full-enclosure-all.fits.log \
+                    test-full-enclosure-all-CI.fits.gz
+            v2dl3-compareFitsFiles \
+                  -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
+                  -d test-full-enclosure-all.log
+            cat test-full-enclosure-all.log
+            grep -q "No differences found" test-full-enclosure-all.log
+          fi
+
+      - name: Upload generated reference files
+        if: env.GENERATE_REFERENCE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eventdisplay-reference-files-python-${{ matrix.python-version }}
+          path: |
+            64080.anasum.root
+            effectiveArea.root
+            64080.db.fits.gz
+            64080.allevents.anasum.root
+            eventfilter.yml
+            ED-*.fits.gz
+            ED-*.log
+          retention-days: 30
+
+      - name: Create reference archive
+        if: env.GENERATE_REFERENCE == 'true'
+        run: |
+          echo "Creating reference archive..."
+          # Only create archive if at least one file exists
+          if ls *.root *.gz *.log *.yml 1> /dev/null 2>&1; then
+            tar -cvzf github-CI-reference.tar.gz *.root *.gz *.log *.yml
+            echo "Archive created successfully"
+          else
+            echo "Warning: No files found to archive" >&2
+          fi
+
+      - name: Upload reference archive
+        if: env.GENERATE_REFERENCE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eventdisplay-reference-archive-python-${{ matrix.python-version }}
+          path: github-CI-reference.tar.gz
+          retention-days: 1
