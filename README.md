@@ -23,13 +23,10 @@ Each of these steps are covered by one of the following tools:
 Users of V2DL3 can install the package with the following steps:
 
 ```bash
-git clone https://github.com/VERITAS-Observatory/V2DL3
-cd V2DL3
-pip install .
+python3.13 -m venv v2dl3
+source v2dl3/bin/activate
+pip install v2dl3
 ```
-
-> [!NOTE]
-> This will replaced in near future by a pip install from PyPI.
 
 All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
 
