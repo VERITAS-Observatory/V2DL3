@@ -56,7 +56,6 @@ packages = [
   "pyV2DL3._dev_version",
   "pyV2DL3.tests",
 ]
-#package-dir={'' = '.'}
 
 [tool.setuptools_scm]
 write_to = "pyV2DL3/_version.py"
