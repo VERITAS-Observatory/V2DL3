@@ -52,6 +52,11 @@ v2dl3-eventdisplay --full-enclosure \
         --logfile ED-full-enclosure-all-CI.log \
         ED-full-enclosure-all-CI.fits.gz
 
-tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml 2>/dev/null || true
+# Only create archive if at least one file exists
+if ls *.root *.gz *.log *.yml 1> /dev/null 2>&1; then
+    tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml
+else
+    echo "Warning: No files found to archive. Archive not created." >&2
+fi
 
 cd ${PDIR} || exit
