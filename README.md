@@ -23,7 +23,7 @@ Each of these steps are covered by one of the following tools:
 Users of V2DL3 can install the package with the following steps:
 
 ```bash
-python3.13 -m venv v2dl3
+python3 -m venv v2dl3
 source v2dl3/bin/activate
 pip install v2dl3
 ```
