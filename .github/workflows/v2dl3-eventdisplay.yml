@@ -205,7 +205,7 @@ jobs:
 
       - name: Upload reference archive
         if: env.GENERATE_REFERENCE == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: eventdisplay-reference-archive-python-${{ matrix.python-version }}
           path: github-CI.tar.gz
