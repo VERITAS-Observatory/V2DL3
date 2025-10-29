@@ -5,7 +5,6 @@ on:
   pull_request:
     paths-ignore:
       - 'utils/**vegas**'
-      - 'utils/compare_fits_dirs.sh'
       - '.github/v2dl3-vegas.yml'
       - '.git*'
       - 'CITATION.cff'
@@ -13,21 +12,31 @@ on:
       - 'LICENSE'
       - 'README.md'
       - 'setup.py'
+  workflow_dispatch:
+    inputs:
+      generate_reference:
+        description: 'Generate reference files instead of testing'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GENERATE_REFERENCE: ${{ github.event.inputs.generate_reference || false }}
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -40,11 +49,34 @@ jobs:
         run: |
           pytest .
 
-      - name: download test data
+      - name: Cache test data
+        id: cache-test-data
+        uses: actions/cache@v4
+        with:
+          path: |
+            64080.anasum.root
+            effectiveArea.root
+            64080.db.fits.gz
+            64080.allevents.anasum.root
+            eventfilter.yml
+            ED-*.fits.gz
+          key: eventdisplay-test-data-v1
+
+      - name: Download test data
+        if: steps.cache-test-data.outputs.cache-hit != 'true'
+        env:
+          TEST_DATA_URL: ${{ secrets.EVENTDISPLAY_TEST_DATA_URL }}
         run: |
-          ./utils/download_Eventdisplay_test_data.sh
+          if [ -z "$TEST_DATA_URL" ]; then
+            echo "Error: EVENTDISPLAY_TEST_DATA_URL secret not set"
+            exit 1
+          fi
+          wget --no-verbose "$TEST_DATA_URL" -O github-CI.tar.gz
+          tar -xvzf github-CI.tar.gz
+          rm github-CI.tar.gz
 
       - name: Eventdisplay-pointlike
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         run: |
           # point-like tests
@@ -53,13 +85,19 @@ jobs:
                   ./effectiveArea.root \
                   --logfile test-pointlike.fits.log \
                   test-pointlike-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
-                -d test-pointlike.log
-          cat test-pointlike.log
-          grep -q "No differences found" test-pointlike.log
+          if [ "$GENERATE_REFERENCE" != "true" ]; then
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
+                  -d test-pointlike.log
+            cat test-pointlike.log
+            grep -q "No differences found" test-pointlike.log
+          else
+            mv test-pointlike-CI.fits.gz ED-pointlike-CI.fits.gz
+            mv test-pointlike.fits.log ED-pointlike-CI.log
+          fi
 
       - name: Eventdisplay-full-enclosure
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
@@ -70,13 +108,19 @@ jobs:
                   ./effectiveArea.root \
                   --logfile test-full-enclosure.fits.log \
                   test-full-enclosure-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
-                -d test-full-enclosure.log
-          cat test-full-enclosure.log
-          grep -q "No differences found" test-full-enclosure.log
+          if [ "$GENERATE_REFERENCE" != "true" ]; then
+            v2dl3-compareFitsFiles \
+                  -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
+                  -d test-full-enclosure.log
+            cat test-full-enclosure.log
+            grep -q "No differences found" test-full-enclosure.log
+          else
+            mv test-full-enclosure-CI.fits.gz ED-fullenclosure-CI.fits.gz
+            mv test-full-enclosure.fits.log ED-fullenclosure-CI.log
+          fi
 
       - name: Eventdisplay-pointlike-DB
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
@@ -88,13 +132,19 @@ jobs:
                   --db_fits_file ./64080.db.fits.gz \
                   --logfile test-pointlike-db.fits.log \
                   test-pointlike-db-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
-                -d test-pointlike-db.log
-          cat test-pointlike-db.log
-          grep -q "No differences found" test-pointlike-db.log
+          if [ "$GENERATE_REFERENCE" != "true" ]; then
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
+                  -d test-pointlike-db.log
+            cat test-pointlike-db.log
+            grep -q "No differences found" test-pointlike-db.log
+          else
+            mv test-pointlike-db-CI.fits.gz ED-pointlike-db-CI.fits.gz
+            mv test-pointlike-db.fits.log ED-pointlike-db-CI.log
+          fi
 
       - name: Eventdisplay-pointlike-select
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
@@ -106,13 +156,19 @@ jobs:
                   --evt_filter eventfilter.yml \
                   --logfile test-pointlike-all.fits.log \
                   test-pointlike-all-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
-                -d test-pointlike-all.log
-          cat test-pointlike-all.log
-          grep -q "No differences found" test-pointlike-all.log
+          if [ "$GENERATE_REFERENCE" != "true" ]; then
+            v2dl3-compareFitsFiles \
+                  -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
+                  -d test-pointlike-all.log
+            cat test-pointlike-all.log
+            grep -q "No differences found" test-pointlike-all.log
+          else
+            mv test-pointlike-all-CI.fits.gz ED-pointlike-all-CI.fits.gz
+            mv test-pointlike-all.fits.log ED-pointlike-all-CI.log
+          fi
 
       - name: Eventdisplay-full-enclosure-select
+        continue-on-error: ${{ env.GENERATE_REFERENCE == 'true' }}
         shell: bash -leo pipefail {0}
         env:
           PYTHONPATH: .
@@ -124,8 +180,33 @@ jobs:
                   --evt_filter eventfilter.yml \
                   --logfile test-full-enclosure-all.fits.log \
                   test-full-enclosure-all-CI.fits.gz
-          v2dl3-compareFitsFiles \
-                -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
-                -d test-full-enclosure-all.log
-          cat test-full-enclosure-all.log
-          grep -q "No differences found" test-full-enclosure-all.log
+          if [ "$GENERATE_REFERENCE" != "true" ]; then
+            v2dl3-compareFitsFiles \
+                  -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
+                  -d test-full-enclosure-all.log
+            cat test-full-enclosure-all.log
+            grep -q "No differences found" test-full-enclosure-all.log
+          else
+            mv test-full-enclosure-all-CI.fits.gz ED-full-enclosure-all-CI.fits.gz
+            mv test-full-enclosure-all.fits.log ED-full-enclosure-all-CI.log
+          fi
+
+      - name: Create reference archive
+        if: env.GENERATE_REFERENCE == 'true'
+        run: |
+          echo "Creating reference archive..."
+          # Only create archive if at least one file exists
+          if ls *.root *.gz *.log *.yml 1> /dev/null 2>&1; then
+            tar -cvzf github-CI.tar.gz *.root *.gz *.log *.yml
+            echo "Archive created successfully"
+          else
+            echo "Warning: No files found to archive" >&2
+          fi
+
+      - name: Upload reference archive
+        if: env.GENERATE_REFERENCE == 'true'
+        uses: actions/upload-artifact@v5
+        with:
+          name: eventdisplay-reference-archive-python-${{ matrix.python-version }}
+          path: github-CI.tar.gz
+          retention-days: 1

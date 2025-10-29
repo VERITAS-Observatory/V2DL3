@@ -4,18 +4,29 @@ import os
 import click
 
 from pyV2DL3.genHDUList import genHDUlist, loadROOTFiles
+from pyV2DL3.version import __version__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 IRF_AXIS = ["zenith", "pedvar"]
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(f'pyV2DL3 version {__version__}')
+    ctx.exit()
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--version', '-v', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True,
+              help='Show version and exit.')
 @click.option(
     "--file_pair",
     "-f",
     nargs=2,
     type=click.Path(exists=True),
-    help="anasum file (<file 1>) and " "the corresponding effective area (<file 2>).",
+    help="anasum file (<file 1>) and the corresponding effective area (<file 2>).",
 )
 @click.option(
     "--full-enclosure",
@@ -76,6 +87,12 @@ value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair."
     help="FITS file containing the database tables (including DQM table).",
     default=None,
 )
+@click.option(
+    "--interpolator_name",
+    type=click.Choice(["KNeighborsRegressor", "RegularGridInterpolator"]),
+    help="Name of the interpolator to be used for IRF interpolation",
+    default="KNeighborsRegressor",
+)
 def cli(
     file_pair,
     full_enclosure,
@@ -90,6 +107,7 @@ def cli(
     force_extrapolation,
     fuzzy_boundary,
     db_fits_file,
+    interpolator_name
 ):
     """Convert Eventdisplay anasum files and corresponding IRFs to DL3"""
     if len(file_pair) == 0:
@@ -125,11 +143,15 @@ def cli(
     if fuzzy_boundary is not None:
         for key, value in fuzzy_boundary:
             logging.info("Fuzzy boundary setting for %s axis: %s", key, value)
+    logging.info("IRF interpolator name: %s", interpolator_name)
     logging.info("Database FITS file: %s", db_fits_file)
 
     datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
     datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(evt_filter=evt_filter, db_fits_file=db_fits_file)
+    datasource.fill_data(
+        evt_filter=evt_filter,
+        db_fits_file=db_fits_file,
+    )
     hdulist = genHDUlist(
         datasource,
         save_multiplicity=save_multiplicity,

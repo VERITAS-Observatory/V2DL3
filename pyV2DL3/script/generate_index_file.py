@@ -19,11 +19,22 @@ import os
 import click
 
 from pyV2DL3.generateObsHduIndex import create_obs_hdu_index_file
+from pyV2DL3.version import __version__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(f'pyV2DL3 version {__version__}')
+    ctx.exit()
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--version', '-v', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True,
+              help='Show version and exit.')
 @click.option(
     "--folder_location",
     "-f",

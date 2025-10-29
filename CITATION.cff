@@ -4,8 +4,8 @@ cff-version: 1.2.0
 message: If you use this software, please cite it using these metadata.
 title: "V2DL3 - VERITAS (VEGAS and Eventdisplay) to DL3 Converter."
 doi: 10.5281/zenodo.8306205
-version: 0.5.0
-date-released: 2023-09-08
+version: 0.8.0
+date-released: 2025-09-20
 keywords:
 - "gamma-ray astronomy"
 - "astronomy software"
@@ -59,3 +59,12 @@ authors:
 - given-names: Tyler
   family-names: Cahill
   affiliation: "Iowa State University"
+- given-names: Matthew
+  family-names: Lundy
+  affiliation: "McGill University"
+- given-names: Deivid
+  family-names: Ribeiro
+  affiliation: "University of Minnesota"
+- given-names: Nicki
+  family-names: Bond
+  affiliation: "University College Dublin"
