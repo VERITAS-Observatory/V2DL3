@@ -320,19 +320,6 @@ def __fillEVENTS_not_safe__(
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
 
-    avNoise = 0
-    nTels = 0
-    for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
-        avNoise += qStatsData.getCameraAverageTraceVarTimeIndpt(
-            telID - 1, windowSizeForNoise, pixelData, arrayInfo
-        )
-        nTels += 1
-
-    avNoise /= nTels
-    if avNoise <= 0:
-        logger.warning(
-            f"Time independent noise of {avNoise} found for Run {runHeader.getRunNumber()}."
-        )
 
     if st6_configs is not None:
         split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
@@ -371,7 +358,7 @@ def __fillEVENTS_not_safe__(
             "TSTART": startTime_s,
             "TSTOP": endTime_s,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
+        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNonNegativeNoises},
         returned_dicts,
     )
 
