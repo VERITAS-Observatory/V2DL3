@@ -219,7 +219,6 @@ def __fillEVENTS_not_safe__(
         if fNoise > 0:
             nNonNegativeNoises += 1
             avNonNegativeNoises += fNoise
-    avNonNegativeNoises /= nNonNegativeNoises
 
     if nNonNegativeNoises == 0:
         logger.error(
@@ -227,6 +226,7 @@ def __fillEVENTS_not_safe__(
         )
 
     else:
+        avNonNegativeNoises /= nNonNegativeNoises
         for i, fNoise in enumerate(this_event_group["fNoise"]):
             if fNoise <= 0:  # replace negative noises with average
                 this_event_group["fNoise"][i] = avNonNegativeNoises
