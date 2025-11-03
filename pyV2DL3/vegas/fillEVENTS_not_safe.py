@@ -271,14 +271,16 @@ def __fillEVENTS_not_safe__(
 
         if nWithinXSigmaOfMeanNoises == 0:
             logger.error(
-                "Error! No valid noises found for this run. Do not use."
+                "Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
             )
+            avNonNegativeNonSuppressedNoises = -100
         else:
             avWithinXSigmaOfMeanNoises /= nWithinXSigmaOfMeanNoises
             for i, fNoise in enumerate(this_event_group["fNoise"]):
                 if fNoise < MeanPerEventNoise -  n_noise_stddev_thresh*StDevPerEventNoise:
                     this_event_group["fNoise"][i] = avWithinXSigmaOfMeanNoises
                     ValuesReplaced.append(fNoise)
+            avNonNegativeNonSuppressedNoises = avWithinXSigmaOfMeanNoises
         if len(ValuesReplaced) > 0:
             logger.warning(
                 f"Warning! The following Time Dependent Noise values were more than {n_noise_stddev_thresh} sigma below the mean (as well as having suppressed pixels): {[f'{n:.4f}' for n in set(ValuesReplaced)]} \n"
@@ -289,6 +291,7 @@ def __fillEVENTS_not_safe__(
             logger.info(
                 f"Info: No Time Dependent Noise values were more than {n_noise_stddev_thresh} sigma below the mean despite {n_suppressed_all_tels} suppressed pixels. Continuing normally."
             )
+
 
 
     avAlt = np.mean(avAlt)
@@ -396,7 +399,7 @@ def __fillEVENTS_not_safe__(
             "TSTART": startTime_s,
             "TSTOP": endTime_s,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNonNegativeNoises},
+        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNonNegativeNonSuppressedNoises},
         returned_dicts,
     )
 
