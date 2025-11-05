@@ -64,8 +64,8 @@ def __fillEVENTS_not_safe__(
 
     # Threshold for total pixels suppressed across all telescopes to cause warning.
     n_suppresed_pixel_thresh = 200
-    # Threshold of how many standard deviations from the mean to consider a noise value 
-    # in a run with more than n_suppresed_pixel_thresh suppressed pixels to be considered 
+    # Threshold of how many standard deviations from the mean to consider a noise value
+    # in a run with more than n_suppresed_pixel_thresh suppressed pixels to be considered
     # artificially low/high and replaced with mean for that run.
     n_noise_stddev_thresh = 3
 
@@ -267,7 +267,7 @@ def __fillEVENTS_not_safe__(
             "Alternatively, consider cutting time slice in Stage 5. \n"
             f"All timeslice noises in run: \n {[format(x, '.4f') for x in unique_noises]}"
         )
-        # Replace any noise values that are more than n_noise_stddev_thresh * sigma 
+        # Replace any noise values that are more than n_noise_stddev_thresh * sigma
         # below the mean with the average for the run.
         # Only looking for low noises as these are the result of suppressed pixels.
         nWithinXSigmaOfMeanNoises = 0
@@ -295,7 +295,7 @@ def __fillEVENTS_not_safe__(
             avNonNegativeNonSuppressedNoises = avWithinXSigmaOfMeanNoises
         if len(ValuesReplaced) > 0:
             logger.warning(
-                f"Warning! The following Time Dependent Noise values were more than {n_noise_stddev_thresh} " 
+                f"Warning! The following Time Dependent Noise values were more than {n_noise_stddev_thresh} "
                 f"sigma below the mean (as well as having suppressed pixels): {[f'{n:.4f}' for n in set(ValuesReplaced)]} \n"
                 f"These values have been replaced with the average of the other noise values within {n_noise_stddev_thresh} "
                 f"sigma of the mean ({avWithinXSigmaOfMeanNoises:.4f}) \n"
