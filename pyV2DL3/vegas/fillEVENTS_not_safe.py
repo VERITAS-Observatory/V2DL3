@@ -252,13 +252,18 @@ def __fillEVENTS_not_safe__(
     if n_suppressed_all_tels > n_suppresed_pixel_thresh:
         MeanPerEventNoise=np.mean(list(this_event_group['fNoise']))
         StDevPerEventNoise=np.std(list(this_event_group['fNoise']))
+        unique_noises = [] # Use this rather than set() so they are in order
+        for x in this_event_group['fNoise']:
+            if x not in unique_noises:
+                unique_noises.append(x)
+
         logger.warning(
             f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: \n"
             "    This will make noise artificially low in that timeslice. \n"
-            f"    Replacing any Time Dependent Noise values more than {n_noise_stddev_thresh} sigma below the run mean with the run mean. \n"
-            "    Alternatively, consider cutting time slice in Stage 5."
+            f"    Replacing any Time Dependent Noise values more than {n_noise_stddev_thresh} sigma below the run mean with the mean of those within {n_noise_stddev_thresh} sigma \n"
+            "Alternatively, consider cutting time slice in Stage 5. \n"
+            f"All timeslice noises in run: \n {[format(x, '.4f') for x in unique_noises]}"
         )
-        
         # Replace any noise values that are more than n_noise_stddev_thresh * sigma below the mean with the average for the run. 
         # Only looking for low noises as these are the result of suppressed pixels.
         nWithinXSigmaOfMeanNoises = 0
@@ -284,8 +289,7 @@ def __fillEVENTS_not_safe__(
         if len(ValuesReplaced) > 0:
             logger.warning(
                 f"Warning! The following Time Dependent Noise values were more than {n_noise_stddev_thresh} sigma below the mean (as well as having suppressed pixels): {[f'{n:.4f}' for n in set(ValuesReplaced)]} \n"
-                f"Mean: {MeanPerEventNoise:.4f}, StdDev: {StDevPerEventNoise:.4f} \n"
-                f"These values have been replaced with the average of the other noise values within {n_noise_stddev_thresh} sigma of the mean: {avWithinXSigmaOfMeanNoises:.4f}"
+                f"These values have been replaced with the average of the other noise values within {n_noise_stddev_thresh} sigma of the mean ({avWithinXSigmaOfMeanNoises:.4f}) \n"
             )
         else: # len(ValuesReplaced) == 0
             logger.info(
