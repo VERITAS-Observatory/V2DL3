@@ -295,6 +295,8 @@ def __fillEVENTS_not_safe__(
             logger.info(
                 f"Info: No Time Dependent Noise values were more than {n_noise_stddev_thresh} sigma below the mean despite {n_suppressed_all_tels} suppressed pixels. Continuing normally."
             )
+    else: # n_suppressed_all_tels < n_suppresed_pixel_thresh:
+        avNonNegativeNonSuppressedNoises = avNonNegativeNoises
 
 
 
