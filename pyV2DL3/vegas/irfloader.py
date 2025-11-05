@@ -48,13 +48,15 @@ def get_axes_edges(az, az_index, ze, ze_index, noise, noise_index):
         noise_low = noise_index[0]
         noise_high = noise_index[1]
         logger.warning(
-            f"Warning! Noise {noise:.3f} is {(noise_low-noise):.3f} too low! - (Minimum allowed value: {noise_low:.3f}) Using nearest EA bin ...."
+            f"Warning! Noise {noise:.3f} is {(noise_low-noise):.3f} too low! - "
+            f"(Minimum allowed value: {noise_low:.3f}) Using nearest EA bin ...."
         )
     elif noise >= noise_index[-1]:
         noise_low = noise_index[-2]
         noise_high = noise_index[-1]
         logger.warning(
-            f"Warning! Noise {noise:.3f} is {(noise-noise_high):.3f} too high! - (Maximum allowed value: {noise_high:.3f}) Using nearest EA bin ...."
+            f"Warning! Noise {noise:.3f} is {(noise-noise_high):.3f} too high! - "
+            f"(Maximum allowed value: {noise_high:.3f}) Using nearest EA bin ...."
         )
     else:
         for low, high in zip(noise_index[:-1], noise_index[1:]):
