@@ -196,6 +196,7 @@ def __fillEVENTS_not_safe__(
                 telID - 1, windowSizeForNoise, reco.fTime, pixelData, arrayInfo
             )
             if Noise > 0:
+                # Using mean not median to match VEGAS behaviour
                 avNoise += Noise
                 nTels += 1
         if nTels == 0:
@@ -223,9 +224,7 @@ def __fillEVENTS_not_safe__(
             avNonNegativeNoises += fNoise
 
     if nNonNegativeNoises == 0:
-        logger.error(
-            "Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
-        )
+        raise ValueError(f"No valid noises found for run {runHeader.getRunNumber()}.")
 
     else:
         avNonNegativeNoises /= nNonNegativeNoises
