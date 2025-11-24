@@ -44,13 +44,28 @@ def get_axes_edges(az, az_index, ze, ze_index, noise, noise_index):
     # Noise
     noise_low = -1
     noise_high = -1
-    for low, high in zip(noise_index[:-1], noise_index[1:]):
-        if (noise >= low) and (noise < high):
-            noise_low = low
-            noise_high = high
-            break
+    if noise < noise_index[0]:
+        noise_low = noise_index[0]
+        noise_high = noise_index[1]
+        logger.warning(
+            f"Warning! Noise {noise:.3f} is {(noise_low-noise):.3f} too low! - "
+            f"(Minimum allowed value: {noise_low:.3f}) Using nearest EA bin ...."
+        )
+    elif noise >= noise_index[-1]:
+        noise_low = noise_index[-2]
+        noise_high = noise_index[-1]
+        logger.warning(
+            f"Warning! Noise {noise:.3f} is {(noise-noise_high):.3f} too high! - "
+            f"(Maximum allowed value: {noise_high:.3f}) Using nearest EA bin ...."
+        )
+    else:
+        for low, high in zip(noise_index[:-1], noise_index[1:]):
+            if low <= noise < high:
+                noise_low = low
+                noise_high = high
+                break
     if (noise_low < 0) or (noise_high < 0):
-        raise Exception("Noise out of range")
+        raise Exception("Unexpected error: Noise range could not be determined")
 
     return az_low, az_high, ze_low, ze_high, noise_low, noise_high
 
@@ -235,7 +250,10 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     az_low, az_high, ze_low, ze_high, noise_low, noise_high = get_axes_edges(
         az, axis_dict["Azimuth"], ze, axis_dict["Zenith"], noise, axis_dict["Noise"]
     )
-
+    if noise > noise_high:
+        noise = noise_high
+    if noise < noise_low:
+        noise = noise_low
     irf_data = []
     offset_index = axis_dict["AbsoluteOffset"]
     for az_i, az_val in [(0, az_low), (1, az_high)]:
@@ -322,6 +340,7 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
     ehigh = irf_data[0]["EA_Dict"]["EHigh"]
     thetalow = irf_data[0]["EA_Dict"]["ThetaLow"]
     thetahigh = irf_data[0]["EA_Dict"]["ThetaHigh"]
+
     ea_interpolated = ea_interpolator((az, ze, noise))
     ea_final_data = np.array(
         [(elow, ehigh, thetalow, thetahigh, ea_interpolated)],

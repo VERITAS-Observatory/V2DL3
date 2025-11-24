@@ -64,6 +64,10 @@ def __fillEVENTS_not_safe__(
 
     # Threshold for total pixels suppressed across all telescopes to cause warning.
     n_suppresed_pixel_thresh = 200
+    # Threshold of how many standard deviations from the mean to consider a noise value
+    # in a run with more than n_suppresed_pixel_thresh suppressed pixels to be considered
+    # artificially low/high and replaced with mean for that run.
+    n_noise_stddev_thresh = 3
 
     # Set num_event_groups so we dont call len(effective_area_files)
     # thousands of times when filling events.
@@ -192,6 +196,7 @@ def __fillEVENTS_not_safe__(
                 telID - 1, windowSizeForNoise, reco.fTime, pixelData, arrayInfo
             )
             if Noise > 0:
+                # Using mean not median to match VEGAS behaviour
                 avNoise += Noise
                 nTels += 1
         if nTels == 0:
@@ -217,14 +222,12 @@ def __fillEVENTS_not_safe__(
         if fNoise > 0:
             nNonNegativeNoises += 1
             avNonNegativeNoises += fNoise
-    avNonNegativeNoises /= nNonNegativeNoises
 
     if nNonNegativeNoises == 0:
-        logger.error(
-            "Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
-        )
+        raise ValueError(f"No valid noises found for run {runHeader.getRunNumber()}.")
 
     else:
+        avNonNegativeNoises /= nNonNegativeNoises
         for i, fNoise in enumerate(this_event_group["fNoise"]):
             if fNoise <= 0:  # replace negative noises with average
                 this_event_group["fNoise"][i] = avNonNegativeNoises
@@ -248,10 +251,61 @@ def __fillEVENTS_not_safe__(
                     isSuppressed.value = False
         n_suppressed_all_tels += n_suppressed
     if n_suppressed_all_tels > n_suppresed_pixel_thresh:
+        MeanPerEventNoise = np.mean(list(this_event_group["fNoise"]))
+        StDevPerEventNoise = np.std(list(this_event_group["fNoise"]))
+        unique_noises = []  # Use this rather than set() so they are in order
+        for x in this_event_group["fNoise"]:
+            if x not in unique_noises:
+                unique_noises.append(x)
+
         logger.warning(
-            f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: "
-            "This will make noise artificially low. Ensure you cut the entire timeslice this occurred in."
+            f"Warning! {n_suppressed_all_tels} Pixels Suppressed for Run {runHeader.getRunNumber()}: \n"
+            "    This will make noise artificially low in that timeslice. \n"
+            f"    Replacing any Time Dependent Noise values more than {n_noise_stddev_thresh} sigma "
+            f"below the run mean with the mean of those within {n_noise_stddev_thresh} sigma \n"
+            "Alternatively, consider cutting time slice in Stage 5. \n"
+            f"All timeslice noises in run: \n {[format(x, '.4f') for x in unique_noises]}"
         )
+        # Replace any noise values that are more than n_noise_stddev_thresh * sigma
+        # below the mean with the average for the run.
+        # Only looking for low noises as these are the result of suppressed pixels.
+        nWithinXSigmaOfMeanNoises = 0
+        avWithinXSigmaOfMeanNoises = 0
+        ValuesReplaced = []
+        for fNoise in this_event_group["fNoise"]:
+            if fNoise > MeanPerEventNoise - n_noise_stddev_thresh * StDevPerEventNoise:
+                nWithinXSigmaOfMeanNoises += 1
+                avWithinXSigmaOfMeanNoises += fNoise
+
+        if nWithinXSigmaOfMeanNoises == 0:
+            logger.error(
+                "Error! No valid noises found for this run. Setting TimeDependentNoise: -100. Do not use."
+            )
+            avNonNegativeNonSuppressedNoises = -100
+        else:
+            avWithinXSigmaOfMeanNoises /= nWithinXSigmaOfMeanNoises
+            for i, fNoise in enumerate(this_event_group["fNoise"]):
+                if (
+                    fNoise
+                    < MeanPerEventNoise - n_noise_stddev_thresh * StDevPerEventNoise
+                ):
+                    this_event_group["fNoise"][i] = avWithinXSigmaOfMeanNoises
+                    ValuesReplaced.append(fNoise)
+            avNonNegativeNonSuppressedNoises = avWithinXSigmaOfMeanNoises
+        if len(ValuesReplaced) > 0:
+            logger.warning(
+                f"Warning! The following Time Dependent Noise values were more than {n_noise_stddev_thresh} "
+                f"sigma below the mean (as well as having suppressed pixels): {[f'{n:.4f}' for n in set(ValuesReplaced)]} \n"
+                f"These values have been replaced with the average of the other noise values within {n_noise_stddev_thresh} "
+                f"sigma of the mean ({avWithinXSigmaOfMeanNoises:.4f}) \n"
+            )
+        else:  # len(ValuesReplaced) == 0
+            logger.info(
+                f"Info: No Time Dependent Noise values were more than {n_noise_stddev_thresh} sigma below the mean "
+                f"despite {n_suppressed_all_tels} suppressed pixels. Continuing normally."
+            )
+    else:  # n_suppressed_all_tels < n_suppresed_pixel_thresh:
+        avNonNegativeNonSuppressedNoises = avNonNegativeNoises
 
     avAlt = np.mean(avAlt)
     # Calculate average azimuth angle from average vector on a circle
@@ -320,20 +374,6 @@ def __fillEVENTS_not_safe__(
         evt_dict["TELLIST"] = produceTelList(runHeader.fRunInfo.fConfigMask)
         evt_dict["N_TELS"] = runHeader.pfRunDetails.fTels
 
-    avNoise = 0
-    nTels = 0
-    for telID in decodeConfigMask(runHeader.fRunInfo.fConfigMask):
-        avNoise += qStatsData.getCameraAverageTraceVarTimeIndpt(
-            telID - 1, windowSizeForNoise, pixelData, arrayInfo
-        )
-        nTels += 1
-
-    avNoise /= nTels
-    if avNoise <= 0:
-        logger.warning(
-            f"Time independent noise of {avNoise} found for Run {runHeader.getRunNumber()}."
-        )
-
     if st6_configs is not None:
         split_configs = {opt.split()[0]: opt.split()[1] for opt in st6_configs}
         if "EA_ApplyEnergyCorrectionForExperimentalBias" in split_configs.keys():
@@ -371,7 +411,11 @@ def __fillEVENTS_not_safe__(
             "TSTART": startTime_s,
             "TSTOP": endTime_s,
         },
-        {"azimuth": avAz, "zenith": (90.0 - avAlt), "noise": avNoise},
+        {
+            "azimuth": avAz,
+            "zenith": (90.0 - avAlt),
+            "noise": avNonNegativeNonSuppressedNoises,
+        },
         returned_dicts,
     )
 
