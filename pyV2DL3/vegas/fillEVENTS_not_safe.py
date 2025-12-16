@@ -323,7 +323,7 @@ def __fillEVENTS_not_safe__(
         tc = getTimeCut(k.fCutsFileText)
 
     goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))
-    real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
+    ontime_after_timecuts = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
 
     # Construct an array to hold the event dict(s) to be returned:
     returned_dicts = []
@@ -359,9 +359,9 @@ def __fillEVENTS_not_safe__(
         evt_dict["DATE-AVG"] = time_avg.to_value("fits")
         evt_dict["TSTART"] = startTime_s
         evt_dict["TSTOP"] = endTime_s
-        evt_dict["ONTIME"] = endTime_s - startTime_s
+        evt_dict["ONTIME"] = ontime_after_timecuts
         evt_dict["LIVETIME"] = (
-            runHeader.getLiveTimeFrac(True) * real_live_time
+            runHeader.getLiveTimeFrac(True) * ontime_after_timecuts
         )  # True to suppress error warnings
         evt_dict["DEADC"] = runHeader.getLiveTimeFrac(True)
         evt_dict["OBJECT"] = runHeader.getSourceId()
