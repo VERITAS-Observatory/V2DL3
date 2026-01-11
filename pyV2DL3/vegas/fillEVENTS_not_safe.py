@@ -364,10 +364,10 @@ def __fillEVENTS_not_safe__(
 
         # Add elapsed and live times
         L3ScalarTreeElapsedTime += (elapsedtime_end - elapsedtime_start)
-        L3ScalarTreeLiveTime    += (livetime_end - livetime_start)
+        L3ScalarTreeLiveTime += (livetime_end - livetime_start)
     if L3ScalarTreeElapsedTime <= 0:
         raise ValueError("Total elapsed time from L3 scaler tree is 0. Cannot comput livetime fraction")
-    LiveTimeFraction = L3ScalarTreeLiveTime/L3ScalarTreeElapsedTime
+    LiveTimeFraction = L3ScalarTreeLiveTime / L3ScalarTreeElapsedTime
 
     # Construct an array to hold the event dict(s) to be returned:
     returned_dicts = []
