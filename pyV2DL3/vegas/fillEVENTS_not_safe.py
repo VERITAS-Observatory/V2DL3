@@ -322,8 +322,52 @@ def __fillEVENTS_not_safe__(
     for k in cuts:
         tc = getTimeCut(k.fCutsFileText)
 
-    goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc))
-    real_live_time = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
+    # Load the L3 scalar tree and use it to calculate the livetime
+    L3ScalarTree = vegasFileIO.getTFilePtr().Get("/Diagnostics/LiveTime/L3ScalarTree")
+    L3ScalarTree_df = ROOT.RDataFrame(L3ScalarTree)
+
+    lastElapsedTime = (
+        L3ScalarTree_df
+        .Max("ElapsedTimeNow")
+        .GetValue()
+    )
+
+    goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc), lastElapsedTime)
+    ontime_after_timecuts = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
+
+    L3ScalarTreeElapsedTime = 0.0
+    L3ScalarTreeLiveTime = 0.0
+
+    for start, stop in zip(goodTimeStart - startTime_s, goodTimeStop - startTime_s):
+        df_filt = (
+            L3ScalarTree_df.Define("entry", "rdfentry_")
+            .Filter(f"ElapsedTimeNow >= {start} and ElapsedTimeNow <= {stop}")
+        )
+        n = df_filt.Count().GetValue()
+        if n == 0:
+            logger.warning(f"Warning: no events between seconds {start} and {stop}")
+            continue
+
+        # Get start values
+        df_sel = df_filt.Range(0, 0)
+        start_entry = df_sel.Take["ULong64_t"]("entry").GetValue()[0]
+        L3ScalarTree.GetEntry(start_entry)
+        elapsedtime_start = L3ScalarTree.ElapsedTimeNow
+        livetime_start = L3ScalarTree.LiveTimeNow
+
+        # Get end values
+        df_sel = df_filt.Range(n - 1, n)
+        end_entry = df_sel.Take["ULong64_t"]("entry").GetValue()[0]
+        L3ScalarTree.GetEntry(end_entry)
+        elapsedtime_end = L3ScalarTree.ElapsedTimeNow
+        livetime_end = L3ScalarTree.LiveTimeNow
+
+        # Add elapsed and live times
+        L3ScalarTreeElapsedTime += (elapsedtime_end - elapsedtime_start)
+        L3ScalarTreeLiveTime += (livetime_end - livetime_start)
+    if L3ScalarTreeElapsedTime <= 0:
+        raise ValueError("Total elapsed time from L3 scaler tree is 0. Cannot comput livetime fraction")
+    LiveTimeFraction = L3ScalarTreeLiveTime / L3ScalarTreeElapsedTime
 
     # Construct an array to hold the event dict(s) to be returned:
     returned_dicts = []
@@ -359,11 +403,11 @@ def __fillEVENTS_not_safe__(
         evt_dict["DATE-AVG"] = time_avg.to_value("fits")
         evt_dict["TSTART"] = startTime_s
         evt_dict["TSTOP"] = endTime_s
-        evt_dict["ONTIME"] = endTime_s - startTime_s
+        evt_dict["ONTIME"] = ontime_after_timecuts
         evt_dict["LIVETIME"] = (
-            runHeader.getLiveTimeFrac(True) * real_live_time
+            LiveTimeFraction * ontime_after_timecuts
         )  # True to suppress error warnings
-        evt_dict["DEADC"] = runHeader.getLiveTimeFrac(True)
+        evt_dict["DEADC"] = LiveTimeFraction
         evt_dict["OBJECT"] = runHeader.getSourceId()
         evt_dict["RA_PNT"] = avRA
         evt_dict["DEC_PNT"] = avDec
