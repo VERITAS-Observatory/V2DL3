@@ -258,7 +258,7 @@ def cli(
         if not os.path.exists(output):
             os.makedirs(output)
         st5_str, ea_file = file_pair
-        ea_file = EffectiveAreaFile(ea_file)
+        ea_file = EffectiveAreaFile(ea_file,datasource_kwargs["reco_type"])
         flist, failed_list, num_event_groups = processFilePair(
             st5_str,
             ea_file,
@@ -274,7 +274,7 @@ def cli(
         )
     # Runlist mode
     else:
-        file_pairs = runlist_to_file_pairs(runlist, event_class_mode, output)
+        file_pairs = runlist_to_file_pairs(runlist, event_class_mode, datasource_kwargs['reco_type'], output)
         for st5_str, ea_file, st6_config in file_pairs:
 
             flist, failed_list, num_event_groups = processFilePair(
@@ -377,7 +377,7 @@ Returns:
 """
 
 
-def runlist_to_file_pairs(runlist, event_class_mode, output):
+def runlist_to_file_pairs(runlist, event_class_mode, reco_type, output):
     from pyV2DL3.vegas.parseSt6RunList import (
         RunlistParsingError,
         RunlistValidationError,
@@ -420,7 +420,7 @@ def runlist_to_file_pairs(runlist, event_class_mode, output):
         if len(eas[runlist_id]) < 1:
             raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
 
-        ea_files = [EffectiveAreaFile(ea) for ea in eas[runlist_id]]
+        ea_files = [EffectiveAreaFile(ea,reco_type) for ea in eas[runlist_id]]
         if "CONFIG" in rl_dict.keys():
             file_pairs.extend([(st5_file, ea_files, configs[runlist_id]) for st5_file in st5s[runlist_id]])
         else:
