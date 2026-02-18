@@ -66,7 +66,6 @@ def getCuts(config_str_ori, cut_searches):
         else:
             for cut_search in cut_searches:
                 if line.find(cut_search) >= 0:
-                    logger.debug(line)
                     key, cut_str = line.split(" ")
                     if key == cut_search:
                         if len(cut_str) > 0:
