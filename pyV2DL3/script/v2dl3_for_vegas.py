@@ -178,7 +178,7 @@ def cli(
         "event_class_mode": event_class_mode,
         "reco_type": reconstruction_type,
         "save_msw_msl": save_msw_msl,
-        "corr_EB_params" : energy_bias_corr,
+        "corr_EB_params": energy_bias_corr,
     }
 
     if psf_king is not None:
@@ -209,7 +209,7 @@ def cli(
         logging.info(f"Processing file: {st5_str}")
         logging.debug(f"Stage5 file:{st5_str}, Event classes:{ea_files}")
         fname_base = os.path.splitext(os.path.basename(st5_str))[0]
-        datasource_kwargs.update({"st6_configs" : st6_config})
+        datasource_kwargs.update({"st6_configs": st6_config})
         datasource = loadROOTFiles(st5_str, ea_files, "VEGAS", **datasource_kwargs)
         datasource.set_irfs_to_store(irfs_to_store)
         with cpp_print_context(verbose=verbose):
@@ -258,7 +258,7 @@ def cli(
         if not os.path.exists(output):
             os.makedirs(output)
         st5_str, ea_file = file_pair
-        ea_file = EffectiveAreaFile(ea_file,datasource_kwargs["reco_type"])
+        ea_file = EffectiveAreaFile(ea_file, datasource_kwargs["reco_type"])
         flist, failed_list, num_event_groups = processFilePair(
             st5_str,
             ea_file,
@@ -274,7 +274,9 @@ def cli(
         )
     # Runlist mode
     else:
-        file_pairs = runlist_to_file_pairs(runlist, event_class_mode, datasource_kwargs['reco_type'], output)
+        file_pairs = runlist_to_file_pairs(
+            runlist, event_class_mode, datasource_kwargs["reco_type"], output
+        )
         for st5_str, ea_file, st6_config in file_pairs:
 
             flist, failed_list, num_event_groups = processFilePair(
@@ -420,9 +422,14 @@ def runlist_to_file_pairs(runlist, event_class_mode, reco_type, output):
         if len(eas[runlist_id]) < 1:
             raise Exception("No EA filenames defined for runlist tag: " + runlist_id)
 
-        ea_files = [EffectiveAreaFile(ea,reco_type) for ea in eas[runlist_id]]
+        ea_files = [EffectiveAreaFile(ea, reco_type) for ea in eas[runlist_id]]
         if "CONFIG" in rl_dict.keys():
-            file_pairs.extend([(st5_file, ea_files, configs[runlist_id]) for st5_file in st5s[runlist_id]])
+            file_pairs.extend(
+                [
+                    (st5_file, ea_files, configs[runlist_id])
+                    for st5_file in st5s[runlist_id]
+                ]
+            )
         else:
             file_pairs.extend(
                 [(st5_file, ea_files, configs) for st5_file in st5s[runlist_id]]

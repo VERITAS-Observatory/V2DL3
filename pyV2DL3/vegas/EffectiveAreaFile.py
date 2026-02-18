@@ -23,7 +23,7 @@ https://veritas.sao.arizona.edu/wiki/V2dl3_dev_notes#Event_Classes
 
 
 class EffectiveAreaFile(object):
-    def __init__(self, effective_area_file,reco_type=1):
+    def __init__(self, effective_area_file, reco_type=1):
         self.__vegas__ = VEGASStatus()
         self.__vegas__.loadVEGAS()
         self.effective_area_IO = ROOT.VARootIO(effective_area_file, True)
@@ -41,13 +41,13 @@ class EffectiveAreaFile(object):
             "FoVCutUpper",
             "FoVCutLower",
         ]
-        if reco_type==1:
-            cut_searches.append('ThetaSquareUpper')
-        elif reco_type ==2:
-            cut_searches.append('Model3DThetaSquareUpper')
+        if reco_type == 1:
+            cut_searches.append("ThetaSquareUpper")
+        elif reco_type == 2:
+            cut_searches.append("Model3DThetaSquareUpper")
 
         # Initialize corresponding class variables and default values
-        self.reco_type=reco_type
+        self.reco_type = reco_type
         self.theta_square_upper = None
         self.msw_lower = float("-inf")
         self.msw_upper = float("inf")
@@ -117,7 +117,9 @@ class EffectiveAreaFile(object):
         minEnergy, maxEnergy = c_float(), c_float()
         if st6_configs is not None:
             split_configs = {
-                opt.split(" ")[0]: opt.split(" ")[1] for opt in st6_configs if st6_configs is not None
+                opt.split(" ")[0]: opt.split(" ")[1]
+                for opt in st6_configs
+                if st6_configs is not None
             }
             if "EA_SafeEnergyRangeMethod" in split_configs.keys():
                 safe_energy_method = str(split_configs["EA_SafeEnergyRangeMethod"])
