@@ -57,6 +57,7 @@ Returns:
 
 def getCuts(config_str_ori, cut_searches):
     config_str = str(config_str_ori)
+    logger.debug(f"Searching for cuts {cut_searches} in config string:\n{config_str}")
     cuts_found = {}
     for line in config_str.splitlines():
         # Skip comment lines
@@ -66,8 +67,10 @@ def getCuts(config_str_ori, cut_searches):
             for cut_search in cut_searches:
                 if line.find(cut_search) >= 0:
                     key, cut_str = line.split(" ")
-                    if len(cut_str) > 0:
-                        cuts_found[cut_search] = cut_str
+                    if key == cut_search:
+                        if len(cut_str) > 0:
+                            cuts_found[cut_search] = cut_str
+    logger.debug(f'Found Cuts! {cut_searches} with {cuts_found}')
     return cuts_found
 
 
