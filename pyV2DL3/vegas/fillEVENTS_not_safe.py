@@ -326,22 +326,19 @@ def __fillEVENTS_not_safe__(
     L3ScalarTree = vegasFileIO.getTFilePtr().Get("/Diagnostics/LiveTime/L3ScalarTree")
     L3ScalarTree_df = ROOT.RDataFrame(L3ScalarTree)
 
-    lastElapsedTime = (
-        L3ScalarTree_df
-        .Max("ElapsedTimeNow")
-        .GetValue()
-    )
+    lastElapsedTime = L3ScalarTree_df.Max("ElapsedTimeNow").GetValue()
 
-    goodTimeStart, goodTimeStop = getGTArray(startTime_s, endTime_s, mergeTimeCut(tc), lastElapsedTime)
+    goodTimeStart, goodTimeStop = getGTArray(
+        startTime_s, endTime_s, mergeTimeCut(tc), lastElapsedTime
+    )
     ontime_after_timecuts = np.sum(np.array(goodTimeStop) - np.array(goodTimeStart))
 
     L3ScalarTreeElapsedTime = 0.0
     L3ScalarTreeLiveTime = 0.0
 
     for start, stop in zip(goodTimeStart - startTime_s, goodTimeStop - startTime_s):
-        df_filt = (
-            L3ScalarTree_df.Define("entry", "rdfentry_")
-            .Filter(f"ElapsedTimeNow >= {start} and ElapsedTimeNow <= {stop}")
+        df_filt = L3ScalarTree_df.Define("entry", "rdfentry_").Filter(
+            f"ElapsedTimeNow >= {start} and ElapsedTimeNow <= {stop}"
         )
         n = df_filt.Count().GetValue()
         if n == 0:
@@ -363,10 +360,12 @@ def __fillEVENTS_not_safe__(
         livetime_end = L3ScalarTree.LiveTimeNow
 
         # Add elapsed and live times
-        L3ScalarTreeElapsedTime += (elapsedtime_end - elapsedtime_start)
-        L3ScalarTreeLiveTime += (livetime_end - livetime_start)
+        L3ScalarTreeElapsedTime += elapsedtime_end - elapsedtime_start
+        L3ScalarTreeLiveTime += livetime_end - livetime_start
     if L3ScalarTreeElapsedTime <= 0:
-        raise ValueError("Total elapsed time from L3 scaler tree is 0. Cannot comput livetime fraction")
+        raise ValueError(
+            "Total elapsed time from L3 scaler tree is 0. Cannot comput livetime fraction"
+        )
     LiveTimeFraction = L3ScalarTreeLiveTime / L3ScalarTreeElapsedTime
 
     # Construct an array to hold the event dict(s) to be returned:
@@ -549,10 +548,12 @@ def energyBiasCorr(
         effectiveAreaParameters.fAzimuth = azimuth[shift]
         effectiveAreaParameters.fZenith = 90 - zenith[shift]
         effectiveAreaParameters.fNoise = noise[shift]
-        
+
         effectiveAreaParameters.fOffset = offset[shift]
-        
-        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(effectiveAreaParameters)
+
+        effectiveAreaParameters = manager.getVectorParamsFromSimpleParameterData(
+            effectiveAreaParameters
+        )
 
         correction = manager.getCorrectionForExperimentalBias(
             effectiveAreaParameters, energy[i] * 1000
