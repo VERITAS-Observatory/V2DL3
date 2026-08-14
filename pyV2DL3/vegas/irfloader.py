@@ -98,7 +98,7 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
             eb_dl3 = manager.getEnergyBias_DL3(effectiveAreaParameters, False)
         if not ea_dl3:
             continue
-        
+
         # Get Ebias
         n_bins_x = eb_dl3.GetNbinsX()
         n_bins_y = eb_dl3.GetNbinsY()
@@ -163,24 +163,36 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
             x_edges = np.array(
                 [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetXaxis().GetBinLowEdge(i)
-                    for i in range(1, x_n_bins + 2,)
+                    manager.getAngularBias_DL3(effectiveAreaParameters)
+                    .GetXaxis()
+                    .GetBinLowEdge(i)
+                    for i in range(
+                        1,
+                        x_n_bins + 2,
+                    )
                 ]
             )
 
             y_edges = np.array(
                 [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetYaxis().GetBinLowEdge(i)
-                    for i in range(1, y_n_bins + 2,)
+                    manager.getAngularBias_DL3(effectiveAreaParameters)
+                    .GetYaxis()
+                    .GetBinLowEdge(i)
+                    for i in range(
+                        1,
+                        y_n_bins + 2,
+                    )
                 ]
             )
 
             a = np.zeros((x_n_bins, y_n_bins))
             for i in range(1, x_n_bins + 1):
                 for j in range(1, y_n_bins + 1):
-                    bin_content = manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i, j)
+                    bin_content = manager.getAngularBias_DL3(
+                        effectiveAreaParameters
+                    ).GetBinContent(i, j)
                     a[i - 1, j - 1] = bin_content
-            
+
             e = np.vstack((x_edges, y_edges))
 
             # Apply power of 10 transformation
@@ -419,8 +431,22 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
         # Build Interpolator
         for i in range(len(irf_data)):
             abias_data = irf_data[i]["ABias_Dict"]["Data"]
-            inidices = [[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]]
-            abias_array[inidices[i][0], inidices[i][1], inidices[i][2], offset_index_low:offset_index_high] = abias_data
+            inidices = [
+                [0, 0, 0],
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+                [1, 1, 1],
+            ]
+            abias_array[
+                inidices[i][0],
+                inidices[i][1],
+                inidices[i][2],
+                offset_index_low:offset_index_high,
+            ] = abias_data
 
         abias_interpolator = RegularGridInterpolator(inter_axis, abias_array)
 
