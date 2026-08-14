@@ -96,7 +96,6 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
                 effectiveAreaParameters
             )
             eb_dl3 = manager.getEnergyBias_DL3(effectiveAreaParameters, False)
-
         if not ea_dl3:
             continue
 
@@ -158,51 +157,66 @@ def get_irf_not_safe(manager, offset_arr, az, ze, noise, pointlike, psf_king=Fal
 
         # Get ABias
         if not pointlike and not psf_king:
-            a = np.array(
+
+            x_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
+            y_n_bins = manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsY()
+
+            x_edges = np.array(
                 [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinContent(i)
+                    manager.getAngularBias_DL3(effectiveAreaParameters)
+                    .GetXaxis()
+                    .GetBinLowEdge(i)
                     for i in range(
                         1,
-                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
-                        + 1,
-                    )
-                ]
-            )
-            e = np.array(
-                [
-                    manager.getAngularBias_DL3(effectiveAreaParameters).GetBinLowEdge(i)
-                    for i in range(
-                        1,
-                        manager.getAngularBias_DL3(effectiveAreaParameters).GetNbinsX()
-                        + 2,
+                        x_n_bins + 2,
                     )
                 ]
             )
 
-            eLow = np.power(10, [e[0][:-1]])[0]
-            eHigh = np.power(10, [e[0][1:]])[0]
+            y_edges = np.array(
+                [
+                    manager.getAngularBias_DL3(effectiveAreaParameters)
+                    .GetYaxis()
+                    .GetBinLowEdge(i)
+                    for i in range(
+                        1,
+                        y_n_bins + 2,
+                    )
+                ]
+            )
 
-            bLow = np.power(10, [e[1][:-1]])[0]
-            bHigh = np.power(10, [e[1][1:]])[0]
+            a = np.zeros((x_n_bins, y_n_bins))
+            for i in range(1, x_n_bins + 1):
+                for j in range(1, y_n_bins + 1):
+                    bin_content = manager.getAngularBias_DL3(
+                        effectiveAreaParameters
+                    ).GetBinContent(i, j)
+                    a[i - 1, j - 1] = bin_content
 
+            e = np.vstack((x_edges, y_edges))
+
+            # Apply power of 10 transformation
+            eLow = np.power(10, x_edges[:-1])
+            eHigh = np.power(10, x_edges[1:])
+            bLow = np.power(10, y_edges[:-1])
+            bHigh = np.power(10, y_edges[1:])
+
+            a = a.transpose()
+            counts_map = a
             ac = []
-            for aa in a:
-                if np.sum(aa) > 0:
-                    # As the unit is sr^-1 we need to convert y bin size into radian
-                    ab = (
-                        aa
-                        / np.deg2rad(bHigh - bLow)
-                        / np.sum(aa)
-                        / np.pi
-                        / np.deg2rad(bHigh + bLow)
-                    )
+            for i in range(len(counts_map)):
+                energy_slice = a[:, i]
+                if np.sum(energy_slice) > 0:
+                    norm_counts = energy_slice / np.sum(energy_slice)
+                    dr_rad = np.deg2rad(bHigh - bLow)
+                    dP_dr = norm_counts / dr_rad
+                    r_rad = np.deg2rad(0.5 * (bHigh + bLow))
+                    psf_density = dP_dr / (2 * np.pi * r_rad)
+                    ac.append(psf_density)
                 else:
-                    ab = aa
-                try:
-                    ac = np.vstack((ac, ab))
-                except ValueError:
-                    ac = ab
+                    ac.append(energy_slice * np.nan)
 
+            ac = np.array(ac)
             ac = ac.transpose()
             abias_energy_low = eLow
             abias_energy_high = eHigh
@@ -415,10 +429,23 @@ def getIRF(az, ze, noise, event_class, pointlike, psf_king_params=None):
         )
 
         # Build Interpolator
-        for irf in irf_data:
-            abias_data = irf["ABias_Dict"]["Data"]
-            abias_array[index[0], index[1], index[2]][
-                offset_index_low:offset_index_high
+        for i in range(len(irf_data)):
+            abias_data = irf_data[i]["ABias_Dict"]["Data"]
+            inidices = [
+                [0, 0, 0],
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+                [1, 1, 1],
+            ]
+            abias_array[
+                inidices[i][0],
+                inidices[i][1],
+                inidices[i][2],
+                offset_index_low:offset_index_high,
             ] = abias_data
 
         abias_interpolator = RegularGridInterpolator(inter_axis, abias_array)
