@@ -17,4 +17,5 @@ dependencies:
   - python>=3.11
   - pyyaml
   - scipy
+  - scikit-learn
   - uproot

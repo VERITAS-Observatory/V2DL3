@@ -57,6 +57,7 @@ Returns:
 
 def getCuts(config_str_ori, cut_searches):
     config_str = str(config_str_ori)
+    logger.debug(f"Searching for cuts {cut_searches} in config string:\n{config_str}")
     cuts_found = {}
     for line in config_str.splitlines():
         # Skip comment lines
@@ -66,8 +67,10 @@ def getCuts(config_str_ori, cut_searches):
             for cut_search in cut_searches:
                 if line.find(cut_search) >= 0:
                     key, cut_str = line.split(" ")
-                    if len(cut_str) > 0:
-                        cuts_found[cut_search] = cut_str
+                    if key == cut_search:
+                        if len(cut_str) > 0:
+                            cuts_found[cut_search] = cut_str
+    logger.debug(f'Found Cuts! {cut_searches} with {cuts_found}')
     return cuts_found
 
 
@@ -140,16 +143,31 @@ def mergeTimeCut(cuts):
     return list(filter(lambda x: x[0] != x[1], merged_cut))
 
 
-def getGTArray(startTime_s, endTime_s, cuts):
+def getGTArray(startTime_s, endTime_s, cuts, lastElapsedTime):
     """Produce Good Time Interval start and stop time array."""
+    # lastElapsedTime is relative to start time (i.e. needs to have start time added to it)
+    lastElapsedTime = lastElapsedTime + startTime_s
     if len(cuts) == 0:
-        return np.array([startTime_s]), np.array([endTime_s])
-    goodTimeStart = [startTime_s] + [cc[1] + startTime_s for cc in cuts]
-    goodTimeStop = [cc[0] + startTime_s for cc in cuts] + [endTime_s]
+        # Use the lastElapsedTime or the end time from the run header - whichever comes first.
+        # This deals with runs where harvester crashed and there is no data at end of run.
+        data_end = min(endTime_s, lastElapsedTime) if lastElapsedTime is not None else endTime_s
+        return np.array([startTime_s]), np.array([data_end])
+    goodTimeStart = np.array([startTime_s] + [cc[1] + startTime_s for cc in cuts])
+    goodTimeStop = np.array([cc[0] + startTime_s for cc in cuts] + [endTime_s])
 
-    goodTimeStop[-1] = min(goodTimeStop[-1], endTime_s)
-    if goodTimeStart[-1] > goodTimeStop[-1]:
-        return goodTimeStart[:-1], goodTimeStop[:-1]
+    # Check if any cuts are after the lastElapsedTime
+    if lastElapsedTime is not None:
+        # Set stop value(s) to lastElapsedTime if they are past it.
+        goodTimeStop = np.minimum(goodTimeStop, lastElapsedTime)
+        # Keep intervals with positive duration
+        # i.e. Remove intervals where start is after or same as stop.
+        valid = goodTimeStart < goodTimeStop
+        goodTimeStart = goodTimeStart[valid]
+        goodTimeStop = goodTimeStop[valid]
+
+    if len(goodTimeStart) < 1 or len(goodTimeStop) < 1:
+        raise ValueError("Error: No good time intervals found!")
+
     return np.array(goodTimeStart), np.array(goodTimeStop)
 
 

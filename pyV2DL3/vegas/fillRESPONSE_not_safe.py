@@ -23,6 +23,7 @@ def __fillRESPONSE_not_safe__(
     response_dict["LO_THRES"] = minEnergy
     response_dict["HI_THRES"] = maxEnergy
 
+    logger.debug(f'RAD_MAX = {np.sqrt(effective_area_file.theta_square_upper)}')
     # Point-like
     if irf_to_store["point-like"]:
         response_dict["EA"] = ea_final_data
