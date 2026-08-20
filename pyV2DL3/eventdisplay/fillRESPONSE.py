@@ -9,6 +9,12 @@ from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 
 logger = logging.getLogger(__name__)
 
+# At low zenith angles the IRF dependence is sufficiently weak that the
+# lowest available zenith IRF can be used as a boundary value.  The fuzzy
+# boundary check remains strict for larger zenith angles, where extrapolation
+# has a larger impact on the IRFs.
+LOW_ZENITH_BOUNDARY = 30.0
+
 
 class FullEnclosureOffsetAxisError(Exception):
     pass
@@ -84,6 +90,18 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
                 par, np.max(irf_stored_par), tolerance, par_name
             ):
                 par = np.max(irf_stored_par)
+            elif (
+                par_name == "zenith"
+                and np.all(irf_stored_par > par)
+                and par < LOW_ZENITH_BOUNDARY
+            ):
+                logging.warning(
+                    "Coordinate zenith ({0:.1f} deg) is below the IRF range; "
+                    "using the lower boundary ({1:.1f} deg)".format(
+                        par, np.min(irf_stored_par)
+                    )
+                )
+                par = np.min(irf_stored_par)
             elif np.all(irf_stored_par > par) and check_fuzzy_boundary(
                 par, np.min(irf_stored_par), tolerance, par_name
             ):

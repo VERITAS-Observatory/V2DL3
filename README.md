@@ -138,7 +138,7 @@ Runs with observational parameters (i.e., zenith, night sky background) outside 
 - `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
 
 Recommended options is: `--fuzzy_boundary zenith 0.05 --fuzzy_boundary pedvar 0.5`.
-This takes into account that extrapolation of the IRF zenith axis is applied to very large zenith angles only, where shower properties changes significantly with small changes in zenith angle.
+For zenith values below 30 degrees and below the lowest available IRF zenith, the lowest IRF boundary is used. The fuzzy-boundary tolerance remains enforced for large zenith angles, where shower properties change significantly with small changes in zenith angle.
 
 Further options are:
 
