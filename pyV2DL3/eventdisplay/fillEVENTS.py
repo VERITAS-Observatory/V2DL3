@@ -31,7 +31,7 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
         runNumber = runSummary["runOn"][0]
-        logging.info("Run number: %d", runNumber)
+        logger.info("Run number: %d", runNumber)
 
         t_start, t_stop, t_avg = __get_start_stop_times(file)
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
@@ -58,7 +58,7 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
         evt_dict["N_TELS"] = np.binary_repr(MaxImgSel).count("1")
-        logging.info("Number of Telescopes: {}".format(evt_dict["N_TELS"]))
+        logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
@@ -94,12 +94,16 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     DL3EventTree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
     if len(DL3EventTree["eventNumber"]) == 0:
-        logging.error("Empty event list")
+        logger.error("Empty event list")
         raise ZeroLengthEventList
 
     mask = __get_mask(DL3EventTree, select)
     if not np.any(mask):
         logging.error("Empty event list after selection")
+        raise ZeroLengthEventList
+
+    if np.sum(mask) == 0:
+        logger.error("Empty event list after applying selection filter")
         raise ZeroLengthEventList
 
     evt_dict = {}
@@ -142,12 +146,7 @@ def __get_start_stop_times(file):
     # convert mjd to fits format
     t_start = Time(start_mjd, format="mjd", scale="utc")
     t_stop = Time(stop_mjd, format="mjd", scale="utc")
-    t_avg = (
-        Time(start_mjd, format="mjd", scale="utc")
-        + (
-            Time(stop_mjd, format="mjd", scale="utc") - Time(start_mjd, format="mjd", scale="utc")
-        ) / 2.
-    )
+    t_avg = t_start + (t_stop - t_start) / 2.0
 
     return t_start, t_stop, t_avg
 
@@ -216,7 +215,7 @@ def __read_quality_flag_from_log(file, runNumber):
     try:
         return getRunQuality(file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines"))
     except KeyError:
-        logging.info("Eventdisplay logfile not found in anasum root file. Quality flag set to 0")
+        logger.info("Eventdisplay logfile not found in anasum root file. Quality flag set to 0")
     return 0
 
 
@@ -233,7 +232,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         )
     except KeyError:
         for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
-            logging.info("maskBits not found, Available keys: {0}".format(k))
+            logger.info("maskBits not found, Available keys: %s", k)
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
@@ -251,10 +250,7 @@ def __get_time_vector(time_of_day, seconds_from_reference):
     """
 
     if time_of_day.max() > 24 * 60 * 60:
-        logging.error(
-            "Max value in time_of_day  \
-                            array exceeds length of a day"
-        )
+        logger.error("Max value in time_of_day array exceeds length of a day")
         raise ValueError
     return seconds_from_reference + time_of_day
 
@@ -267,7 +263,7 @@ def __get_mask(DL3EventTree, select):
 
     mask = np.ones(len(DL3EventTree["RA"]), bool)
     if select is not None and len(select) > 0:
-        logging.info(select)
+        logger.info("Applying event selection filter: %s", select)
         for key, value in select.items():
             if isinstance(value, (list, tuple)):
                 mask = (
@@ -278,10 +274,8 @@ def __get_mask(DL3EventTree, select):
             elif isinstance(value, (int, float)):
                 mask = mask & (DL3EventTree[key] == value)
             else:
-                logging.error(
-                    "select condition required a list or tuple of ranges"
-                )
+                logger.error("select condition required a list or tuple of ranges")
                 raise TypeError
-        logging.info("%d of %d events after selection.", np.sum(mask), len(mask))
+        logger.info("%d of %d events after selection.", np.sum(mask), len(mask))
 
     return mask

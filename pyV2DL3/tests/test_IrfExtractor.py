@@ -1,5 +1,6 @@
 import numpy as np
 
+from pyV2DL3.eventdisplay import IrfExtractor
 from pyV2DL3.eventdisplay.IrfExtractor import find_closest_az, find_nearest
 
 
@@ -83,6 +84,23 @@ def test_find_closest_az():
     assert find_closest_az(360.0, azMins, azMaxs) == 8
     assert find_closest_az(-1.0, azMins, azMaxs) == 8
     assert find_closest_az(-180.0, azMins, azMaxs) == find_closest_az(180.0, azMins, azMaxs)
+
+
+def test_extract_irf_accepts_zero_azimuth(monkeypatch):
+    calls = {}
+
+    def fake_extract_irf_2d(filename, irf_name, azimuth):
+        calls.update(filename=filename, irf_name=irf_name, azimuth=azimuth)
+        return "extracted"
+
+    monkeypatch.setattr(IrfExtractor, "extract_irf_2d", fake_extract_irf_2d)
+
+    assert IrfExtractor.extract_irf("effective_area.root", "eff", azimuth=0) == "extracted"
+    assert calls == {
+        "filename": "effective_area.root",
+        "irf_name": "eff",
+        "azimuth": 0,
+    }
 
 
 if __name__ == "__main__":

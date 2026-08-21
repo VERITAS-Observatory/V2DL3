@@ -57,11 +57,12 @@ def get_fuzzy_boundary(par_name, tolerance_tuble):
 
 
 def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
-    """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
-    0. checks if command line parameter force_extrapolation is given. If given,
+    """Check that coordinates are in range of provided IRF and whether extrapolation is to be done.
+
+    1. checks if command line parameter force_extrapolation is given. If given,
        the extrapolation will happen when parameter is outside IRF range. If parameter is
        within IRF range, it works as normal. Default is False.
-    1. Further checks for fuzzy boundary (parameter close to boundary value).
+    2. Further checks for fuzzy boundary (parameter close to boundary value).
        If fuzzy boundary is within a given tolerance then IRF is interpolated for
        at boundary value. Default is 0.0 tolerance.
     """
@@ -277,8 +278,6 @@ def fill_direction_migration(
     irf_interpolator.set_irf("hAngularLogDiffEmc_2D", **kwargs)
 
     rpsf_final = []
-    rpsf_test = []
-    test_psf = False  # use PSF distribution from IRFs by default
 
     for offset in camera_offsets:
         # direction diff (rad, energy),
@@ -291,62 +290,31 @@ def fill_direction_migration(
         energy_axis = axis[0][energy_axis_index_lb:energy_axis_index_ub]
         _, e_low, e_high = bin_centers_to_edges(energy_axis)
 
-        # generate psf data from halfnorm pdf
-        if test_psf:
-            from scipy.stats import halfnorm
+        direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
 
-            # interpolation test
-            rad_edges, r_low, r_high = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
+        # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
+        rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
 
-            # use linspace instead of rad_edges
-            rad_width_deg = np.diff(rad_edges)
-
-            x = np.linspace(0, 10, 4000)
-            sigma = 0.5
-            scale = sigma * np.sqrt(1 - 2 / np.pi)
-            y = halfnorm.pdf(x, loc=0, scale=scale)
-            cumsum = (2 * np.pi * rad_width_deg * y * (r_low + r_high) / 2).cumsum()
-            normed = y / cumsum.max() * ((180 / np.pi) ** 2)
-            normed = np.nan_to_num(normed)
-
-            # PSF should be normed (deg**2 / sr), test should give 3200:
-            # values = 2 * np.pi * rad_width_deg * normed * (r_low + r_high) / 2
-            # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
-
-            y = np.array(normed)
-            test = np.repeat(y[np.newaxis, ...], len(energy_axis), axis=0)
-            rpsf_test.append(test)
-
-        else:
-            direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
-
-            # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
-            rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
-
-            rad_width_deg = np.diff(np.power(10, rad_edges))
-            # this step makes sure all arrays have the same dimensions,
-            # rad_width_deg and the central rad values are
-            # repeated by the length of the energy axis.
-            norm = np.sum(
-                direction_diff
-                * np.repeat(rad_width_deg[..., np.newaxis], len(energy_axis), axis=1)
-                / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1),
-                axis=0,
-            )
-            norm = norm * 2 * np.pi
-            direction_diff = direction_diff / (
-                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1) ** 2
-            )
-            with np.errstate(invalid="ignore"):
-                normed = direction_diff / norm * ((180 / np.pi) ** 2)
-            rpsf_final.append(np.nan_to_num(normed))
+        rad_width_deg = np.diff(np.power(10, rad_edges))
+        # this step makes sure all arrays have the same dimensions,
+        # rad_width_deg and the central rad values are
+        # repeated by the length of the energy axis.
+        norm = np.sum(
+            direction_diff
+            * np.repeat(rad_width_deg[..., np.newaxis], len(energy_axis), axis=1)
+            / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1),
+            axis=0,
+        )
+        norm = norm * 2 * np.pi
+        direction_diff = direction_diff / (
+            np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1) ** 2
+        )
+        with np.errstate(invalid="ignore"):
+            normed = direction_diff / norm * ((180 / np.pi) ** 2)
+        rpsf_final.append(np.nan_to_num(normed))
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
-    if test_psf:
-        rpsf_test = np.swapaxes(rpsf_test, 0, 1)
-        rpsf_final = np.swapaxes(rpsf_test, 0, 2)
-    else:
-        rpsf_final = np.swapaxes(rpsf_final, 0, 1)
+    rpsf_final = np.swapaxes(rpsf_final, 0, 1)
 
     return np.array(
         [(e_low, e_high, theta_low, theta_high, r_low, r_high, rpsf_final)],

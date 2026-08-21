@@ -186,8 +186,7 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf
         except Exception:
-            logging.error("Unexpected error:", sys.exc_info()[0])
-            logging.error("Entry number ", i)
+            logging.error("At entry number %d unexpected error: %s", i, sys.exc_info()[0])
             raise
 
     axes = {

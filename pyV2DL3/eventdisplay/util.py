@@ -4,7 +4,7 @@ import numpy as np
 
 
 class WrongIrf(Exception):
-    def __init__(self, message, errors):
+    def __init__(self, message="", errors=None):
         """Call the base class constructor with the parameters it needs"""
         super().__init__(message)
 
@@ -65,7 +65,7 @@ def getGTI(BitArray, run_start_from_reference):
 
     Parameters
     ----------
-    maskBits :  array of uint8 numbers, read from anasum root file
+    BitArray :  array of uint8 numbers, read from anasum root file
     run_start_from_reference: Start time of the run in second
                               from reference time
 
