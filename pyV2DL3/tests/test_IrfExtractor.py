@@ -75,9 +75,15 @@ def test_find_closest_az():
         ]
     )
     az_bin_to_store_1 = find_closest_az(146.20, azMins, azMaxs)
-    az_bin_to_store_2 = find_closest_az(-180.0, azMins, azMaxs)
-    az_bin_to_store_3 = find_closest_az(320.0, azMins, azMaxs)
-    assert az_bin_to_store_1 == 14 and az_bin_to_store_2 == 8 and az_bin_to_store_3 == 6
+    az_bin_to_store_2 = find_closest_az(320.0, azMins, azMaxs)
+
+    assert az_bin_to_store_1 == 14
+    assert az_bin_to_store_2 == 6
+    assert find_closest_az(359.0, azMins, azMaxs) == 8
+    assert find_closest_az(0.0, azMins, azMaxs) == 8
+    assert find_closest_az(360.0, azMins, azMaxs) == 8
+    assert find_closest_az(-1.0, azMins, azMaxs) == 8
+    assert find_closest_az(-180.0, azMins, azMaxs) == find_closest_az(180.0, azMins, azMaxs)
 
 
 def test_extract_irf_accepts_zero_azimuth(monkeypatch):

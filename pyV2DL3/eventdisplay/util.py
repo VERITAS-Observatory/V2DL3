@@ -79,24 +79,13 @@ def getGTI(BitArray, run_start_from_reference):
 
     """
 
-    time_array_sec = ""
-    for i in range(BitArray.size):
-        time_array_sec = time_array_sec + np.binary_repr(BitArray[i], width=8)[::-1]
+    bits = np.unpackbits(np.asarray(BitArray, dtype=np.uint8), bitorder="little").astype(bool)
+    ontime_s = int(np.count_nonzero(bits))
+    if ontime_s == 0:
+        return np.array([]), np.array([]), ontime_s
 
-    nbits = len(time_array_sec)
-    for i in range(nbits):
-        if (time_array_sec[-1] == "0"):
-            time_array_sec = time_array_sec[:-1]
-        else:
-            break
-
-    # Guard against fully masked run (all bits zero)
-    if len(time_array_sec) == 0:
-        logging.warning("Time mask is all zeros: ontime=0, no GTIs")
-        return np.array([]), np.array([]), 0
-
-    duration_s = len(time_array_sec)
-    ontime_s = time_array_sec.count("1")
+    duration_s = np.flatnonzero(bits)[-1] + 1
+    bits = bits[:duration_s]
     logging.info(
         "Duration: {0:.0f} (sec.) {1:.2f} (min)".format(duration_s, duration_s / 60.0)
     )
@@ -104,24 +93,9 @@ def getGTI(BitArray, run_start_from_reference):
         "Ontime: {0:.0f} (sec.) {1:.2f} (min)".format(ontime_s, ontime_s / 60.0)
     )
 
-    gti_start = []
-    gti_end = []
-
-    if time_array_sec[0] != "0":
-        gti_start.append(0)
-
-    for i in range(1, duration_s - 1):
-
-        if (time_array_sec[i] == "0") and (time_array_sec[i - 1] == "1"):
-            end = i
-            gti_end.append(end)
-
-        if (time_array_sec[i] == "0") and (time_array_sec[i + 1] == "1"):
-            start = i + 1
-            gti_start.append(start)
-
-    if time_array_sec[-1] != "0":
-        gti_end.append(duration_s)
+    padded_bits = np.pad(bits, 1)
+    gti_start = np.flatnonzero(~padded_bits[:-1] & padded_bits[1:])
+    gti_end = np.flatnonzero(padded_bits[:-1] & ~padded_bits[1:])
 
     logging.info(
         "GTIs start and stop in second since run start: {0} {1}".format(
@@ -129,8 +103,8 @@ def getGTI(BitArray, run_start_from_reference):
         )
     )
 
-    gti_start_from_reference = np.array(gti_start) + run_start_from_reference
-    gti_end_from_reference = np.array(gti_end) + run_start_from_reference
+    gti_start_from_reference = gti_start + run_start_from_reference
+    gti_end_from_reference = gti_end + run_start_from_reference
 
     return gti_start_from_reference, gti_end_from_reference, ontime_s
 

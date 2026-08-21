@@ -98,6 +98,9 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
         raise ZeroLengthEventList
 
     mask = __get_mask(DL3EventTree, select)
+    if not np.any(mask):
+        logging.error("Empty event list after selection")
+        raise ZeroLengthEventList
 
     if np.sum(mask) == 0:
         logger.error("Empty event list after applying selection filter")

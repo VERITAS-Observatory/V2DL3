@@ -9,6 +9,12 @@ from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 
 logger = logging.getLogger(__name__)
 
+# At low zenith angles the IRF dependence is sufficiently weak that the
+# lowest available zenith IRF can be used as a boundary value.  The fuzzy
+# boundary check remains strict for larger zenith angles, where extrapolation
+# has a larger impact on the IRFs.
+LOW_ZENITH_BOUNDARY = 30.0
+
 
 class FullEnclosureOffsetAxisError(Exception):
     pass
@@ -85,6 +91,18 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
                 par, np.max(irf_stored_par), tolerance, par_name
             ):
                 par = np.max(irf_stored_par)
+            elif (
+                par_name == "zenith"
+                and np.all(irf_stored_par > par)
+                and par < LOW_ZENITH_BOUNDARY
+            ):
+                logging.warning(
+                    "Coordinate zenith ({0:.1f} deg) is below the IRF range; "
+                    "using the lower boundary ({1:.1f} deg)".format(
+                        par, np.min(irf_stored_par)
+                    )
+                )
+                par = np.min(irf_stored_par)
             elif np.all(irf_stored_par > par) and check_fuzzy_boundary(
                 par, np.min(irf_stored_par), tolerance, par_name
             ):
@@ -161,7 +179,8 @@ def find_camera_offsets(camera_offsets):
     # Note in the camera offset _low and _high may refer
     # to the simulated "points", and
     # not to actual bins.
-    return camera_offsets, camera_offsets
+    _, theta_low, theta_high = bin_centers_to_edges(camera_offsets, logaxis=False)
+    return theta_low, theta_high
 
 
 def duplicate_interpolating_coordinate(camera_offsets, irf_name):
@@ -269,8 +288,8 @@ def fill_direction_migration(
         energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
         energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
 
-        axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
-        _, e_low, e_high = bin_centers_to_edges(axis[0])
+        energy_axis = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        _, e_low, e_high = bin_centers_to_edges(energy_axis)
 
         direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
 
@@ -283,13 +302,13 @@ def fill_direction_migration(
         # repeated by the length of the energy axis.
         norm = np.sum(
             direction_diff
-            * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
-            / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1),
+            * np.repeat(rad_width_deg[..., np.newaxis], len(energy_axis), axis=1)
+            / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1),
             axis=0,
         )
         norm = norm * 2 * np.pi
         direction_diff = direction_diff / (
-            np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2
+            np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1) ** 2
         )
         with np.errstate(invalid="ignore"):
             normed = direction_diff / norm * ((180 / np.pi) ** 2)
