@@ -98,6 +98,9 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
         raise ZeroLengthEventList
 
     mask = __get_mask(DL3EventTree, select)
+    if not np.any(mask):
+        logging.error("Empty event list after selection")
+        raise ZeroLengthEventList
 
     evt_dict = {}
     evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
