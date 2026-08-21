@@ -151,6 +151,9 @@ def cli(
     datasource.fill_data(
         evt_filter=evt_filter,
         db_fits_file=db_fits_file,
+        force_extrapolation=force_extrapolation,
+        fuzzy_boundary=fuzzy_boundary,
+        interpolator_name=interpolator_name,
     )
     hdulist = genHDUlist(
         datasource,
