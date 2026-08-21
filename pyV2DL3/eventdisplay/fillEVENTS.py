@@ -37,9 +37,10 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        run_metadata = __get_run_event_metadata(file, runNumber)
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
         evt_dict, _, _ =  \
-            __fill_event_list(file, runNumber, select, seconds_from_reference)
+            __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
 
         # Header info
         evt_dict["OBS_ID"] = runNumber
@@ -91,18 +92,19 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     )
 
 
-def __fill_event_list(file, runNumber, select, seconds_from_reference):
+def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=None):
     """
     Fill event list from DL3EventTree
 
     """
 
-    DL3EventTree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
-    if len(DL3EventTree["eventNumber"]) == 0:
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
         logger.error("Empty event list")
         raise ZeroLengthEventList
 
-    mask = __get_mask(DL3EventTree, select)
+    mask = __get_mask(event_tree, select)
     if not np.any(mask):
         logger.error("Empty event list after selection")
         raise ZeroLengthEventList
@@ -112,21 +114,21 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
         raise ZeroLengthEventList
 
     evt_dict = {}
-    evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
-    evt_dict["TIME"] = __get_time_vector(DL3EventTree["timeOfDay"][mask], seconds_from_reference)
-    evt_dict["RA"] = DL3EventTree["RA"][mask]
-    evt_dict["DEC"] = DL3EventTree["DEC"][mask]
-    evt_dict["ALT"] = DL3EventTree["El"][mask]
-    evt_dict["AZ"] = DL3EventTree["Az"][mask]
-    evt_dict["ENERGY"] = DL3EventTree["Energy"][mask]
-    evt_dict["EVENT_TYPE"] = DL3EventTree["NImages"][mask]
-    evt_dict["Xoff"] = DL3EventTree["Xoff"][mask]
-    evt_dict["Yoff"] = DL3EventTree["Yoff"][mask]
+    evt_dict["EVENT_ID"] = event_tree["eventNumber"][mask]
+    evt_dict["TIME"] = __get_time_vector(event_tree["timeOfDay"][mask], seconds_from_reference)
+    evt_dict["RA"] = event_tree["RA"][mask]
+    evt_dict["DEC"] = event_tree["DEC"][mask]
+    evt_dict["ALT"] = event_tree["El"][mask]
+    evt_dict["AZ"] = event_tree["Az"][mask]
+    evt_dict["ENERGY"] = event_tree["Energy"][mask]
+    evt_dict["EVENT_TYPE"] = event_tree["NImages"][mask]
+    evt_dict["Xoff"] = event_tree["Xoff"][mask]
+    evt_dict["Yoff"] = event_tree["Yoff"][mask]
     try:
         # Test if anasum file was created using the all events option.
         # In this case write out the additional output.
-        evt_dict["GAMMANESS"] = DL3EventTree["MVA"][mask]
-        evt_dict["IS_GAMMA"] = DL3EventTree["IsGamma"][mask]
+        evt_dict["GAMMANESS"] = event_tree["MVA"][mask]
+        evt_dict["IS_GAMMA"] = event_tree["IsGamma"][mask]
     except KeyError:
         pass
 
@@ -134,15 +136,16 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     return (
         evt_dict,
-        np.max(DL3EventTree["ImgSel"][mask]),
-        np.mean(DL3EventTree["MeanPedvar"][mask]),
+        np.max(event_tree["ImgSel"][mask]),
+        np.mean(event_tree["MeanPedvar"][mask]),
     )
 
 
-def __get_run_event_metadata(file, runNumber):
+def __get_run_event_metadata(file, runNumber, event_tree=None):
     """Return run-level event metadata without applying an event selection."""
 
-    event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
     if len(event_tree["eventNumber"]) == 0:
         logger.error("Empty event list")
         raise ZeroLengthEventList

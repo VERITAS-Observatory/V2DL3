@@ -244,7 +244,13 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     }
     tel_config = Mock()
     tel_config.arrays.return_value = {"TelType": np.array([1, 2])}
-    root_file = RootFile({"total_1/stereo/tRunSummary": run_summary, "run_42/stereo/telconfig": tel_config})
+    event_tree = Mock()
+    event_tree.arrays.return_value = {}
+    root_file = RootFile({
+        "total_1/stereo/tRunSummary": run_summary,
+        "run_42/stereo/DL3EventTree": event_tree,
+        "run_42/stereo/telconfig": tel_config,
+    })
     monkeypatch.setattr(fill_events.uproot, "open", Mock(return_value=root_file))
     start = fill_events.Time(60000.0, format="mjd", scale="utc")
     stop = fill_events.Time(60000.1, format="mjd", scale="utc")
@@ -274,6 +280,7 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     assert events["LIVETIME"] == pytest.approx(7.2)
     assert events["TELLIST"] == "T1,T2"
     assert events["weather"] == "A"
+    event_tree.arrays.assert_called_once_with(library="np")
     db_reader.assert_called_once_with(
         "run.db.fits", 42, protected_keys=events.keys()
     )
