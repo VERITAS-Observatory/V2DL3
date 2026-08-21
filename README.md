@@ -109,6 +109,9 @@ pip install -e .
 
 Run `v2dl3-eventdisplay --help` to see all options.
 
+See [README_eventdisplay.md](README_eventdisplay.md) for the Eventdisplay input
+requirements, response modes, filters, output naming, and failure behavior.
+
 Convert an anasum output file to DL3.
 The following input is required:
 
@@ -119,22 +122,25 @@ Example for point-like analysis:
 
 ```bash
 v2dl3-eventdisplay \
-    -f 54809.anasum.root [Effective Area File] \
-     ./output_dir/54809.anasum.fits
+     -f ./64080.anasum.root \
+        ./effectiveArea.root \
+        --logfile test-pointlike.fits.log \
+        test-pointlike-CI.fits.gz
 ```
 
 Example for full-enclosure analysis:
 
 ```bash
-v2dl3-eventdisplay \
-     --full-enclosure \
-    -f 64080.anasum.root [Effective Area File] \
-     ./output_dir/64080.anasum.fits
+v2dl3-eventdisplay --full-enclosure \
+     -f ./64080.anasum.root \
+        ./effectiveArea.root \
+        --logfile test-full-enclosure.fits.log \
+        test-full-enclosure-CI.fits.gz
 ```
 
 Runs with observational parameters (i.e., zenith, night sky background) outside but close to corresponding IRF axes range can be converted with the one of the following two command line parameters:
 
-- `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`.
+- `--fuzzy_boundary axis tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is defined as the ratio of the absolute difference between the boundary and run parameter value to the boundary. Repeat the option for each axis that needs a tolerance. This option is preferable over `--force_extrapolation`.
 - `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
 
 Recommended options are: `--fuzzy_boundary zenith 0.05 --fuzzy_boundary pedvar 0.5`.
@@ -143,7 +149,7 @@ For zenith values below 30 degrees and below the lowest available value on the I
 Further options are:
 
 - `--interpolator_name [KNeighborsRegressor|RegularGridInterpolator]`: select the interpolator used to interpolate the IRFs values. The default is `KNeighborsRegressor`, which allows to robustly interpolate from a irregular grid of IRFS.
-- `--save_multiplicity`: write telescope multiplicity as `EVENTTYPE` keyword.
+- `--save_multiplicity`: write telescope multiplicity as the `EVENT_TYPE` column in the `EVENTS` table.
 - `--instrument_epoch [epoch]`: write instrument epoch as `INSTRUME` keyword.
 - `--db_fits_file [db_fits_file]`: copy run information (e.g., weather, L3 rates) from DB fits file into header information. Requires access to DB fits files.
 - `--evt_filter [filter_file]`: apply an event filter defined in a yaml or json file (examples below).
@@ -163,7 +169,7 @@ IsGamma: 1
 Select all events with energies between 1 and 10 TeV:
 
 ```yaml
-ENERGY: [1, 10]
+Energy: [1, 10]
 ```
 
 ## Data storage and generating index files
@@ -172,10 +178,10 @@ Generate observation index and HDU tables for DL3 data storage are required to u
 This steps is independent of VEGAS or Eventdisplay.
 The two index files are generated with the tool `v2dl3-generate-index-file` (check all options with `v2dl3-generate-index-file --help`).
 
-The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/index.html):
+The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.3/data_storage/index.html):
 
-- [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/obs_index/index.html)
-- [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.2/data_storage/hdu_index/index.html)
+- [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.3/data_storage/obs_index/index.html)
+- [HDU index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.3/data_storage/hdu_index/index.html)
 
 ## Contributing to V2DL3 and Developing Code
 
