@@ -137,8 +137,8 @@ Runs with observational parameters (i.e., zenith, night sky background) outside 
 - `--fuzzy_boundary tolerance`: This option interpolates the IRF at the boundary value if the run parameter value is within the given tolerance. The tolerance is define as the ratio of absolute difference between boundary and run parameter value to boundary. This option is preferable over `--force_extrapolation`.
 - `--force_extrapolation`: This option extrapolates linearly the IRF at the run parameter value. Use this option with a caution since the extrapolation is applied even for run parameter values very far from the corresponding IRF axes range.
 
-Recommended options is: `--fuzzy_boundary zenith 0.05 --fuzzy_boundary pedvar 0.5`.
-For zenith values below 30 degrees and below the lowest available IRF zenith, the lowest IRF boundary is used. The fuzzy-boundary tolerance remains enforced for large zenith angles, where shower properties change significantly with small changes in zenith angle.
+Recommended options are: `--fuzzy_boundary zenith 0.05 --fuzzy_boundary pedvar 0.5`.
+For zenith values below 30 degrees and below the lowest available value on the IRF zenith axis, the lowest IRF boundary is used. The fuzzy boundary tolerance remains enforced for large zenith angles, where shower properties change significantly with small changes in zenith angle.
 
 Further options are:
 
