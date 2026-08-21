@@ -15,6 +15,40 @@ class ZeroLengthEventList(Exception):
     pass
 
 
+def get_root_log_lines(log_object):
+    """Return text lines from an Eventdisplay ROOT log object.
+
+    Uproot exposes the underlying ``TObjArray`` differently across versions.
+    Keep the compatibility fallback for older files in this one adapter so
+    callers do not depend on private Uproot members.
+    """
+
+    try:
+        lines_object = log_object.member("fLines")
+    except (AttributeError, KeyError, ValueError):
+        try:
+            lines_object = log_object.members["fLines"]
+        except (AttributeError, KeyError) as error:
+            raise ValueError("ROOT log does not contain fLines") from error
+
+    if hasattr(lines_object, "array"):
+        lines = lines_object.array(library="np")
+    else:
+        try:
+            lines = list(lines_object)
+        except TypeError as error:
+            if hasattr(lines_object, "_data"):
+                # Uproot 4 compatibility for the TObjArray representation.
+                lines = lines_object._data
+            else:
+                raise ValueError("ROOT log fLines is not iterable") from error
+
+    return [
+        value.decode(errors="replace") if isinstance(value, bytes) else str(value)
+        for value in lines
+    ]
+
+
 def produce_tel_list(tel_config):
     """Convert the list of telescopes into a string for FITS header"""
     tel_list = "".join("T" + str(tel) + "," for tel in tel_config["TelType"])

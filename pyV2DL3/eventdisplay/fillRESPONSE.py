@@ -46,6 +46,11 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
 def get_fuzzy_boundary(par_name, tolerance_tuble):
     """Return fuzzy boundary value for a given IRF axis (par_name)"""
 
+    if tolerance_tuble is None:
+        return 0.0
+    if np.isscalar(tolerance_tuble):
+        return tolerance_tuble
+
     try:
         for key, value in tolerance_tuble:
             if key == par_name:
@@ -73,12 +78,12 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
         )
     )
 
-    if kwargs.get("use_click", True):
+    if kwargs.get("use_click", False):
         clk = click.get_current_context()
         tolerance = get_fuzzy_boundary(par_name, clk.params["fuzzy_boundary"])
         extrapolation = clk.params["force_extrapolation"]
     else:
-        tolerance = kwargs.get("fuzzy_boundary", 0.0)
+        tolerance = get_fuzzy_boundary(par_name, kwargs.get("fuzzy_boundary", 0.0))
         extrapolation = kwargs.get("force_extrapolation", False)
 
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
@@ -338,11 +343,21 @@ def __fill_response__(
 
     response_dict = {}
 
-    if kwargs.get("use_click", True):
+    if kwargs.get("use_click", False):
         clk = click.get_current_context()
         interpolator_name = clk.params["interpolator_name"]
+        force_extrapolation = clk.params["force_extrapolation"]
     else:
         interpolator_name = kwargs.get("interpolator_name", "KNeighborsRegressor")
+        force_extrapolation = kwargs.get("force_extrapolation", False)
+
+    if force_extrapolation and interpolator_name == "KNeighborsRegressor":
+        raise ValueError(
+            "force_extrapolation requires RegularGridInterpolator; "
+            "KNeighborsRegressor does not extrapolate linearly"
+        )
+    if irf_to_store.get("point-like") and irf_to_store.get("full-enclosure"):
+        raise ValueError("point-like and full-enclosure IRFs are mutually exclusive")
 
     # IRF interpolator
     irf_interpolator = IrfInterpolator(effective_area, azimuth, interpolator_name)

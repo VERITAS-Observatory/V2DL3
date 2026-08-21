@@ -10,6 +10,29 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 IRF_AXIS = ["zenith", "pedvar"]
 
 
+def _obs_id_from_output(output):
+    """Return the integer observation ID encoded by an output filename."""
+
+    filename = os.path.basename(output)
+    for suffix in (".gz", ".fits", ".fit"):
+        if filename.lower().endswith(suffix):
+            filename = filename[: -len(suffix)]
+    try:
+        return int(filename)
+    except ValueError as error:
+        raise click.BadParameter(
+            "--filename_to_obsid requires an integer output filename stem"
+        ) from error
+
+
+def _set_obs_id(hdulist, obs_id):
+    """Set one observation ID on every HDU that carries the keyword."""
+
+    for hdu in hdulist[1:]:
+        if "OBS_ID" in hdu.header:
+            hdu.header["OBS_ID"] = obs_id
+
+
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -58,7 +81,7 @@ def print_version(ctx, param, value):
     "--filename_to_obsid",
     "-I",
     is_flag=True,
-    help="Override OBS_ID with the output filename basename (stored as string).",
+    help="Override OBS_ID with the integer output filename stem.",
 )
 @click.option(
     "--evt_filter",
@@ -68,7 +91,10 @@ def print_version(ctx, param, value):
 @click.option(
     "--force_extrapolation",
     is_flag=True,
-    help="IRF is extrapolated when parameter is found to be outside IRF range",
+    help=(
+        "Linearly extrapolate out-of-range IRF coordinates; requires "
+        "--interpolator_name RegularGridInterpolator."
+    ),
 )
 @click.option(
     "--fuzzy_boundary",
@@ -116,6 +142,13 @@ def cli(
     if len(file_pair) == 0:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
+    if full_enclosure and point_like:
+        raise click.UsageError("--point-like and --full-enclosure are mutually exclusive")
+    if force_extrapolation and interpolator_name == "KNeighborsRegressor":
+        raise click.UsageError(
+            "--force_extrapolation requires --interpolator_name "
+            "RegularGridInterpolator"
+        )
 
     if debug:
         logging.basicConfig(
@@ -163,13 +196,13 @@ def cli(
         save_multiplicity=save_multiplicity,
         instrument_epoch=instrument_epoch,
     )
-    fname_base = os.path.splitext(os.path.basename(output))[0]
     if filename_to_obsid:
+        obs_id = _obs_id_from_output(output)
         logging.info(
             "Overwriting OBS_ID=%s with OBS_ID=%s",
-            hdulist[1].header['OBS_ID'], fname_base
+            hdulist[1].header["OBS_ID"], obs_id
         )
-        hdulist[1].header["OBS_ID"] = fname_base
+        _set_obs_id(hdulist, obs_id)
     hdulist.writeto(output, overwrite=True)
     logging.info("FITS output written to %s", output)
 
