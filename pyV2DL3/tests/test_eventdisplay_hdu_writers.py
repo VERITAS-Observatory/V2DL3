@@ -60,6 +60,9 @@ def test_shared_writers_create_consistent_event_gti_and_response_hdus():
     assert gti.data["START"].tolist() == [10.0]
     assert [hdu.name for hdu in response] == ["EFFECTIVE AREA", "ENERGY DISPERSION"]
     assert {hdu.header["OBS_ID"] for hdu in response} == {events.header["OBS_ID"]}
+    assert response[1].header["CREF7"] == (
+        "(ENERG_LO:ENERG_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)"
+    )
 
 
 def test_hdu_list_joins_the_shared_products_in_gadf_order():

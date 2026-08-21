@@ -45,7 +45,7 @@ def fill_bintablehdu(
         hdu.header.set("TUNIT5 ", "deg", "")
         hdu.header.set("TUNIT6 ", "deg", "")
         hdu.header.set(
-            "CREF7", "(ETRUE_LO:ETRUE_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)", ""
+            "CREF7", "(ENERG_LO:ENERG_HI,MIGRA_LO:MIGRA_HI,THETA_LO:THETA_HI)", ""
         )
     # PSF
     elif hdu_name == "PSF":
