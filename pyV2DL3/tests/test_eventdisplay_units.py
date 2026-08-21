@@ -97,20 +97,52 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
 
 def test_db_fits_reader_converts_masked_values(monkeypatch):
     table = Table()
-    table["weather"] = ["A"]
-    table.add_column(MaskedColumn([1.0], mask=[True], name="l3_rate_mean"))
+    table["runNumber"] = [41, 42]
+    table["weather"] = ["B", "A"]
+    table.add_column(
+        MaskedColumn([1.0, 2.0], mask=[False, True], name="l3_rate_mean")
+    )
+    table["unsupported"] = [1, 2]
     monkeypatch.setattr(DBFitsFile.Table, "read", Mock(return_value=table))
 
-    assert DBFitsFile.read_db_fits_file("run.db.fits") == {
+    assert DBFitsFile.read_db_fits_file("run.db.fits", 42) == {
         "weather": "A", "l3_rate_mean": None
     }
     assert DBFitsFile.read_db_fits_file(None) == {}
 
 
+def test_db_fits_reader_rejects_missing_or_ambiguous_run_metadata(monkeypatch):
+    table = Table()
+    table["runNumber"] = [41, 43]
+    table["weather"] = ["B", "A"]
+    monkeypatch.setattr(DBFitsFile.Table, "read", Mock(return_value=table))
+
+    with pytest.raises(ValueError, match="expected exactly one"):
+        DBFitsFile.read_db_fits_file("run.db.fits", 42)
+
+    table["runNumber"] = [42, 42]
+    with pytest.raises(ValueError, match="expected exactly one"):
+        DBFitsFile.read_db_fits_file("run.db.fits", 42)
+
+
+def test_db_fits_reader_rejects_core_metadata_collisions(monkeypatch):
+    table = Table()
+    table["runNumber"] = [42]
+    table["OBS_ID"] = [999]
+    monkeypatch.setattr(DBFitsFile.Table, "read", Mock(return_value=table))
+
+    with pytest.raises(ValueError, match="overwrite core"):
+        DBFitsFile.read_db_fits_file(
+            "run.db.fits", 42, protected_keys={"OBS_ID"}
+        )
+
+
 def test_db_fits_reader_preserves_read_errors(monkeypatch):
-    monkeypatch.setattr(DBFitsFile.Table, "read", Mock(side_effect=FileNotFoundError))
+    monkeypatch.setattr(
+        DBFitsFile.Table, "read", Mock(side_effect=FileNotFoundError)
+    )
     with pytest.raises(FileNotFoundError):
-        DBFitsFile.read_db_fits_file("missing.db.fits")
+        DBFitsFile.read_db_fits_file("missing.db.fits", 42)
 
 
 def test_data_source_passes_event_and_response_options(monkeypatch, tmp_path):
@@ -187,7 +219,8 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     monkeypatch.setattr(fill_events, "__get_average_event_direction", Mock(return_value=(50.0, 180.0)))
     monkeypatch.setattr(fill_events, "__read_quality_flag_from_log", Mock(return_value=0))
     monkeypatch.setattr(fill_events, "__get_ontime", Mock(return_value=([10.0], [18.0], 8.0)))
-    monkeypatch.setattr(fill_events, "read_db_fits_file", Mock(return_value={"weather": "A"}))
+    db_reader = Mock(return_value={"weather": "A"})
+    monkeypatch.setattr(fill_events, "read_db_fits_file", db_reader)
 
     gti, irf_query, events = fill_events.__fillEVENTS__("events.root", db_fits_file="run.db.fits")
 
@@ -197,6 +230,9 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     assert events["LIVETIME"] == pytest.approx(7.2)
     assert events["TELLIST"] == "T1,T2"
     assert events["weather"] == "A"
+    db_reader.assert_called_once_with(
+        "run.db.fits", 42, protected_keys=events.keys()
+    )
 
 
 def test_irf_extraction_and_interpolation_accept_north_azimuth(tmp_path, monkeypatch):
