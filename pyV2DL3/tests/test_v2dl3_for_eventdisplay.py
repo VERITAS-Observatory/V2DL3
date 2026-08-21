@@ -7,6 +7,41 @@ from click.testing import CliRunner
 from pyV2DL3.script import v2dl3_for_Eventdisplay as eventdisplay_cli
 
 
+def test_filename_to_obsid_strips_fits_suffixes_and_requires_integer_stem():
+    assert eventdisplay_cli._obs_id_from_output("/tmp/12345.fits.gz") == 12345
+    with pytest.raises(Exception, match="integer output filename stem"):
+        eventdisplay_cli._obs_id_from_output("/tmp/not-an-id.fits.gz")
+
+
+def test_set_obs_id_updates_all_response_hdus():
+    hdulist = fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU(), fits.BinTableHDU()])
+    hdulist[1].header["OBS_ID"] = 1
+    hdulist[2].header["OBS_ID"] = 1
+
+    eventdisplay_cli._set_obs_id(hdulist, 12345)
+
+    assert hdulist[1].header["OBS_ID"] == 12345
+    assert hdulist[2].header["OBS_ID"] == 12345
+
+
+def test_cli_rejects_conflicting_response_modes(tmp_path):
+    result = CliRunner().invoke(
+        eventdisplay_cli.cli,
+        ["--file_pair", str(tmp_path), str(tmp_path), "--point-like", "--full-enclosure", "out.fits"],
+    )
+    assert result.exit_code != 0
+    assert "mutually exclusive" in result.output
+
+
+def test_cli_rejects_knn_extrapolation(tmp_path):
+    result = CliRunner().invoke(
+        eventdisplay_cli.cli,
+        ["--file_pair", str(tmp_path), str(tmp_path), "--force_extrapolation", "out.fits"],
+    )
+    assert result.exit_code != 0
+    assert "requires --interpolator_name RegularGridInterpolator" in result.output
+
+
 def test_cli_help_describes_filter_and_fuzzy_boundary_options():
     result = CliRunner().invoke(eventdisplay_cli.cli, ["--help"])
 

@@ -37,8 +37,10 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        evt_dict, MaxImgSel, mean_ped_var =  \
-            __fill_event_list(file, runNumber, select, seconds_from_reference)
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
+        evt_dict, _, _ =  \
+            __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
 
         # Header info
         evt_dict["OBS_ID"] = runNumber
@@ -51,18 +53,18 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["DEADC"] = 1 - runSummary["DeadTimeFracOn"][0]
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
         evt_dict["RA_PNT"], evt_dict["DEC_PNT"] = __get_average_pointing(file, runNumber)
-        evt_dict["ALT_PNT"], evt_dict["AZ_PNT"] = __get_average_event_direction(
-            evt_dict["ALT"], evt_dict["AZ"])
+        evt_dict["ALT_PNT"] = run_metadata["altitude"]
+        evt_dict["AZ_PNT"] = run_metadata["azimuth"]
         evt_dict["RA_OBJ"] = runSummary["TargetRAJ2000"][0]
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
-        evt_dict["N_TELS"] = np.binary_repr(MaxImgSel).count("1")
+        evt_dict["N_TELS"] = np.binary_repr(run_metadata["max_img_sel"]).count("1")
         logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
-        evt_dict["NSBLEVEL"] = mean_ped_var
+        evt_dict["NSBLEVEL"] = run_metadata["pedvar"]
         evt_dict["QUALITY"] = __read_quality_flag_from_log(file, runNumber)
         gti_tstart_from_reference, gti_tstop_from_reference, evt_dict["ONTIME"] = \
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
@@ -90,20 +92,21 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     )
 
 
-def __fill_event_list(file, runNumber, select, seconds_from_reference):
+def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=None):
     """
     Fill event list from DL3EventTree
 
     """
 
-    DL3EventTree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
-    if len(DL3EventTree["eventNumber"]) == 0:
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
         logger.error("Empty event list")
         raise ZeroLengthEventList
 
-    mask = __get_mask(DL3EventTree, select)
+    mask = __get_mask(event_tree, select)
     if not np.any(mask):
-        logging.error("Empty event list after selection")
+        logger.error("Empty event list after selection")
         raise ZeroLengthEventList
 
     if np.sum(mask) == 0:
@@ -111,21 +114,21 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
         raise ZeroLengthEventList
 
     evt_dict = {}
-    evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
-    evt_dict["TIME"] = __get_time_vector(DL3EventTree["timeOfDay"][mask], seconds_from_reference)
-    evt_dict["RA"] = DL3EventTree["RA"][mask]
-    evt_dict["DEC"] = DL3EventTree["DEC"][mask]
-    evt_dict["ALT"] = DL3EventTree["El"][mask]
-    evt_dict["AZ"] = DL3EventTree["Az"][mask]
-    evt_dict["ENERGY"] = DL3EventTree["Energy"][mask]
-    evt_dict["EVENT_TYPE"] = DL3EventTree["NImages"][mask]
-    evt_dict["Xoff"] = DL3EventTree["Xoff"][mask]
-    evt_dict["Yoff"] = DL3EventTree["Yoff"][mask]
+    evt_dict["EVENT_ID"] = event_tree["eventNumber"][mask]
+    evt_dict["TIME"] = __get_time_vector(event_tree["timeOfDay"][mask], seconds_from_reference)
+    evt_dict["RA"] = event_tree["RA"][mask]
+    evt_dict["DEC"] = event_tree["DEC"][mask]
+    evt_dict["ALT"] = event_tree["El"][mask]
+    evt_dict["AZ"] = event_tree["Az"][mask]
+    evt_dict["ENERGY"] = event_tree["Energy"][mask]
+    evt_dict["EVENT_TYPE"] = event_tree["NImages"][mask]
+    evt_dict["Xoff"] = event_tree["Xoff"][mask]
+    evt_dict["Yoff"] = event_tree["Yoff"][mask]
     try:
         # Test if anasum file was created using the all events option.
         # In this case write out the additional output.
-        evt_dict["GAMMANESS"] = DL3EventTree["MVA"][mask]
-        evt_dict["IS_GAMMA"] = DL3EventTree["IsGamma"][mask]
+        evt_dict["GAMMANESS"] = event_tree["MVA"][mask]
+        evt_dict["IS_GAMMA"] = event_tree["IsGamma"][mask]
     except KeyError:
         pass
 
@@ -133,9 +136,29 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     return (
         evt_dict,
-        np.max(DL3EventTree["ImgSel"][mask]),
-        np.mean(DL3EventTree["MeanPedvar"][mask]),
+        np.max(event_tree["ImgSel"][mask]),
+        np.mean(event_tree["MeanPedvar"][mask]),
     )
+
+
+def __get_run_event_metadata(file, runNumber, event_tree=None):
+    """Return run-level event metadata without applying an event selection."""
+
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
+        logger.error("Empty event list")
+        raise ZeroLengthEventList
+
+    altitude, azimuth = __get_average_event_direction(
+        event_tree["El"], event_tree["Az"]
+    )
+    return {
+        "altitude": altitude,
+        "azimuth": azimuth,
+        "max_img_sel": np.max(event_tree["ImgSel"]),
+        "pedvar": np.mean(event_tree["MeanPedvar"]),
+    }
 
 
 def __get_start_stop_times(file):
@@ -235,8 +258,13 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
             BitArray, t_start_from_reference
         )
     except KeyError:
-        for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
-            logger.info("maskBits not found, Available keys: %s", k)
+        try:
+            time_mask = file[f"run_{runNumber}"]["stereo"]["timeMask"]
+        except KeyError:
+            logger.info("Eventdisplay time mask not found; using the full run interval")
+        else:
+            for key in time_mask.keys():
+                logger.info("maskBits not found, available key: %s", key)
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
