@@ -27,10 +27,12 @@ def get_epoch_effective_area(anasum_file, run):
     effective_matches = [
         line for line in effective_lines if "reading effective areas from" in line
     ]
-    if len(effective_matches) != 1:
+    # EventDisplay may log the same effective-area file more than once while
+    # setting up the analysis.  The first matching line is the behavior used
+    # by the original parser; only a missing line is an error.
+    if not effective_matches:
         raise ValueError(
-            f"Expected one effective-area line in {anasum_file}, found "
-            f"{len(effective_matches)}"
+            f"Expected at least one effective-area line in {anasum_file}, found 0"
         )
     eff = effective_matches[0].split("reading effective areas from", 1)[1].strip()
     marker = eff.find("effArea")
