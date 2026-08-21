@@ -289,8 +289,8 @@ def fill_direction_migration(
         energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
         energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
 
-        axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
-        _, e_low, e_high = bin_centers_to_edges(axis[0])
+        energy_axis = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        _, e_low, e_high = bin_centers_to_edges(energy_axis)
 
         # generate psf data from halfnorm pdf
         if test_psf:
@@ -315,7 +315,7 @@ def fill_direction_migration(
             # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
 
             y = np.array(normed)
-            test = np.repeat(y[np.newaxis, ...], len(axis[0]), axis=0)
+            test = np.repeat(y[np.newaxis, ...], len(energy_axis), axis=0)
             rpsf_test.append(test)
 
         else:
@@ -330,13 +330,13 @@ def fill_direction_migration(
             # repeated by the length of the energy axis.
             norm = np.sum(
                 direction_diff
-                * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
-                / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1),
+                * np.repeat(rad_width_deg[..., np.newaxis], len(energy_axis), axis=1)
+                / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1),
                 axis=0,
             )
             norm = norm * 2 * np.pi
             direction_diff = direction_diff / (
-                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2
+                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1) ** 2
             )
             with np.errstate(invalid="ignore"):
                 normed = direction_diff / norm * ((180 / np.pi) ** 2)

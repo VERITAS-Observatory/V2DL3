@@ -65,6 +65,6 @@ run.source = [
   "pyV2DL3.script.v2dl3_for_Eventdisplay",
 ]
 run.branch = true
-report.fail_under = 60
+report.fail_under = 75
 report.skip_covered = true
 report.show_missing = true

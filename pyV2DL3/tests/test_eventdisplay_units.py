@@ -8,7 +8,9 @@ import pyV2DL3.eventdisplay.fillEVENTS as fill_events
 from pyV2DL3.eventdisplay import DBFitsFile, EventDisplayDataSource, IrfExtractor
 from pyV2DL3.eventdisplay.fillRESPONSE import (
     __fill_response__,
+    fill_direction_migration,
     fill_effective_area,
+    fill_energy_migration,
     find_camera_offsets,
 )
 from pyV2DL3.eventdisplay.IrfInterpolator import IrfInterpolator
@@ -19,6 +21,35 @@ from pyV2DL3.eventdisplay.util import (
     getGTI,
     produce_tel_list,
 )
+
+
+class Branch:
+    def __init__(self, values):
+        self.values = np.asarray(values)
+
+    def array(self, library=None):
+        return self.values
+
+
+class RootFile(dict):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def effective_area_tree():
+    values = {
+        "azMin": [-180.0, 0.0, 180.0], "azMax": [-180.0, 0.0, 180.0],
+        "az": [0], "pedvar": [4.0], "ze": [20.0], "Woff": [0.5],
+        "e0": [[0.0, 1.0]], "eff": [[10.0, 20.0]],
+        "hEsysMCRelative2D_binsx": [2], "hEsysMCRelative2D_minx": [-1.0],
+        "hEsysMCRelative2D_maxx": [1.0], "hEsysMCRelative2D_binsy": [2],
+        "hEsysMCRelative2D_miny": [0.0], "hEsysMCRelative2D_maxy": [2.0],
+        "hEsysMCRelative2D_value": [[1.0, 2.0, 3.0, 4.0]],
+    }
+    return {name: Branch(value) for name, value in values.items()}
 
 
 def test_eventdisplay_utilities_cover_telescope_bins_dimensions_and_empty_gti():
@@ -133,6 +164,41 @@ def test_event_helpers_keep_times_directions_and_filter_errors_explicit():
         fill_events.__get_mask({"RA": np.array([1.0])}, {"RA": "bad"})
 
 
+def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypatch):
+    run_summary = Mock()
+    run_summary.arrays.return_value = {
+        "runOn": np.array([42]), "DeadTimeFracOn": np.array([0.1]),
+        "TargetName": np.array(["Crab"]), "TargetRAJ2000": np.array([83.0]),
+        "TargetDecJ2000": np.array([22.0]),
+    }
+    tel_config = Mock()
+    tel_config.arrays.return_value = {"TelType": np.array([1, 2])}
+    root_file = RootFile({"total_1/stereo/tRunSummary": run_summary, "run_42/stereo/telconfig": tel_config})
+    monkeypatch.setattr(fill_events.uproot, "open", Mock(return_value=root_file))
+    start = fill_events.Time(60000.0, format="mjd", scale="utc")
+    stop = fill_events.Time(60000.1, format="mjd", scale="utc")
+    monkeypatch.setattr(fill_events, "__get_start_stop_times", Mock(return_value=(start, stop, start)))
+    monkeypatch.setattr(fill_events, "__get_times_since_reference_time", Mock(return_value=(10.0, 20.0, 0.0)))
+    monkeypatch.setattr(
+        fill_events, "__fill_event_list",
+        Mock(return_value=({"ALT": np.array([50.0]), "AZ": np.array([180.0])}, 3, 4.0)),
+    )
+    monkeypatch.setattr(fill_events, "__get_average_pointing", Mock(return_value=(83.0, 22.0)))
+    monkeypatch.setattr(fill_events, "__get_average_event_direction", Mock(return_value=(50.0, 180.0)))
+    monkeypatch.setattr(fill_events, "__read_quality_flag_from_log", Mock(return_value=0))
+    monkeypatch.setattr(fill_events, "__get_ontime", Mock(return_value=([10.0], [18.0], 8.0)))
+    monkeypatch.setattr(fill_events, "read_db_fits_file", Mock(return_value={"weather": "A"}))
+
+    gti, irf_query, events = fill_events.__fillEVENTS__("events.root", db_fits_file="run.db.fits")
+
+    assert gti == {"goodTimeStart": [10.0], "goodTimeStop": [18.0], "TSTART": 10.0, "TSTOP": 20.0}
+    assert irf_query == {"azimuth": 180.0, "zenith": 40.0, "pedvar": 4.0}
+    assert events["OBS_ID"] == 42
+    assert events["LIVETIME"] == pytest.approx(7.2)
+    assert events["TELLIST"] == "T1,T2"
+    assert events["weather"] == "A"
+
+
 def test_irf_extraction_and_interpolation_accept_north_azimuth(tmp_path, monkeypatch):
     extract_1d = Mock(return_value=("data", "axes"))
     monkeypatch.setattr(IrfExtractor, "extract_irf_1d", extract_1d)
@@ -156,6 +222,28 @@ def test_irf_extraction_and_interpolation_accept_north_azimuth(tmp_path, monkeyp
     assert interpolator.interpolator.predict.call_args.args[0].shape == (2, 4)
 
 
+def test_irf_extractor_builds_regular_and_knn_input_arrays(monkeypatch):
+    tree = effective_area_tree()
+    monkeypatch.setattr(IrfExtractor.uproot, "open", Mock(return_value={"fEffAreaH2F": tree}))
+
+    one_dimensional, one_axes = IrfExtractor.extract_irf_1d("irf.root", "eff", azimuth=0.0)
+    two_dimensional, two_axes = IrfExtractor.extract_irf_2d(
+        "irf.root", "hEsysMCRelative2D", azimuth=0.0
+    )
+    coordinates, values = IrfExtractor.extract_irf_for_knn(
+        "irf.root", "eff", irf1d=True, azimuth=0.0
+    )
+
+    assert one_dimensional.shape == (2, 1, 1, 1)
+    assert np.array_equal(one_dimensional[:, 0, 0, 0], [10.0, 20.0])
+    assert one_axes["energies"].tolist() == [0.0, 1.0]
+    assert two_dimensional.shape == (2, 2, 1, 1, 1)
+    assert two_dimensional[:, :, 0, 0, 0].tolist() == [[1.0, 3.0], [2.0, 4.0]]
+    assert two_axes["irf_dimension_1"].tolist() == [-0.5, 0.5]
+    assert coordinates.shape == (2, 4)
+    assert values.tolist() == [10.0, 20.0]
+
+
 def test_irf_interpolator_loads_knn_coordinates(tmp_path, monkeypatch):
     filename = tmp_path / "irf.root"
     filename.touch()
@@ -172,6 +260,26 @@ def test_irf_interpolator_loads_knn_coordinates(tmp_path, monkeypatch):
 
     extract.assert_called_once_with(str(filename), "eff", irf1d=True, azimuth=10.0)
     assert np.array_equal(interpolator.irf_axes[0], [0.0, 1.0])
+
+
+def test_regular_grid_interpolator_loads_and_interpolates(tmp_path, monkeypatch):
+    filename = tmp_path / "irf.root"
+    filename.touch()
+    axes = {
+        "energies": np.array([0.0, 1.0]), "pedvars": np.array([4.0]),
+        "zeniths": np.array([20.0]), "woffs": np.array([0.5]),
+    }
+    data = np.array([[[[10.0]]], [[[20.0]]]])
+    monkeypatch.setattr(
+        "pyV2DL3.eventdisplay.IrfInterpolator.extract_irf", Mock(return_value=(data, axes))
+    )
+
+    interpolator = IrfInterpolator(str(filename), 0.0, "RegularGridInterpolator")
+    interpolator.set_irf("eff", use_click=False)
+    values, axis = interpolator.interpolate([4.0, 20.0, 0.5])
+
+    assert np.allclose(values, [10.0, 20.0])
+    assert np.array_equal(axis[0], [0.0, 1.0])
 
 
 def test_response_builder_selects_the_requested_response_mode(monkeypatch):
@@ -204,6 +312,34 @@ def test_response_builder_selects_the_requested_response_mode(monkeypatch):
     assert point_area.call_args.args[0] == "eff"
 
 
+def test_response_builder_creates_all_full_enclosure_products(monkeypatch):
+    fast_eff_area = {"Woff": Mock(), "ze": Mock(), "pedvar": Mock()}
+    fast_eff_area["Woff"].array.return_value = np.array([0.5, 1.0])
+    fast_eff_area["ze"].array.return_value = np.array([20.0])
+    fast_eff_area["pedvar"].array.return_value = np.array([4.0])
+    monkeypatch.setattr(
+        "pyV2DL3.eventdisplay.fillRESPONSE.uproot.open",
+        Mock(return_value={"fEffAreaH2F": fast_eff_area}),
+    )
+    area = Mock(return_value=("EA", 0.1, 1.0))
+    migration = Mock(return_value="MIGRATION")
+    direction = Mock(return_value="PSF")
+    monkeypatch.setattr("pyV2DL3.eventdisplay.fillRESPONSE.IrfInterpolator", Mock())
+    monkeypatch.setattr("pyV2DL3.eventdisplay.fillRESPONSE.fill_effective_area", area)
+    monkeypatch.setattr("pyV2DL3.eventdisplay.fillRESPONSE.fill_energy_migration", migration)
+    monkeypatch.setattr("pyV2DL3.eventdisplay.fillRESPONSE.fill_direction_migration", direction)
+
+    response = __fill_response__(
+        "events.root", "irf.root", 10.0, 20.0, 4.0,
+        {"point-like": False, "full-enclosure": True}, use_click=False,
+    )
+
+    assert response == {"FULL_EA": "EA", "LO_THRES": 0.1, "HI_THRES": 1.0,
+                        "FULL_MIGRATION": "MIGRATION", "PSF": "PSF"}
+    assert area.call_args.args[0] == "effNoTh2"
+    assert migration.call_args.args[0] == "hEsysMCRelative2DNoDirectionCut"
+
+
 def test_response_offset_edges_are_non_empty_and_used_separately_from_centers():
     theta_low, theta_high = find_camera_offsets(np.array([0.5, 1.0]))
     assert np.all(theta_high > theta_low)
@@ -218,3 +354,28 @@ def test_response_offset_edges_are_non_empty_and_used_separately_from_centers():
     assert interpolator.interpolate.call_count == 2
     assert low_energy < high_energy
     assert np.all(table["THETA_HI"][0] > table["THETA_LO"][0])
+
+
+def test_response_array_builders_normalize_and_preserve_axis_shapes():
+    interpolator = Mock()
+    interpolator.interpolate.return_value = (
+        np.array([[1.0, 1.0], [1.0, 1.0]]),
+        [np.array([0.0, 1.0]), np.array([0.0, 1.0])],
+    )
+    migration = fill_energy_migration(
+        "hEsysMCRelative2D", interpolator, [0.5, 1.0], 4.0, 20.0,
+        np.array([0.25, 0.75]), np.array([0.75, 1.25]),
+    )
+    assert migration["MATRIX"].shape == (1, 2, 2, 2)
+    assert np.all(migration["MIGRA_HI"][0] > migration["MIGRA_LO"][0])
+
+    interpolator.interpolate.return_value = (
+        np.ones((2, 6)),
+        [np.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0]), np.array([-2.0, -1.0])],
+    )
+    psf = fill_direction_migration(
+        interpolator, [0.5, 1.0], 4.0, 20.0,
+        np.array([0.25, 0.75]), np.array([0.75, 1.25]),
+    )
+    assert psf["RPSF"].shape[1] == 2
+    assert np.all(psf["RAD_HI"][0] > psf["RAD_LO"][0])
