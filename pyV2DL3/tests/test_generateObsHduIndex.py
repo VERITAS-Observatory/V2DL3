@@ -1,14 +1,20 @@
 
+import os
+from unittest.mock import Mock
+
 import pytest
 from astropy.io import fits
+from click.testing import CliRunner
 
 from pyV2DL3.generateObsHduIndex import (
     _add_table_units,
     _check_unit_consistency,
     _default_null_value,
     _fill_table_data,
+    gen_hdu_index,
     get_unit_string_from_comment,
 )
+from pyV2DL3.script import generate_index_file
 
 
 class TestGetUnitStringFromComment:
@@ -268,3 +274,43 @@ class Test_DefaultNullValue:
         for data_type in data_types:
             result = _default_null_value(data_type)
             assert isinstance(result, (float, int, str))
+
+
+def test_hdu_index_preserves_long_relative_paths(tmp_path):
+    source_dir = tmp_path / ("nested_" + "x" * 45)
+    source_dir.mkdir()
+    source = source_dir / ("observation_" + "y" * 50 + ".fits")
+    events = fits.BinTableHDU.from_columns([])
+    events.name = "EVENTS"
+    events.header["OBS_ID"] = 42
+    events.header["HDUCLAS1"] = "EVENTS"
+    fits.HDUList([fits.PrimaryHDU(), events]).writeto(source)
+
+    index = gen_hdu_index([str(source)], str(tmp_path))
+    row = index.data[0]
+    expected_dir = os.path.dirname(os.path.relpath(source, tmp_path))
+    expected_name = os.path.basename(source)
+    actual_dir = row["FILE_DIR"].decode() if isinstance(row["FILE_DIR"], bytes) else row["FILE_DIR"]
+    actual_name = row["FILE_NAME"].decode() if isinstance(row["FILE_NAME"], bytes) else row["FILE_NAME"]
+
+    assert actual_dir == expected_dir
+    assert actual_name == expected_name
+
+
+def test_index_cli_checks_requested_output_names(tmp_path, monkeypatch):
+    (tmp_path / "obs-index.fits.gz").touch()
+    monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: ["input.fits"])
+    create_mock = Mock()
+    monkeypatch.setattr(generate_index_file, "create_obs_hdu_index_file", create_mock)
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location", str(tmp_path),
+            "--index_file_dir", str(tmp_path),
+            "--obs_index_file", "custom-obs.fits.gz",
+            "--hdu_index_file", "custom-hdu.fits.gz",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    create_mock.assert_called_once()

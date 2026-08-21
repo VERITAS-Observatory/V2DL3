@@ -37,7 +37,8 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        evt_dict, MaxImgSel, mean_ped_var =  \
+        run_metadata = __get_run_event_metadata(file, runNumber)
+        evt_dict, _, _ =  \
             __fill_event_list(file, runNumber, select, seconds_from_reference)
 
         # Header info
@@ -51,18 +52,18 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["DEADC"] = 1 - runSummary["DeadTimeFracOn"][0]
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
         evt_dict["RA_PNT"], evt_dict["DEC_PNT"] = __get_average_pointing(file, runNumber)
-        evt_dict["ALT_PNT"], evt_dict["AZ_PNT"] = __get_average_event_direction(
-            evt_dict["ALT"], evt_dict["AZ"])
+        evt_dict["ALT_PNT"] = run_metadata["altitude"]
+        evt_dict["AZ_PNT"] = run_metadata["azimuth"]
         evt_dict["RA_OBJ"] = runSummary["TargetRAJ2000"][0]
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
-        evt_dict["N_TELS"] = np.binary_repr(MaxImgSel).count("1")
+        evt_dict["N_TELS"] = np.binary_repr(run_metadata["max_img_sel"]).count("1")
         logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
-        evt_dict["NSBLEVEL"] = mean_ped_var
+        evt_dict["NSBLEVEL"] = run_metadata["pedvar"]
         evt_dict["QUALITY"] = __read_quality_flag_from_log(file, runNumber)
         gti_tstart_from_reference, gti_tstop_from_reference, evt_dict["ONTIME"] = \
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
@@ -103,7 +104,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     mask = __get_mask(DL3EventTree, select)
     if not np.any(mask):
-        logging.error("Empty event list after selection")
+        logger.error("Empty event list after selection")
         raise ZeroLengthEventList
 
     if np.sum(mask) == 0:
@@ -136,6 +137,25 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
         np.max(DL3EventTree["ImgSel"][mask]),
         np.mean(DL3EventTree["MeanPedvar"][mask]),
     )
+
+
+def __get_run_event_metadata(file, runNumber):
+    """Return run-level event metadata without applying an event selection."""
+
+    event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
+        logger.error("Empty event list")
+        raise ZeroLengthEventList
+
+    altitude, azimuth = __get_average_event_direction(
+        event_tree["El"], event_tree["Az"]
+    )
+    return {
+        "altitude": altitude,
+        "azimuth": azimuth,
+        "max_img_sel": np.max(event_tree["ImgSel"]),
+        "pedvar": np.mean(event_tree["MeanPedvar"]),
+    }
 
 
 def __get_start_stop_times(file):
@@ -235,8 +255,13 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
             BitArray, t_start_from_reference
         )
     except KeyError:
-        for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
-            logger.info("maskBits not found, Available keys: %s", k)
+        try:
+            time_mask = file[f"run_{runNumber}"]["stereo"]["timeMask"]
+        except KeyError:
+            logger.info("Eventdisplay time mask not found; using the full run interval")
+        else:
+            for key in time_mask.keys():
+                logger.info("maskBits not found, available key: %s", key)
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference

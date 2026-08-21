@@ -6,6 +6,7 @@ import yaml
 
 from pyV2DL3.eventdisplay.fillEVENTS import __fillEVENTS__
 from pyV2DL3.eventdisplay.fillRESPONSE import __fill_response__
+from pyV2DL3.eventdisplay.util import get_root_log_lines
 from pyV2DL3.VtsDataSource import VtsDataSource
 
 
@@ -84,13 +85,29 @@ class EventDisplayDataSource(VtsDataSource):
         str
             Version string of the Eventdisplay data source, e.g. "v490.7"
         """
-        file = uproot.open(self.__evt_file__)
-        try:
-            data_list = file['anasumLog;1'].members['fLines']._data
-        except uproot.exceptions.KeyInFileError:
-            logging.warning(f"No anasum log found in {self.__evt_file__}")
-            return "0.0.0"
-        sub = "VERITAS Analysis Summary"
-        version_string = str([s for s in data_list if sub in s][0])
-        match = re.search(r'version\s+([^\)]+)', version_string)
-        return match.group(1) if match else "0.0.0"
+        with uproot.open(self.__evt_file__) as file:
+            try:
+                log = file["anasumLog;1"]
+            except uproot.exceptions.KeyInFileError:
+                logging.warning(f"No anasum log found in {self.__evt_file__}")
+                return "0.0.0"
+
+            try:
+                data_list = get_root_log_lines(log)
+            except ValueError as error:
+                raise ValueError(
+                    f"Could not decode anasum log in {self.__evt_file__}: {error}"
+                ) from error
+
+        matches = [line for line in data_list if "VERITAS Analysis Summary" in line]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Expected one VERITAS Analysis Summary line in "
+                f"{self.__evt_file__}, found {len(matches)}"
+            )
+        match = re.search(r"version\s+([^\)]+)", matches[0])
+        if match is None:
+            raise ValueError(
+                f"Could not parse Eventdisplay version from {self.__evt_file__}"
+            )
+        return match.group(1)

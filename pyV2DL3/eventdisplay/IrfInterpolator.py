@@ -132,7 +132,7 @@ class IrfInterpolator:
         self.irf_axes = list(irf_axes.values())
         logging.debug(f"IRF axes: {irf_axes}")
 
-        if kwargs.get("use_click", True):
+        if kwargs.get("use_click", False):
             clk = click.get_current_context()
             extrapolation = clk.params["force_extrapolation"]
         else:

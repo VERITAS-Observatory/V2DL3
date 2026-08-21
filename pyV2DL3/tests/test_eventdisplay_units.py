@@ -18,6 +18,7 @@ from pyV2DL3.eventdisplay.util import (
     ZeroLengthEventList,
     bin_centers_to_edges,
     duplicate_dimensions,
+    get_root_log_lines,
     getGTI,
     produce_tel_list,
 )
@@ -37,6 +38,16 @@ class RootFile(dict):
 
     def __exit__(self, *args):
         return False
+
+
+class RootLog:
+    def __init__(self, lines):
+        self.lines = lines
+
+    def member(self, name):
+        if name != "fLines":
+            raise KeyError(name)
+        return self.lines
 
 
 def effective_area_tree():
@@ -65,6 +76,29 @@ def test_eventdisplay_utilities_cover_telescope_bins_dimensions_and_empty_gti():
     assert start.size == stop.size == 0
 
 
+def test_root_log_adapter_uses_public_member_and_decodes_lines():
+    assert get_root_log_lines(RootLog([b"first", "second"])) == ["first", "second"]
+
+
+def test_eventdisplay_version_parser_reports_missing_version_line(monkeypatch):
+    root_file = RootFile({"anasumLog;1": RootLog(["unrelated line"])})
+    monkeypatch.setattr(EventDisplayDataSource.uproot, "open", Mock(return_value=root_file))
+    source = EventDisplayDataSource.EventDisplayDataSource("events.root", "irf.root")
+
+    with pytest.raises(ValueError, match="VERITAS Analysis Summary"):
+        source.get_version()
+
+
+def test_missing_time_mask_falls_back_to_full_run_interval():
+    file = {"run_42": {"stereo": {}}}
+
+    start, stop, ontime = fill_events.__get_ontime(file, 42, 10.0, 20.0)
+
+    assert start == [10.0]
+    assert stop == [20.0]
+    assert ontime == 10.0
+
+
 def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     tree = {
         "eventNumber": np.array([1, 2]),
@@ -90,6 +124,11 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     assert events["TIME"].tolist() == [103.0]
     assert max_img_sel == 7
     assert pedvar == 6.0
+    metadata = fill_events.__get_run_event_metadata(file, 42)
+    assert metadata["altitude"] == 55.0
+    assert metadata["azimuth"] == pytest.approx(75.0)
+    assert metadata["max_img_sel"] == 7
+    assert metadata["pedvar"] == 5.0
 
     with pytest.raises(ZeroLengthEventList):
         fill_events.__fill_event_list(file, 42, {"Energy": [3.0, 4.0]}, 100.0)
@@ -215,6 +254,11 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
         fill_events, "__fill_event_list",
         Mock(return_value=({"ALT": np.array([50.0]), "AZ": np.array([180.0])}, 3, 4.0)),
     )
+    monkeypatch.setattr(
+        fill_events,
+        "__get_run_event_metadata",
+        Mock(return_value={"altitude": 55.0, "azimuth": 190.0, "max_img_sel": 7, "pedvar": 5.0}),
+    )
     monkeypatch.setattr(fill_events, "__get_average_pointing", Mock(return_value=(83.0, 22.0)))
     monkeypatch.setattr(fill_events, "__get_average_event_direction", Mock(return_value=(50.0, 180.0)))
     monkeypatch.setattr(fill_events, "__read_quality_flag_from_log", Mock(return_value=0))
@@ -225,7 +269,7 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     gti, irf_query, events = fill_events.__fillEVENTS__("events.root", db_fits_file="run.db.fits")
 
     assert gti == {"goodTimeStart": [10.0], "goodTimeStop": [18.0], "TSTART": 10.0, "TSTOP": 20.0}
-    assert irf_query == {"azimuth": 180.0, "zenith": 40.0, "pedvar": 4.0}
+    assert irf_query == {"azimuth": 190.0, "zenith": 35.0, "pedvar": 5.0}
     assert events["OBS_ID"] == 42
     assert events["LIVETIME"] == pytest.approx(7.2)
     assert events["TELLIST"] == "T1,T2"
