@@ -4,7 +4,7 @@ import numpy as np
 
 
 class WrongIrf(Exception):
-    def __init__(self, message, errors):
+    def __init__(self, message="", errors=None):
         """Call the base class constructor with the parameters it needs"""
         super().__init__(message)
 
@@ -65,7 +65,7 @@ def getGTI(BitArray, run_start_from_reference):
 
     Parameters
     ----------
-    maskBits :  array of uint8 numbers, read from anasum root file
+    BitArray :  array of uint8 numbers, read from anasum root file
     run_start_from_reference: Start time of the run in second
                               from reference time
 
@@ -89,6 +89,11 @@ def getGTI(BitArray, run_start_from_reference):
             time_array_sec = time_array_sec[:-1]
         else:
             break
+
+    # Guard against fully masked run (all bits zero)
+    if len(time_array_sec) == 0:
+        logging.warning("Time mask is all zeros: ontime=0, no GTIs")
+        return np.array([]), np.array([]), 0
 
     duration_s = len(time_array_sec)
     ontime_s = time_array_sec.count("1")
@@ -115,7 +120,7 @@ def getGTI(BitArray, run_start_from_reference):
             start = i + 1
             gti_start.append(start)
 
-    if (time_array_sec[-1] != 0):
+    if time_array_sec[-1] != "0":
         gti_end.append(duration_s)
 
     logging.info(

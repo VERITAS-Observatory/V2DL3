@@ -183,8 +183,7 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf
         except Exception:
-            logging.error("Unexpected error:", sys.exc_info()[0])
-            logging.error("Entry number ", i)
+            logging.error("At entry number %d unexpected error: %s", i, sys.exc_info()[0])
             raise
 
     axes = {
@@ -204,7 +203,7 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
     return a multidimensional array
     """
 
-    if not azimuth:
+    if azimuth is None:
         logging.error("Azimuth for IRF extraction not given")
         raise ValueError
 

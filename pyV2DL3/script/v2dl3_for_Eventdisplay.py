@@ -58,7 +58,7 @@ def print_version(ctx, param, value):
     "--filename_to_obsid",
     "-I",
     is_flag=True,
-    help="Override OBS_ID with output filename",
+    help="Override OBS_ID with the output filename basename (stored as string).",
 )
 @click.option(
     "--evt_filter",
@@ -160,7 +160,7 @@ def cli(
     fname_base = os.path.splitext(os.path.basename(output))[0]
     if filename_to_obsid:
         logging.info(
-            "Overwriting OBS_ID=%d with OBS_ID=%d",
+            "Overwriting OBS_ID=%s with OBS_ID=%s",
             hdulist[1].header['OBS_ID'], fname_base
         )
         hdulist[1].header["OBS_ID"] = fname_base
