@@ -28,6 +28,8 @@ def cli(file_pair, diff_file):
 
     fd = fits.FITSDiff(file1, file2, rtol=1.e-4, ignore_keywords=["CREATOR"])
     fd.report(diff_file, overwrite=True)
+    if not fd.identical:
+        raise click.exceptions.Exit(1)
 
 
 if __name__ == "__main__":
