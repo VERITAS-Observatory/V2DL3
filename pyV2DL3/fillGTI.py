@@ -23,7 +23,7 @@ def fillGTI(datasource, goodTimeStart=None, goodTimeStop=None):
     hdu2.header.set("TSTART", startTime_s, "start time [s]")
     hdu2.header.set("TSTOP", endTime_s, "stop time same [s]")
 
-    hdu2.header.set("MJDREFI ", VTS_REFERENCE_MJD, "int part of reference MJD [days]")
+    hdu2.header.set("MJDREFI ", int(VTS_REFERENCE_MJD), "int part of reference MJD [days]")
     hdu2.header.set("MJDREFF ", 0.0, "fractional part of reference MJD [days]")
 
     hdu2.header.set("TIMEUNIT", "s", "time unit is seconds since MET start")
