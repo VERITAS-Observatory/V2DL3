@@ -207,7 +207,7 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
     return a multidimensional array
     """
 
-    if not azimuth:
+    if azimuth is None:
         logging.error("Azimuth for IRF extraction not given")
         raise ValueError
 

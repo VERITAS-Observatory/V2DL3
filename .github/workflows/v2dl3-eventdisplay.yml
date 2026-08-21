@@ -44,10 +44,10 @@ jobs:
         run: |
           pip install .[tests]
 
-      - name: pytest
+      - name: Unit tests and coverage
         shell: bash -leo pipefail {0}
         run: |
-          pytest .
+          pytest pyV2DL3/tests --cov --cov-report=term-missing --cov-report=xml
 
       - name: Cache test data
         id: cache-test-data

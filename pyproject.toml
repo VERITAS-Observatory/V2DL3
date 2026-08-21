@@ -1,6 +1,5 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-
 requires = [ "setuptools", "setuptools-scm[toml]" ]
 
 [project]
@@ -14,11 +13,7 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.8",
   "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dynamic = [ "version" ]
@@ -33,14 +28,13 @@ dependencies = [
   "tqdm",
   "uproot",
 ]
-
-optional-dependencies."tests" = [
+optional-dependencies.tests = [
   "pytest",
   "pytest-cov",
 ]
 urls."bug tracker" = "https://github.com/VERITAS-Observatory/V2DL3/issues"
-urls."documentation" = "https://github.com/VERITAS-Observatory/V2DL3/"
-urls."repository" = "https://github.com/VERITAS-Observatory/V2DL3/"
+urls.documentation = "https://github.com/VERITAS-Observatory/V2DL3/"
+urls.repository = "https://github.com/VERITAS-Observatory/V2DL3/"
 scripts.v2dl3-compareFitsFiles = "pyV2DL3.script.compareFitsFiles:cli"
 scripts.v2dl3-eventdisplay = "pyV2DL3.script.v2dl3_for_Eventdisplay:cli"
 scripts.v2dl3-eventdisplay-query-runparameters = "pyV2DL3.script.eventdisplay_query_runparameters:main"
@@ -59,3 +53,18 @@ packages = [
 
 [tool.setuptools_scm]
 write_to = "pyV2DL3/_version.py"
+
+[tool.coverage]
+run.source = [
+  "pyV2DL3.addHDUClassKeyword",
+  "pyV2DL3.eventdisplay",
+  "pyV2DL3.fillEVENTS",
+  "pyV2DL3.fillGTI",
+  "pyV2DL3.fillRESPONSE",
+  "pyV2DL3.genHDUList",
+  "pyV2DL3.script.v2dl3_for_Eventdisplay",
+]
+run.branch = true
+report.fail_under = 60
+report.skip_covered = true
+report.show_missing = true
