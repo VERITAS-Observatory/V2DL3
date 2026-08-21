@@ -150,11 +150,6 @@ def read_db_fits_file(db_fits_file, run_number=None, protected_keys=()):
                 "DQM column {!r} would overwrite core "
                 "Eventdisplay metadata".format(column)
             )
-        if normalised_column in protected_columns:
-            raise ValueError(
-                "DQM column {!r} would overwrite core "
-                "Eventdisplay metadata".format(column)
-            )
         canonical_name = supported_columns.get(normalised_column)
         if canonical_name is not None:
             db_dict[canonical_name] = _scalar_value(row[column])
