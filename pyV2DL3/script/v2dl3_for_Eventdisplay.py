@@ -63,7 +63,7 @@ def print_version(ctx, param, value):
 @click.option(
     "--evt_filter",
     type=click.Path(exists=True),
-    help="Load condition to filter events form json or yaml file.",
+    help="Load conditions to filter events from a JSON or YAML file.",
 )
 @click.option(
     "--force_extrapolation",
@@ -76,9 +76,12 @@ def print_version(ctx, param, value):
     nargs=2,
     type=(click.Choice(IRF_AXIS), click.FLOAT),
     default=None,
-    help="Parameter outside IRF range but within a given tolerance is interpolated\
-at boundary value. tolerance = ratio of absolute difference between boundary and parameter\
-value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair.",
+    help=(
+        "A parameter outside the IRF range but within the given tolerance is "
+        "interpolated at the boundary. The tolerance is the ratio of the "
+        "absolute difference between the boundary and parameter value to the "
+        "boundary. Repeat for each IRF axis (zenith, pedvar) as an axis/value pair."
+    ),
 )
 @click.option(
     "--db_fits_file",

@@ -10,7 +10,6 @@ on:
       - 'CITATION.cff'
       - 'environment-vegas.yml'
       - 'LICENSE'
-      - 'README.md'
       - 'setup.py'
   workflow_dispatch:
     inputs:
@@ -28,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v7

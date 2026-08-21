@@ -7,6 +7,18 @@ from click.testing import CliRunner
 from pyV2DL3.script import v2dl3_for_Eventdisplay as eventdisplay_cli
 
 
+def test_cli_help_describes_filter_and_fuzzy_boundary_options():
+    result = CliRunner().invoke(eventdisplay_cli.cli, ["--help"])
+
+    assert result.exit_code == 0
+    assert "Load conditions to filter events from a JSON" in result.output
+    assert "or YAML file" in result.output
+    assert "Repeat for" in result.output
+    assert "each IRF axis" in result.output
+    assert "IRF axis" in result.output
+    assert "form json" not in result.output
+
+
 @pytest.mark.parametrize(
     ("response_option", "expected_irfs"),
     [
