@@ -68,7 +68,11 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         evt_dict["LIVETIME"] = evt_dict["ONTIME"] * evt_dict["DEADC"]
 
-    evt_dict.update(read_db_fits_file(db_fits_file))
+    evt_dict.update(
+        read_db_fits_file(
+            db_fits_file, runNumber, protected_keys=evt_dict.keys()
+        )
+    )
 
     return (
         {
