@@ -340,11 +340,10 @@ def test_response_builder_creates_all_full_enclosure_products(monkeypatch):
     assert migration.call_args.args[0] == "hEsysMCRelative2DNoDirectionCut"
 
 
-def test_response_offset_edges_are_non_empty_and_used_separately_from_centers():
+def test_response_offset_coordinates_are_preserved_in_serialized_irfs():
     theta_low, theta_high = find_camera_offsets(np.array([0.5, 1.0]))
-    assert np.all(theta_high > theta_low)
-    assert np.allclose(theta_low, [0.25, 0.75])
-    assert np.allclose(theta_high, [0.75, 1.25])
+    assert np.array_equal(theta_low, [0.5, 1.0])
+    assert np.array_equal(theta_high, [0.5, 1.0])
 
     interpolator = Mock()
     interpolator.interpolate.return_value = (np.array([10.0, 20.0]), [np.array([0.0, 1.0])])
@@ -353,7 +352,8 @@ def test_response_offset_edges_are_non_empty_and_used_separately_from_centers():
     )
     assert interpolator.interpolate.call_count == 2
     assert low_energy < high_energy
-    assert np.all(table["THETA_HI"][0] > table["THETA_LO"][0])
+    assert np.array_equal(table["THETA_LO"][0], theta_low)
+    assert np.array_equal(table["THETA_HI"][0], theta_high)
 
 
 def test_response_array_builders_normalize_and_preserve_axis_shapes():

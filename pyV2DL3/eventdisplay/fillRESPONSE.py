@@ -178,8 +178,7 @@ def find_camera_offsets(camera_offsets):
     # Note in the camera offset _low and _high may refer
     # to the simulated "points", and
     # not to actual bins.
-    _, theta_low, theta_high = bin_centers_to_edges(camera_offsets, logaxis=False)
-    return theta_low, theta_high
+    return camera_offsets, camera_offsets
 
 
 def duplicate_interpolating_coordinate(camera_offsets, irf_name):
