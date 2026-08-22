@@ -32,7 +32,8 @@ def get_epoch_effective_area(anasum_file, run):
     # by the original parser; only a missing line is an error.
     if not effective_matches:
         raise ValueError(
-            f"Expected at least one effective-area line in {anasum_file}, found 0"
+            f"Expected at least one effective-area line in {anasum_file}, found "
+            f"{len(effective_matches)}"
         )
     eff = effective_matches[0].split("reading effective areas from", 1)[1].strip()
     marker = eff.find("effArea")

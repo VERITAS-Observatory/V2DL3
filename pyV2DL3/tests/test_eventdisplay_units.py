@@ -22,6 +22,7 @@ from pyV2DL3.eventdisplay.util import (
     getGTI,
     produce_tel_list,
 )
+from pyV2DL3.tests.helpers import RootFile, RootLog
 
 
 class Branch:
@@ -30,24 +31,6 @@ class Branch:
 
     def array(self, library=None):
         return self.values
-
-
-class RootFile(dict):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
-
-
-class RootLog:
-    def __init__(self, lines):
-        self.lines = lines
-
-    def member(self, name):
-        if name != "fLines":
-            raise KeyError(name)
-        return self.lines
 
 
 def effective_area_tree():

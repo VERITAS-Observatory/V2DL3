@@ -1,24 +1,7 @@
 from unittest.mock import patch
 
 from pyV2DL3.script.eventdisplay_query_runparameters import get_epoch_effective_area
-
-
-class RootFile(dict):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
-
-
-class RootLog:
-    def __init__(self, lines):
-        self.lines = lines
-
-    def member(self, name):
-        if name != "fLines":
-            raise KeyError(name)
-        return self.lines
+from pyV2DL3.tests.helpers import RootFile, RootLog
 
 
 def test_query_runparameters_accepts_repeated_effective_area_lines():
