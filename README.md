@@ -109,9 +109,6 @@ pip install -e .
 
 Run `v2dl3-eventdisplay --help` to see all options.
 
-See [README_eventdisplay.md](README_eventdisplay.md) for the Eventdisplay input
-requirements, response modes, filters, output naming, and failure behavior.
-
 Convert an anasum output file to DL3.
 The following input is required:
 

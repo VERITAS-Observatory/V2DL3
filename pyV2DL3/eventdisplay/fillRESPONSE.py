@@ -91,23 +91,23 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
             logging.warning(
                 "IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name)
             )
+        elif (
+            par_name == "zenith"
+            and np.all(irf_stored_par > par)
+            and par < LOW_ZENITH_BOUNDARY
+        ):
+            logging.warning(
+                "Coordinate zenith ({0:.1f} deg) is below the IRF range; "
+                "using the lower boundary ({1:.1f} deg)".format(
+                    par, np.min(irf_stored_par)
+                )
+            )
+            par = np.min(irf_stored_par)
         elif tolerance > 0.0:
             if np.all(irf_stored_par < par) and check_fuzzy_boundary(
                 par, np.max(irf_stored_par), tolerance, par_name
             ):
                 par = np.max(irf_stored_par)
-            elif (
-                par_name == "zenith"
-                and np.all(irf_stored_par > par)
-                and par < LOW_ZENITH_BOUNDARY
-            ):
-                logging.warning(
-                    "Coordinate zenith ({0:.1f} deg) is below the IRF range; "
-                    "using the lower boundary ({1:.1f} deg)".format(
-                        par, np.min(irf_stored_par)
-                    )
-                )
-                par = np.min(irf_stored_par)
             elif np.all(irf_stored_par > par) and check_fuzzy_boundary(
                 par, np.min(irf_stored_par), tolerance, par_name
             ):
@@ -165,26 +165,23 @@ def check_fuzzy_boundary(par, boundary, tolerance, par_name):
 
 
 def find_camera_offsets(camera_offsets):
-    """Find camera offsets, depending on  availability in the effective area file."""
+    """Convert simulated camera-offset centers into non-zero bin edges."""
 
-    if len(camera_offsets) == 1:
-        # Many times, just IRFs for 0.5 deg are available.
-        # Assume that offset for the whole camera.
-        logger.debug(
-            "IMPORTANT: Only one camera offset bin "
-            + "({} deg) simulated within the effective area file selected.".format(
-                camera_offsets[0]
-            )
-        )
-        logger.debug(
-            "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
-        )
-        return [0.0, 10.0], [0.0, 10.0]
+    centers = np.asarray(camera_offsets, dtype=float)
+    if centers.size == 0:
+        raise ValueError("At least one camera offset is required")
+    if centers.size == 1:
+        # Treat a lone positive center as the center of a bin starting at zero.
+        # Use a finite default width when the simulated center is itself zero.
+        width = centers[0] if centers[0] > 0.0 else 0.5
+        edges = np.array([max(0.0, centers[0] - width), centers[0] + width])
+    else:
+        boundaries = (centers[:-1] + centers[1:]) / 2.0
+        first = centers[0] - (boundaries[0] - centers[0])
+        last = centers[-1] + (centers[-1] - boundaries[-1])
+        edges = np.concatenate(([max(0.0, first)], boundaries, [last]))
 
-    # Note in the camera offset _low and _high may refer
-    # to the simulated "points", and
-    # not to actual bins.
-    return camera_offsets, camera_offsets
+    return edges[:-1], edges[1:]
 
 
 def duplicate_interpolating_coordinate(camera_offsets, irf_name):

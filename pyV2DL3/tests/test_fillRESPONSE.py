@@ -38,11 +38,27 @@ def test_low_zenith_uses_lower_irf_boundary(caplog):
         np.array([20.0, 40.0, 60.0]),
         "zenith",
         use_click=False,
-        fuzzy_boundary=0.05,
+        fuzzy_boundary=0.0,
     )
 
     assert result == 20.0
     assert "using the lower boundary" in caplog.text
+
+
+def test_camera_offset_centers_are_converted_to_edges():
+    from pyV2DL3.eventdisplay.fillRESPONSE import find_camera_offsets
+
+    theta_low, theta_high = find_camera_offsets(np.array([0.5, 1.0]))
+    assert np.array_equal(theta_low, [0.25, 0.75])
+    assert np.array_equal(theta_high, [0.75, 1.25])
+
+    theta_low, theta_high = find_camera_offsets(np.array([0.5]))
+    assert np.array_equal(theta_low, [0.0])
+    assert np.array_equal(theta_high, [1.0])
+
+    theta_low, theta_high = find_camera_offsets(np.array([0.0]))
+    assert np.array_equal(theta_low, [0.0])
+    assert np.array_equal(theta_high, [0.5])
 
 
 def test_cli_style_fuzzy_boundary_is_selected_per_axis():

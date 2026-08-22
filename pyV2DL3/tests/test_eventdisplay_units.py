@@ -412,8 +412,8 @@ def test_response_builder_creates_all_full_enclosure_products(monkeypatch):
 
 def test_response_offset_coordinates_are_preserved_in_serialized_irfs():
     theta_low, theta_high = find_camera_offsets(np.array([0.5, 1.0]))
-    assert np.array_equal(theta_low, [0.5, 1.0])
-    assert np.array_equal(theta_high, [0.5, 1.0])
+    assert np.array_equal(theta_low, [0.25, 0.75])
+    assert np.array_equal(theta_high, [0.75, 1.25])
 
     interpolator = Mock()
     interpolator.interpolate.return_value = (np.array([10.0, 20.0]), [np.array([0.0, 1.0])])
