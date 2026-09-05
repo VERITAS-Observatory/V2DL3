@@ -246,9 +246,11 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     monkeypatch.setattr(
         fill_events,
         "__get_run_event_metadata",
-        Mock(return_value={"altitude": 55.0, "azimuth": 190.0, "max_img_sel": 7, "pedvar": 5.0}),
+        Mock(return_value={"altitude": 10.0, "azimuth": 190.0, "max_img_sel": 7, "pedvar": 5.0}),
     )
     monkeypatch.setattr(fill_events, "__get_average_pointing", Mock(return_value=(83.0, 22.0)))
+    pointing_altaz = Mock(return_value=(55.0, 190.0))
+    monkeypatch.setattr(fill_events, "__get_pointing_altaz", pointing_altaz)
     monkeypatch.setattr(fill_events, "__get_average_event_direction", Mock(return_value=(50.0, 180.0)))
     monkeypatch.setattr(fill_events, "__read_quality_flag_from_log", Mock(return_value=0))
     monkeypatch.setattr(fill_events, "__get_ontime", Mock(return_value=([10.0], [18.0], 8.0)))
@@ -264,6 +266,7 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     assert events["TELLIST"] == "T1,T2"
     assert events["weather"] == "A"
     event_tree.arrays.assert_called_once_with(library="np")
+    pointing_altaz.assert_called_once_with(83.0, 22.0, start)
     db_reader.assert_called_once_with(
         "run.db.fits", 42, protected_keys=events.keys()
     )
