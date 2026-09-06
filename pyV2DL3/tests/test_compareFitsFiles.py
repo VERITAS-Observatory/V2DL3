@@ -21,6 +21,7 @@ def test_compare_fits_returns_zero_for_identical_files(tmp_path):
     )
 
     assert result.exit_code == 0
+    assert "FITS files are identical" in result.output
 
 
 def test_compare_fits_returns_nonzero_for_different_files(tmp_path):
@@ -35,4 +36,6 @@ def test_compare_fits_returns_nonzero_for_different_files(tmp_path):
     )
 
     assert result.exit_code == 1
+    assert "FITS files differ" in result.output
+    assert str(diff_file) in result.output
     assert "Data contains differences" in diff_file.read_text()
