@@ -10,7 +10,6 @@ on:
       - 'CITATION.cff'
       - 'environment-vegas.yml'
       - 'LICENSE'
-      - 'README.md'
       - 'setup.py'
   workflow_dispatch:
     inputs:
@@ -44,10 +43,10 @@ jobs:
         run: |
           pip install .[tests]
 
-      - name: pytest
+      - name: Unit tests and coverage
         shell: bash -leo pipefail {0}
         run: |
-          pytest .
+          pytest pyV2DL3/tests --cov --cov-report=term-missing --cov-report=xml
 
       - name: Cache test data
         id: cache-test-data
@@ -60,7 +59,7 @@ jobs:
             64080.allevents.anasum.root
             eventfilter.yml
             ED-*.fits.gz
-          key: eventdisplay-test-data-v1
+          key: eventdisplay-test-data-v2
 
       - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
@@ -80,17 +79,29 @@ jobs:
         shell: bash -leo pipefail {0}
         run: |
           # point-like tests
-          v2dl3-eventdisplay \
+          if v2dl3-eventdisplay \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --logfile test-pointlike.fits.log \
-                  test-pointlike-CI.fits.gz
+                  test-pointlike-CI.fits.gz; then
+            :
+          else
+            status=$?
+            echo "Eventdisplay point-like conversion failed (exit $status)" >&2
+            test ! -f test-pointlike.fits.log || cat test-pointlike.fits.log
+            exit "$status"
+          fi
           if [ "$GENERATE_REFERENCE" != "true" ]; then
-            v2dl3-compareFitsFiles \
+            if v2dl3-compareFitsFiles \
                   -f ED-pointlike-CI.fits.gz test-pointlike-CI.fits.gz \
-                  -d test-pointlike.log
-            cat test-pointlike.log
-            grep -q "No differences found" test-pointlike.log
+                  -d test-pointlike.log; then
+              cat test-pointlike.log
+            else
+              status=$?
+              echo "Eventdisplay point-like comparison failed (exit $status)" >&2
+              test ! -f test-pointlike.log || cat test-pointlike.log
+              exit "$status"
+            fi
           else
             mv test-pointlike-CI.fits.gz ED-pointlike-CI.fits.gz
             mv test-pointlike.fits.log ED-pointlike-CI.log
@@ -103,17 +114,29 @@ jobs:
           PYTHONPATH: .
         run: |
           # full-enclosure tests
-          v2dl3-eventdisplay --full-enclosure \
+          if v2dl3-eventdisplay --full-enclosure \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --logfile test-full-enclosure.fits.log \
-                  test-full-enclosure-CI.fits.gz
+                  test-full-enclosure-CI.fits.gz; then
+            :
+          else
+            status=$?
+            echo "Eventdisplay full-enclosure conversion failed (exit $status)" >&2
+            test ! -f test-full-enclosure.fits.log || cat test-full-enclosure.fits.log
+            exit "$status"
+          fi
           if [ "$GENERATE_REFERENCE" != "true" ]; then
-            v2dl3-compareFitsFiles \
+            if v2dl3-compareFitsFiles \
                   -f ED-fullenclosure-CI.fits.gz test-full-enclosure-CI.fits.gz \
-                  -d test-full-enclosure.log
-            cat test-full-enclosure.log
-            grep -q "No differences found" test-full-enclosure.log
+                  -d test-full-enclosure.log; then
+              cat test-full-enclosure.log
+            else
+              status=$?
+              echo "Eventdisplay full-enclosure comparison failed (exit $status)" >&2
+              test ! -f test-full-enclosure.log || cat test-full-enclosure.log
+              exit "$status"
+            fi
           else
             mv test-full-enclosure-CI.fits.gz ED-fullenclosure-CI.fits.gz
             mv test-full-enclosure.fits.log ED-fullenclosure-CI.log
@@ -126,18 +149,30 @@ jobs:
           PYTHONPATH: .
         run: |
           # point-like tests (with DB)
-          v2dl3-eventdisplay \
+          if v2dl3-eventdisplay \
                -f ./64080.anasum.root \
                   ./effectiveArea.root \
                   --db_fits_file ./64080.db.fits.gz \
                   --logfile test-pointlike-db.fits.log \
-                  test-pointlike-db-CI.fits.gz
+                  test-pointlike-db-CI.fits.gz; then
+            :
+          else
+            status=$?
+            echo "Eventdisplay point-like DB conversion failed (exit $status)" >&2
+            test ! -f test-pointlike-db.fits.log || cat test-pointlike-db.fits.log
+            exit "$status"
+          fi
           if [ "$GENERATE_REFERENCE" != "true" ]; then
-            v2dl3-compareFitsFiles \
+            if v2dl3-compareFitsFiles \
                   -f ED-pointlike-db-CI.fits.gz test-pointlike-db-CI.fits.gz \
-                  -d test-pointlike-db.log
-            cat test-pointlike-db.log
-            grep -q "No differences found" test-pointlike-db.log
+                  -d test-pointlike-db.log; then
+              cat test-pointlike-db.log
+            else
+              status=$?
+              echo "Eventdisplay point-like DB comparison failed (exit $status)" >&2
+              test ! -f test-pointlike-db.log || cat test-pointlike-db.log
+              exit "$status"
+            fi
           else
             mv test-pointlike-db-CI.fits.gz ED-pointlike-db-CI.fits.gz
             mv test-pointlike-db.fits.log ED-pointlike-db-CI.log
@@ -150,18 +185,30 @@ jobs:
           PYTHONPATH: .
         run: |
           # point-like tests with event selection
-          v2dl3-eventdisplay \
+          if v2dl3-eventdisplay \
                -f ./64080.allevents.anasum.root \
                   ./effectiveArea.root \
                   --evt_filter eventfilter.yml \
                   --logfile test-pointlike-all.fits.log \
-                  test-pointlike-all-CI.fits.gz
+                  test-pointlike-all-CI.fits.gz; then
+            :
+          else
+            status=$?
+            echo "Eventdisplay selected point-like conversion failed (exit $status)" >&2
+            test ! -f test-pointlike-all.fits.log || cat test-pointlike-all.fits.log
+            exit "$status"
+          fi
           if [ "$GENERATE_REFERENCE" != "true" ]; then
-            v2dl3-compareFitsFiles \
+            if v2dl3-compareFitsFiles \
                   -f ED-pointlike-all-CI.fits.gz test-pointlike-all-CI.fits.gz \
-                  -d test-pointlike-all.log
-            cat test-pointlike-all.log
-            grep -q "No differences found" test-pointlike-all.log
+                  -d test-pointlike-all.log; then
+              cat test-pointlike-all.log
+            else
+              status=$?
+              echo "Eventdisplay selected point-like comparison failed (exit $status)" >&2
+              test ! -f test-pointlike-all.log || cat test-pointlike-all.log
+              exit "$status"
+            fi
           else
             mv test-pointlike-all-CI.fits.gz ED-pointlike-all-CI.fits.gz
             mv test-pointlike-all.fits.log ED-pointlike-all-CI.log
@@ -174,18 +221,30 @@ jobs:
           PYTHONPATH: .
         run: |
           # full-enclosure tests with event selection
-          v2dl3-eventdisplay --full-enclosure \
+          if v2dl3-eventdisplay --full-enclosure \
                -f ./64080.allevents.anasum.root \
                   ./effectiveArea.root \
                   --evt_filter eventfilter.yml \
                   --logfile test-full-enclosure-all.fits.log \
-                  test-full-enclosure-all-CI.fits.gz
+                  test-full-enclosure-all-CI.fits.gz; then
+            :
+          else
+            status=$?
+            echo "Eventdisplay selected full-enclosure conversion failed (exit $status)" >&2
+            test ! -f test-full-enclosure-all.fits.log || cat test-full-enclosure-all.fits.log
+            exit "$status"
+          fi
           if [ "$GENERATE_REFERENCE" != "true" ]; then
-            v2dl3-compareFitsFiles \
+            if v2dl3-compareFitsFiles \
                   -f ED-full-enclosure-all-CI.fits.gz test-full-enclosure-all-CI.fits.gz \
-                  -d test-full-enclosure-all.log
-            cat test-full-enclosure-all.log
-            grep -q "No differences found" test-full-enclosure-all.log
+                  -d test-full-enclosure-all.log; then
+              cat test-full-enclosure-all.log
+            else
+              status=$?
+              echo "Eventdisplay selected full-enclosure comparison failed (exit $status)" >&2
+              test ! -f test-full-enclosure-all.log || cat test-full-enclosure-all.log
+              exit "$status"
+            fi
           else
             mv test-full-enclosure-all-CI.fits.gz ED-full-enclosure-all-CI.fits.gz
             mv test-full-enclosure-all.fits.log ED-full-enclosure-all-CI.log
@@ -210,3 +269,14 @@ jobs:
           name: eventdisplay-reference-archive-python-${{ matrix.python-version }}
           path: github-CI.tar.gz
           retention-days: 1
+
+      - name: Upload Eventdisplay CI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eventdisplay-ci-diagnostics-python-${{ matrix.python-version }}
+          path: |
+            test-*.log
+            test-*.fits.gz
+          if-no-files-found: warn
+          retention-days: 7
