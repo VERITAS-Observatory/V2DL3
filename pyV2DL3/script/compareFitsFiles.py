@@ -29,7 +29,14 @@ def cli(file_pair, diff_file):
     fd = fits.FITSDiff(file1, file2, rtol=1.e-4, ignore_keywords=["CREATOR"])
     fd.report(diff_file, overwrite=True)
     if not fd.identical:
+        report = diff_file if diff_file is not None else "standard output"
+        click.echo(
+            f"FITS files differ: {file1} != {file2}. Difference report: {report}",
+            err=True,
+        )
         raise click.exceptions.Exit(1)
+
+    click.echo(f"FITS files are identical: {file1} == {file2}")
 
 
 if __name__ == "__main__":

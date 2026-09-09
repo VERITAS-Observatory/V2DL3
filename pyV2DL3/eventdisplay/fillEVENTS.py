@@ -1,7 +1,9 @@
 import logging
 
+import astropy.units as u
 import numpy as np
 import uproot
+from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
 from scipy.stats import circmean
 
@@ -41,6 +43,10 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
         evt_dict, _, _ =  \
             __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
+        pointing_ra, pointing_dec = __get_average_pointing(file, runNumber)
+        pointing_altitude, pointing_azimuth = __get_pointing_altaz(
+            pointing_ra, pointing_dec, t_avg
+        )
 
         # Header info
         evt_dict["OBS_ID"] = runNumber
@@ -52,9 +58,10 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["MJDREFI"] = int(VTS_REFERENCE_MJD)
         evt_dict["DEADC"] = 1 - runSummary["DeadTimeFracOn"][0]
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
-        evt_dict["RA_PNT"], evt_dict["DEC_PNT"] = __get_average_pointing(file, runNumber)
-        evt_dict["ALT_PNT"] = run_metadata["altitude"]
-        evt_dict["AZ_PNT"] = run_metadata["azimuth"]
+        evt_dict["RA_PNT"] = pointing_ra
+        evt_dict["DEC_PNT"] = pointing_dec
+        evt_dict["ALT_PNT"] = pointing_altitude
+        evt_dict["AZ_PNT"] = pointing_azimuth
         evt_dict["RA_OBJ"] = runSummary["TargetRAJ2000"][0]
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
@@ -232,6 +239,32 @@ def __get_average_pointing(file, runNumber):
     avDec = np.mean(np.rad2deg(pointingDataReduced["TelDecJ2000"]))
 
     return avRA, avDec
+
+
+def __get_pointing_altaz(pointing_ra, pointing_dec, obstime):
+    """Return the telescope pointing altitude and azimuth at ``obstime``.
+
+    Reconstructed event directions are affected by the event selection.  The
+    telescope pointing stored in ``pointingDataReduced`` is independent of
+    those cuts, so it is used for the zenith coordinate of the IRF query.
+    The midpoint of a run is the appropriate representative time for the
+    run-averaged pointing position.
+    """
+
+    location = EarthLocation.from_geodetic(
+        lon=VTS_REFERENCE_LON * u.deg,
+        lat=VTS_REFERENCE_LAT * u.deg,
+        height=VTS_REFERENCE_HEIGHT * u.m,
+    )
+    pointing = SkyCoord(
+        ra=pointing_ra * u.deg,
+        dec=pointing_dec * u.deg,
+        frame="fk5",
+        equinox="J2000",
+    )
+    altaz = pointing.transform_to(AltAz(obstime=obstime, location=location))
+
+    return altaz.alt.to_value(u.deg), altaz.az.to_value(u.deg)
 
 
 def __read_quality_flag_from_log(file, runNumber):

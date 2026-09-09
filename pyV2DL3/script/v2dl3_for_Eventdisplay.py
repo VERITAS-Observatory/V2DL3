@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 import click
 
@@ -38,6 +39,20 @@ def print_version(ctx, param, value):
         return
     click.echo(f'pyV2DL3 version {__version__}')
     ctx.exit()
+
+
+def _configure_logging(debug, logfile):
+    """Configure console logging and optionally duplicate it to ``logfile``."""
+
+    level = logging.DEBUG if debug else logging.INFO
+    handlers = [logging.StreamHandler(sys.stderr)]
+    if logfile is not None:
+        handlers.append(logging.FileHandler(logfile))
+    logging.basicConfig(
+        format="%(levelname)s:v2dl3: %(message)s",
+        level=level,
+        handlers=handlers,
+    )
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -150,18 +165,7 @@ def cli(
             "RegularGridInterpolator"
         )
 
-    if debug:
-        logging.basicConfig(
-            format="%(levelname)s:v2dl3: %(message)s",
-            level=logging.DEBUG,
-            filename=logfile,
-        )
-    else:
-        logging.basicConfig(
-            format="%(levelname)s:v2dl3: %(message)s",
-            level=logging.INFO,
-            filename=logfile,
-        )
+    _configure_logging(debug, logfile)
     logging.debug("logging level %s", logging.getLevelName(logging.getLogger().level))
 
     # default: point like IRFs
@@ -182,29 +186,33 @@ def cli(
     logging.info("IRF interpolator name: %s", interpolator_name)
     logging.info("Database FITS file: %s", db_fits_file)
 
-    datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
-    datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(
-        evt_filter=evt_filter,
-        db_fits_file=db_fits_file,
-        force_extrapolation=force_extrapolation,
-        fuzzy_boundary=fuzzy_boundary,
-        interpolator_name=interpolator_name,
-    )
-    hdulist = genHDUlist(
-        datasource,
-        save_multiplicity=save_multiplicity,
-        instrument_epoch=instrument_epoch,
-    )
-    if filename_to_obsid:
-        obs_id = _obs_id_from_output(output)
-        logging.info(
-            "Overwriting OBS_ID=%s with OBS_ID=%s",
-            hdulist[1].header["OBS_ID"], obs_id
+    try:
+        datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
+        datasource.set_irfs_to_store(irfs_to_store)
+        datasource.fill_data(
+            evt_filter=evt_filter,
+            db_fits_file=db_fits_file,
+            force_extrapolation=force_extrapolation,
+            fuzzy_boundary=fuzzy_boundary,
+            interpolator_name=interpolator_name,
         )
-        _set_obs_id(hdulist, obs_id)
-    hdulist.writeto(output, overwrite=True)
-    logging.info("FITS output written to %s", output)
+        hdulist = genHDUlist(
+            datasource,
+            save_multiplicity=save_multiplicity,
+            instrument_epoch=instrument_epoch,
+        )
+        if filename_to_obsid:
+            obs_id = _obs_id_from_output(output)
+            logging.info(
+                "Overwriting OBS_ID=%s with OBS_ID=%s",
+                hdulist[1].header["OBS_ID"], obs_id
+            )
+            _set_obs_id(hdulist, obs_id)
+        hdulist.writeto(output, overwrite=True)
+        logging.info("FITS output written to %s", output)
+    except Exception:
+        logging.exception("Eventdisplay conversion failed")
+        raise
 
 
 if __name__ == "__main__":
