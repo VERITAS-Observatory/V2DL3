@@ -222,6 +222,8 @@ def fill_energy_migration(
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
+        if len(axis[0]) < 2:
+            raise ValueError("PSF needs at least two energy bins between 0.1 and 100 TeV")
         _, e_low, e_high = bin_centers_to_edges(axis[0])
         _, b_low, b_high = bin_centers_to_edges(axis[1], False)
 
@@ -268,9 +270,11 @@ def fill_direction_migration(
 
         # energy axis from ~ 0.1 - 100 TeV
         energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
-        energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
+        energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100)
 
         axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        if len(axis[0]) < 2:
+            raise ValueError("PSF needs at least two energy bins between 0.1 and 100 TeV")
         _, e_low, e_high = bin_centers_to_edges(axis[0])
 
         # generate psf data from halfnorm pdf
