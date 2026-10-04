@@ -101,7 +101,10 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     evt_dict = {}
     evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
-    evt_dict["TIME"] = __get_time_vector(DL3EventTree["timeOfDay"][mask], seconds_from_reference)
+    evt_dict["TIME"] = __get_time_vector(
+        DL3EventTree["timeOfDay"][mask], seconds_from_reference,
+        event_mjd=DL3EventTree["MJD"][mask],
+    )
     evt_dict["RA"] = DL3EventTree["RA"][mask]
     evt_dict["DEC"] = DL3EventTree["DEC"][mask]
     evt_dict["ALT"] = DL3EventTree["El"][mask]
@@ -238,7 +241,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
     return gti_tstart_from_reference, gti_tstop_from_reference, ontime_s
 
 
-def __get_time_vector(time_of_day, seconds_from_reference):
+def __get_time_vector(time_of_day, seconds_from_reference, event_mjd=None):
     """
     Time vector in seconds since reference time
 
@@ -253,6 +256,10 @@ def __get_time_vector(time_of_day, seconds_from_reference):
                             array exceeds length of a day"
         )
         raise ValueError
+    if event_mjd is not None:
+        t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
+        day_offsets = (Time(event_mjd, format="mjd", scale="utc") - t_ref).sec
+        return day_offsets + time_of_day
     return seconds_from_reference + time_of_day
 
 
