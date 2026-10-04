@@ -31,54 +31,22 @@ def test_find_nearest():
 
 
 def test_find_closest_az():
-    azMins = np.array(
-        [
-            -1000.0,
-            -180.0,
-            -157.5,
-            -135.0,
-            -112.5,
-            -90.0,
-            -67.5,
-            -45.0,
-            -22.5,
-            0.0,
-            22.5,
-            45.0,
-            67.5,
-            90.0,
-            112.5,
-            135.0,
-            150.0,
-        ]
-    )
-    azMaxs = np.array(
-        [
-            -165.0,
-            -150.0,
-            -120.0,
-            -97.5,
-            -75.0,
-            -52.5,
-            -30.0,
-            -7.5,
-            15.0,
-            37.5,
-            60.0,
-            82.5,
-            105.0,
-            127.5,
-            150.0,
-            172.5,
-            1000.0,
-        ]
-    )
-    az_bin_to_store_1 = find_closest_az(146.20, azMins, azMaxs)
-    az_bin_to_store_2 = find_closest_az(-180.0, azMins, azMaxs)
-    az_bin_to_store_3 = find_closest_az(320.0, azMins, azMaxs)
-    assert az_bin_to_store_1 == 14 and az_bin_to_store_2 == 8 and az_bin_to_store_3 == 6
+    # Paired intervals in the producer's original ID order, including wrapped bins.
+    mins = np.array([135, 150, -180] + [-180 + 22.5*i for i in range(1, 14)] + [-1000])
+    maxs = np.array([-165, -150, -120] + [-120 + 22.5*i for i in range(1, 14)] + [1000])
+    for azimuth, expected in [(1, 9), (50, 11), (165, 0), (180, 1), (359, 9), (0, 9), (360, 9)]:
+        assert find_closest_az(azimuth, mins, maxs) == expected
+    centres = (mins[:-1] + (maxs[:-1] - mins[:-1]) % 360 / 2) % 360
+    for index, centre in enumerate(centres):
+        assert find_closest_az(centre, mins, maxs) == index
 
 
-if __name__ == "__main__":
-    test_find_nearest()
-    test_find_closest_az()
+def test_azimuth_mask_preserves_ids_when_rows_are_shuffled():
+    from pyV2DL3.eventdisplay.IrfExtractor import _get_az_mask
+    class Branch:
+        def __init__(self, values): self.values = np.array(values)
+        def array(self, library): return self.values
+    tree = {"az": Branch([11, 0, 11, 16]),
+            "azMin": Branch([22.5, 135, 22.5, -1000]),
+            "azMax": Branch([82.5, -165, 82.5, 1000])}
+    assert _get_az_mask(50, tree).tolist() == [True, False, True, False]

@@ -150,18 +150,8 @@ class IrfInterpolator:
             logging.debug("Interpolating coordinates: {0:.2f}".format(c))
 
         # The interpolation is slightly different for 1D or 2D IRFs.
-        if self.azimuth == 0:
-            if len(coordinate) != 4:
-                logging.error(
-                    "IRF interpolation: for azimuth 0, require 4 coordinates "
-                    "(azimuth,  pedvar, zenith, offset)"
-                )
-                raise ValueError
-        elif len(coordinate) != 3:
-            logging.error(
-                "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
-            )
-            raise ValueError
+        if len(coordinate) != 3:
+            raise ValueError("Require 3 coordinates (pedvar, zenith, offset)")
 
         if self.irf_name in self.implemented_irf_names_2d:
             return self._interpolate_2d(coordinate, self.irf_axes)
