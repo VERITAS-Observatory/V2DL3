@@ -229,8 +229,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
             BitArray, t_start_from_reference
         )
     except KeyError:
-        for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
-            logging.info("maskBits not found, Available keys: {0}".format(k))
+        logging.info("Time mask absent for run %s; using the full run interval", runNumber)
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
