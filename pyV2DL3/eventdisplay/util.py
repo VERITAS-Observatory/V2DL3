@@ -59,75 +59,31 @@ def duplicate_dimensions(data):
     return new_data
 
 
-def getGTI(BitArray, run_start_from_reference):
+def getGTI(BitArray, run_start_from_reference, nbits=None, run_duration=None):
+    """Decode little-endian ROOT TBits into paired half-open GTIs.
+
+    nbits excludes byte padding; run_duration clips a partial last second.
+    An entirely masked observation has no intervals and zero ontime.
     """
-    Decode the time masks stored as 'TBits' in anasum file and extract GTIs
-
-    Parameters
-    ----------
-    maskBits :  array of uint8 numbers, read from anasum root file
-    run_start_from_reference: Start time of the run in second
-                              from reference time
-
-    Returns
-    -------
-    gti_start_from_reference : numpy array of start time of GTIs in second
-                               from reference time
-    gti_end_from_reference: numpy array of stop time of GTIs in second from
-                            reference time
-    ontime: Total of good times
-
-    """
-
-    time_array_sec = ""
-    for i in range(BitArray.size):
-        time_array_sec = time_array_sec + np.binary_repr(BitArray[i], width=8)[::-1]
-
-    nbits = len(time_array_sec)
-    for i in range(nbits):
-        if (time_array_sec[-1] == "0"):
-            time_array_sec = time_array_sec[:-1]
-        else:
-            break
-
-    duration_s = len(time_array_sec)
-    ontime_s = time_array_sec.count("1")
-    logging.info(
-        "Duration: {0:.0f} (sec.) {1:.2f} (min)".format(duration_s, duration_s / 60.0)
-    )
-    logging.info(
-        "Ontime: {0:.0f} (sec.) {1:.2f} (min)".format(ontime_s, ontime_s / 60.0)
-    )
-
-    gti_start = []
-    gti_end = []
-
-    if time_array_sec[0] != "0":
-        gti_start.append(0)
-
-    for i in range(1, duration_s - 1):
-
-        if (time_array_sec[i] == "0") and (time_array_sec[i - 1] == "1"):
-            end = i
-            gti_end.append(end)
-
-        if (time_array_sec[i] == "0") and (time_array_sec[i + 1] == "1"):
-            start = i + 1
-            gti_start.append(start)
-
-    if (time_array_sec[-1] != 0):
-        gti_end.append(duration_s)
-
-    logging.info(
-        "GTIs start and stop in second since run start: {0} {1}".format(
-            gti_start, gti_end
-        )
-    )
-
-    gti_start_from_reference = np.array(gti_start) + run_start_from_reference
-    gti_end_from_reference = np.array(gti_end) + run_start_from_reference
-
-    return gti_start_from_reference, gti_end_from_reference, ontime_s
+    byte_array = np.asarray(BitArray)
+    if np.any((byte_array < 0) | (byte_array > 255)):
+        raise ValueError("Invalid TBits byte")
+    bits = ((byte_array.astype(np.uint8)[:, None] >> np.arange(8)) & 1).reshape(-1)
+    if nbits is not None:
+        if not 0 <= nbits <= bits.size:
+            raise ValueError("TBits length exceeds its byte array")
+        bits = bits[:int(nbits)]
+    transitions = np.diff(np.pad(bits.astype(np.int8), (1, 1)))
+    starts = np.flatnonzero(transitions == 1).astype(float)
+    stops = np.flatnonzero(transitions == -1).astype(float)
+    if run_duration is not None:
+        if not np.isfinite(run_duration) or run_duration < 0:
+            raise ValueError("Invalid run duration")
+        stops = np.minimum(stops, run_duration)
+        valid = stops > starts
+        starts, stops = starts[valid], stops[valid]
+    ontime = float(np.sum(stops - starts))
+    return starts + run_start_from_reference, stops + run_start_from_reference, ontime
 
 
 def getRunQuality(logdata, ntel=4):

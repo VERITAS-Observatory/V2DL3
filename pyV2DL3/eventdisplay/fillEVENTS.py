@@ -224,9 +224,11 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
     """
 
     try:
-        BitArray = file[f"run_{runNumber}"]["stereo"]["timeMask"]["maskBits"].member("fAllBits")
+        mask_bits = file[f"run_{runNumber}"]["stereo"]["timeMask"]["maskBits"]
         gti_tstart_from_reference, gti_tstop_from_reference, ontime_s = getGTI(
-            BitArray, t_start_from_reference
+            mask_bits.member("fAllBits"), t_start_from_reference,
+            nbits=mask_bits.member("fNbits"),
+            run_duration=t_stop_from_reference - t_start_from_reference,
         )
     except KeyError:
         for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
