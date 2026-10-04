@@ -157,6 +157,8 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
         "S20",
         ">f4",
     ]
+    for name in ("TSTART", "TSTOP"):
+        data_type[names.index(name)] = ">f8"
     if dqm_header:
         names, data_type = _add_auxiliary_headers(names, data_type)
     _table_units = {}
@@ -305,7 +307,7 @@ def _default_null_value(data_type):
 
     """
 
-    if data_type == '>f4':
+    if data_type in ('>f4', '>f8'):
         return -9999.0
     if data_type == '>i8':
         return -9999
