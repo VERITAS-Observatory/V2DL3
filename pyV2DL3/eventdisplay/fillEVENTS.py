@@ -51,8 +51,13 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["DEADC"] = 1 - runSummary["DeadTimeFracOn"][0]
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
         evt_dict["RA_PNT"], evt_dict["DEC_PNT"] = __get_average_pointing(file, runNumber)
+        pointing = file[f"run_{runNumber}/stereo/pointingDataReduced"].arrays(library="np")
         evt_dict["ALT_PNT"], evt_dict["AZ_PNT"] = __get_average_event_direction(
-            evt_dict["ALT"], evt_dict["AZ"])
+            pointing["TelElevation"], pointing["TelAzimuth"])
+        if "pedvarsOn" in runSummary:
+            mean_ped_var = float(runSummary["pedvarsOn"][0])
+        if not np.isfinite(mean_ped_var) or mean_ped_var <= 0:
+            raise ValueError("Invalid run pedestal variation for IRF selection")
         evt_dict["RA_OBJ"] = runSummary["TargetRAJ2000"][0]
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
@@ -123,7 +128,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
     return (
         evt_dict,
         np.max(DL3EventTree["ImgSel"][mask]),
-        np.mean(DL3EventTree["MeanPedvar"][mask]),
+        np.mean(DL3EventTree["MeanPedvar"]),
     )
 
 
