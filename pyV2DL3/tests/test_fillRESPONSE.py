@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 from astropy.io import fits
 
 from pyV2DL3.eventdisplay.fillRESPONSE import (
