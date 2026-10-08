@@ -155,25 +155,13 @@ def find_camera_offsets(camera_offsets):
         logger.debug(
             "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
         )
-        return [0.0, 10.0], [0.0, 10.0]
+        # One response curve covers one offset bin across the camera.
+        return [0.0], [10.0]
 
     # Note in the camera offset _low and _high may refer
     # to the simulated "points", and
     # not to actual bins.
     return camera_offsets, camera_offsets
-
-
-def duplicate_interpolating_coordinate(camera_offsets, irf_name):
-    """
-    This function duplicates the camera offsets value, when the dimension of
-    camera offset axis in the stored IRF is 1.
-    """
-
-    if len(camera_offsets) == 1:
-        logger.warning(f"Duplicating single offset axis for IRF {irf_name}")
-        camera_offsets = [camera_offsets[0], camera_offsets[0]]
-
-    return camera_offsets
 
 
 def fill_effective_area(
@@ -186,8 +174,6 @@ def fill_effective_area(
     ea_final = []
 
     # Loop over offsets and store
-    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
-
     for offset in camera_offsets:
         eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
         ea_final.append(np.array(eff_area))
@@ -216,8 +202,6 @@ def fill_energy_migration(
 
     irf_interpolator.set_irf(irf_name, **kwargs)
     ac_final = []
-
-    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
 
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
