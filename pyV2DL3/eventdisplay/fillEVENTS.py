@@ -1,7 +1,9 @@
 import logging
 
+import astropy.units as u
 import numpy as np
 import uproot
+from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
 from scipy.stats import circmean
 
@@ -31,14 +33,20 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     with uproot.open(edFileIO) as file:
         runSummary = file["total_1/stereo/tRunSummary"].arrays(library="np")
         runNumber = runSummary["runOn"][0]
-        logging.info("Run number: %d", runNumber)
+        logger.info("Run number: %d", runNumber)
 
         t_start, t_stop, t_avg = __get_start_stop_times(file)
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        evt_dict, MaxImgSel, mean_ped_var =  \
-            __fill_event_list(file, runNumber, select, seconds_from_reference)
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
+        evt_dict, _, _ =  \
+            __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
+        pointing_ra, pointing_dec = __get_average_pointing(file, runNumber)
+        pointing_altitude, pointing_azimuth = __get_pointing_altaz(
+            pointing_ra, pointing_dec, t_avg
+        )
 
         # Header info
         evt_dict["OBS_ID"] = runNumber
@@ -50,25 +58,30 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["MJDREFI"] = int(VTS_REFERENCE_MJD)
         evt_dict["DEADC"] = 1 - runSummary["DeadTimeFracOn"][0]
         evt_dict["OBJECT"] = runSummary["TargetName"][0]
-        evt_dict["RA_PNT"], evt_dict["DEC_PNT"] = __get_average_pointing(file, runNumber)
-        evt_dict["ALT_PNT"], evt_dict["AZ_PNT"] = __get_average_event_direction(
-            evt_dict["ALT"], evt_dict["AZ"])
+        evt_dict["RA_PNT"] = pointing_ra
+        evt_dict["DEC_PNT"] = pointing_dec
+        evt_dict["ALT_PNT"] = pointing_altitude
+        evt_dict["AZ_PNT"] = pointing_azimuth
         evt_dict["RA_OBJ"] = runSummary["TargetRAJ2000"][0]
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
-        evt_dict["N_TELS"] = np.binary_repr(MaxImgSel).count("1")
-        logging.info("Number of Telescopes: {}".format(evt_dict["N_TELS"]))
+        evt_dict["N_TELS"] = np.binary_repr(run_metadata["max_img_sel"]).count("1")
+        logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
         evt_dict["ALTITUDE"] = VTS_REFERENCE_HEIGHT
-        evt_dict["NSBLEVEL"] = mean_ped_var
+        evt_dict["NSBLEVEL"] = run_metadata["pedvar"]
         evt_dict["QUALITY"] = __read_quality_flag_from_log(file, runNumber)
         gti_tstart_from_reference, gti_tstop_from_reference, evt_dict["ONTIME"] = \
             __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         evt_dict["LIVETIME"] = evt_dict["ONTIME"] * evt_dict["DEADC"]
 
-    evt_dict.update(read_db_fits_file(db_fits_file))
+    evt_dict.update(
+        read_db_fits_file(
+            db_fits_file, runNumber, protected_keys=evt_dict.keys()
+        )
+    )
 
     return (
         {
@@ -86,35 +99,43 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
     )
 
 
-def __fill_event_list(file, runNumber, select, seconds_from_reference):
+def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=None):
     """
     Fill event list from DL3EventTree
 
     """
 
-    DL3EventTree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
-    if len(DL3EventTree["eventNumber"]) == 0:
-        logging.error("Empty event list")
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
+        logger.error("Empty event list")
         raise ZeroLengthEventList
 
-    mask = __get_mask(DL3EventTree, select)
+    mask = __get_mask(event_tree, select)
+    if not np.any(mask):
+        logger.error("Empty event list after selection")
+        raise ZeroLengthEventList
+
+    if np.sum(mask) == 0:
+        logger.error("Empty event list after applying selection filter")
+        raise ZeroLengthEventList
 
     evt_dict = {}
-    evt_dict["EVENT_ID"] = DL3EventTree["eventNumber"][mask]
-    evt_dict["TIME"] = __get_time_vector(DL3EventTree["timeOfDay"][mask], seconds_from_reference)
-    evt_dict["RA"] = DL3EventTree["RA"][mask]
-    evt_dict["DEC"] = DL3EventTree["DEC"][mask]
-    evt_dict["ALT"] = DL3EventTree["El"][mask]
-    evt_dict["AZ"] = DL3EventTree["Az"][mask]
-    evt_dict["ENERGY"] = DL3EventTree["Energy"][mask]
-    evt_dict["EVENT_TYPE"] = DL3EventTree["NImages"][mask]
-    evt_dict["Xoff"] = DL3EventTree["Xoff"][mask]
-    evt_dict["Yoff"] = DL3EventTree["Yoff"][mask]
+    evt_dict["EVENT_ID"] = event_tree["eventNumber"][mask]
+    evt_dict["TIME"] = __get_time_vector(event_tree["timeOfDay"][mask], seconds_from_reference)
+    evt_dict["RA"] = event_tree["RA"][mask]
+    evt_dict["DEC"] = event_tree["DEC"][mask]
+    evt_dict["ALT"] = event_tree["El"][mask]
+    evt_dict["AZ"] = event_tree["Az"][mask]
+    evt_dict["ENERGY"] = event_tree["Energy"][mask]
+    evt_dict["EVENT_TYPE"] = event_tree["NImages"][mask]
+    evt_dict["Xoff"] = event_tree["Xoff"][mask]
+    evt_dict["Yoff"] = event_tree["Yoff"][mask]
     try:
         # Test if anasum file was created using the all events option.
         # In this case write out the additional output.
-        evt_dict["GAMMANESS"] = DL3EventTree["MVA"][mask]
-        evt_dict["IS_GAMMA"] = DL3EventTree["IsGamma"][mask]
+        evt_dict["GAMMANESS"] = event_tree["MVA"][mask]
+        evt_dict["IS_GAMMA"] = event_tree["IsGamma"][mask]
     except KeyError:
         pass
 
@@ -122,9 +143,29 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference):
 
     return (
         evt_dict,
-        np.max(DL3EventTree["ImgSel"][mask]),
-        np.mean(DL3EventTree["MeanPedvar"][mask]),
+        np.max(event_tree["ImgSel"][mask]),
+        np.mean(event_tree["MeanPedvar"][mask]),
     )
+
+
+def __get_run_event_metadata(file, runNumber, event_tree=None):
+    """Return run-level event metadata without applying an event selection."""
+
+    if event_tree is None:
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+    if len(event_tree["eventNumber"]) == 0:
+        logger.error("Empty event list")
+        raise ZeroLengthEventList
+
+    altitude, azimuth = __get_average_event_direction(
+        event_tree["El"], event_tree["Az"]
+    )
+    return {
+        "altitude": altitude,
+        "azimuth": azimuth,
+        "max_img_sel": np.max(event_tree["ImgSel"]),
+        "pedvar": np.mean(event_tree["MeanPedvar"]),
+    }
 
 
 def __get_start_stop_times(file):
@@ -139,12 +180,7 @@ def __get_start_stop_times(file):
     # convert mjd to fits format
     t_start = Time(start_mjd, format="mjd", scale="utc")
     t_stop = Time(stop_mjd, format="mjd", scale="utc")
-    t_avg = (
-        Time(start_mjd, format="mjd", scale="utc")
-        + (
-            Time(stop_mjd, format="mjd", scale="utc") - Time(start_mjd, format="mjd", scale="utc")
-        ) / 2.
-    )
+    t_avg = t_start + (t_stop - t_start) / 2.0
 
     return t_start, t_stop, t_avg
 
@@ -205,6 +241,32 @@ def __get_average_pointing(file, runNumber):
     return avRA, avDec
 
 
+def __get_pointing_altaz(pointing_ra, pointing_dec, obstime):
+    """Return the telescope pointing altitude and azimuth at ``obstime``.
+
+    Reconstructed event directions are affected by the event selection.  The
+    telescope pointing stored in ``pointingDataReduced`` is independent of
+    those cuts, so it is used for the zenith coordinate of the IRF query.
+    The midpoint of a run is the appropriate representative time for the
+    run-averaged pointing position.
+    """
+
+    location = EarthLocation.from_geodetic(
+        lon=VTS_REFERENCE_LON * u.deg,
+        lat=VTS_REFERENCE_LAT * u.deg,
+        height=VTS_REFERENCE_HEIGHT * u.m,
+    )
+    pointing = SkyCoord(
+        ra=pointing_ra * u.deg,
+        dec=pointing_dec * u.deg,
+        frame="fk5",
+        equinox="J2000",
+    )
+    altaz = pointing.transform_to(AltAz(obstime=obstime, location=location))
+
+    return altaz.alt.to_value(u.deg), altaz.az.to_value(u.deg)
+
+
 def __read_quality_flag_from_log(file, runNumber):
     """
     Return quality flag read from evndispLog
@@ -213,7 +275,7 @@ def __read_quality_flag_from_log(file, runNumber):
     try:
         return getRunQuality(file["run_{}/stereo/evndispLog".format(runNumber)].member("fLines"))
     except KeyError:
-        logging.info("Eventdisplay logfile not found in anasum root file. Quality flag set to 0")
+        logger.info("Eventdisplay logfile not found in anasum root file. Quality flag set to 0")
     return 0
 
 
@@ -229,8 +291,13 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
             BitArray, t_start_from_reference
         )
     except KeyError:
-        for k in file["run_{}".format(runNumber)]["stereo"]["timeMask"].keys():
-            logging.info("maskBits not found, Available keys: {0}".format(k))
+        try:
+            time_mask = file[f"run_{runNumber}"]["stereo"]["timeMask"]
+        except KeyError:
+            logger.info("Eventdisplay time mask not found; using the full run interval")
+        else:
+            for key in time_mask.keys():
+                logger.info("maskBits not found, available key: %s", key)
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
@@ -248,10 +315,7 @@ def __get_time_vector(time_of_day, seconds_from_reference):
     """
 
     if time_of_day.max() > 24 * 60 * 60:
-        logging.error(
-            "Max value in time_of_day  \
-                            array exceeds length of a day"
-        )
+        logger.error("Max value in time_of_day array exceeds length of a day")
         raise ValueError
     return seconds_from_reference + time_of_day
 
@@ -264,7 +328,7 @@ def __get_mask(DL3EventTree, select):
 
     mask = np.ones(len(DL3EventTree["RA"]), bool)
     if select is not None and len(select) > 0:
-        logging.info(select)
+        logger.info("Applying event selection filter: %s", select)
         for key, value in select.items():
             if isinstance(value, (list, tuple)):
                 mask = (
@@ -275,10 +339,8 @@ def __get_mask(DL3EventTree, select):
             elif isinstance(value, (int, float)):
                 mask = mask & (DL3EventTree[key] == value)
             else:
-                logging.error(
-                    "select condition required a list or tuple of ranges"
-                )
+                logger.error("select condition required a list or tuple of ranges")
                 raise TypeError
-        logging.info("%d of %d events after selection.", np.sum(mask), len(mask))
+        logger.info("%d of %d events after selection.", np.sum(mask), len(mask))
 
     return mask
