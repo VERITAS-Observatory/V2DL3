@@ -40,7 +40,20 @@ def test_find_closest_az():
         [-165, -150, -120] + [-120 + 22.5 * i for i in range(1, 14)] + [1000]
     )
 
-    expected_bins = [(1, 9), (50, 11), (165, 0), (180, 1), (359, 9), (0, 9), (360, 9)]
+    expected_bins = [
+        (1, 9),
+        (50, 11),
+        (165, 0),
+        (180, 1),
+        (359, 9),
+        (0, 9),
+        (360, 9),
+        # Pointing azimuths from DL3 observations generated with these IRFs.
+        (124.256, 14),  # OBS_ID 111395: formerly selected bin 13.
+        (167.73, 0),  # OBS_ID 115465: formerly selected bin 15.
+        (180.74, 1),  # OBS_ID 113442: formerly selected bin 0.
+        (273.44, 5),  # OBS_ID 114290: formerly selected bin 4.
+    ]
     for azimuth, expected in expected_bins:
         assert find_closest_az(azimuth, az_mins, az_maxs) == expected
 
@@ -84,3 +97,22 @@ def test_azimuth_mask_preserves_ids_when_rows_are_shuffled():
         "azMax": Branch([82.5, -165, 82.5, 1000]),
     }
     assert _get_az_mask(50, tree).tolist() == [True, False, True, False]
+    assert _get_az_mask(167.73, tree).tolist() == [False, True, False, False]
+
+
+def test_azimuth_mask_uses_full_azimuth_irf_when_it_is_the_only_option():
+    from pyV2DL3.eventdisplay.IrfExtractor import _get_az_mask
+
+    class Branch:
+        def __init__(self, values):
+            self.values = np.array(values)
+
+        def array(self, library):
+            return self.values
+
+    tree = {
+        "az": Branch([16, 16]),
+        "azMin": Branch([-1000, -1000]),
+        "azMax": Branch([1000, 1000]),
+    }
+    assert _get_az_mask(124.256, tree).tolist() == [True, True]
