@@ -64,7 +64,7 @@ class IrfInterpolator:
 
         logging.info(
             f"Extracting IRFs of type: {self.irf_name}"
-            f" for azimuth {np.array2string(self.azimuth, precision=2)} deg"
+            f" for azimuth {np.array2string(np.asarray(self.azimuth), precision=2)} deg"
         )
 
         if self.interpolator_name == "KNeighborsRegressor":
@@ -132,7 +132,7 @@ class IrfInterpolator:
         self.irf_axes = list(irf_axes.values())
         logging.debug(f"IRF axes: {irf_axes}")
 
-        if kwargs.get("use_click", True):
+        if kwargs.get("use_click", False):
             clk = click.get_current_context()
             extrapolation = clk.params["force_extrapolation"]
         else:
@@ -150,14 +150,7 @@ class IrfInterpolator:
             logging.debug("Interpolating coordinates: {0:.2f}".format(c))
 
         # The interpolation is slightly different for 1D or 2D IRFs.
-        if self.azimuth == 0:
-            if len(coordinate) != 4:
-                logging.error(
-                    "IRF interpolation: for azimuth 0, require 4 coordinates "
-                    "(azimuth,  pedvar, zenith, offset)"
-                )
-                raise ValueError
-        elif len(coordinate) != 3:
+        if len(coordinate) != 3:
             logging.error(
                 "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
             )
