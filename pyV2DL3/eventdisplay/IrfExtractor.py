@@ -50,6 +50,10 @@ def load_parameter(parameter_name, fast_eff_area, az_mask=None):
 def find_closest_az(azimuth, azMins, azMaxs):
     """Return the closest paired azimuth interval using circular distance.
 
+    Note the different conventions for azimuth:
+    - anasum file (0..360)
+    - EA (-180..180)
+
     Array positions remain associated with their original bin IDs. The
     all-azimuth sentinel is only used if there are no directional bins.
     """
@@ -195,8 +199,7 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf
         except Exception:
-            logging.error("Unexpected error:", sys.exc_info()[0])
-            logging.error("Entry number ", i)
+            logging.error("At entry number %d unexpected error: %s", i, sys.exc_info()[0])
             raise
 
     axes = {

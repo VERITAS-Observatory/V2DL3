@@ -109,12 +109,14 @@ def cli(
     logging.info("Generating HUD and OBS index files")
 
     if not recreate:
-        if os.path.exists(f"{index_file_dir}/obs-index.fits.gz"):
-            logging.info("Existing %s/obs-index.fits.gz", index_file_dir)
+        obs_index_path = os.path.join(index_file_dir, obs_index_file)
+        hdu_index_path = os.path.join(index_file_dir, hdu_index_file)
+        if os.path.exists(obs_index_path):
+            logging.info("Existing %s", obs_index_path)
             logging.info("Remove before continuing or use recreate option -r")
             return
-        if os.path.exists(f"{index_file_dir}/hdu-index.fits.gz"):
-            logging.info("Existing %s/hdu-index.fits.gz", index_file_dir)
+        if os.path.exists(hdu_index_path):
+            logging.info("Existing %s", hdu_index_path)
             logging.info("Remove before continuing or use recreate option -r")
             return
 
