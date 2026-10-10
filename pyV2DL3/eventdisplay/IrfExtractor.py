@@ -48,22 +48,29 @@ def load_parameter(parameter_name, fast_eff_area, az_mask=None):
 
 
 def find_closest_az(azimuth, azMins, azMaxs):
-    """Find the closest azimuth bin using circular angular distance.
+    """Return the closest paired azimuth interval using circular distance.
 
     Note the different conventions for azimuth:
     - anasum file (0..360)
     - EA (-180..180)
 
+    Array positions remain associated with their original azimuth-bin IDs.
+    A full-azimuth bin is used only when no directional bins are present.
     """
-    az_centers = np.array((azMaxs[:-1] + azMins[1:]) / 2.0)
-    az_centers[az_centers < 0] += 360
-    if np.any(az_centers < 0) or np.any(az_centers > 360):
-        logging.error("IRF azimuth bins not in the range 0-360")
-        raise ValueError
-
-    azimuth = np.mod(azimuth, 360.0)
-    angular_distance = np.abs((az_centers - azimuth + 180.0) % 360.0 - 180.0)
-    return angular_distance.argmin()
+    if azimuth is None or not np.isfinite(azimuth):
+        raise ValueError("A finite azimuth is required")
+    azMins, azMaxs = np.asarray(azMins), np.asarray(azMaxs)
+    if azMins.shape != azMaxs.shape or azMins.size == 0:
+        raise ValueError("Azimuth bounds must be paired and nonempty")
+    valid = (np.abs(azMins) <= 180) & (np.abs(azMaxs) <= 180)
+    indices = np.flatnonzero(valid)
+    if not len(indices):
+        if len(azMins) == 1 and azMins[0] <= -1000 and azMaxs[0] >= 1000:
+            return 0
+        raise ValueError("No directional azimuth bins found")
+    centres = (azMins[valid] + (azMaxs[valid] - azMins[valid]) % 360 / 2) % 360
+    distance = np.abs((centres - azimuth + 180) % 360 - 180)
+    return indices[np.argmin(distance)]
 
 
 def get_empty_ndarray(data_dimension):
@@ -72,11 +79,17 @@ def get_empty_ndarray(data_dimension):
 
 
 def _get_az_mask(azimuth, fast_eff_area):
-    """Return azimuth mask for given azimuth angle"""
-    _, azMaxs = load_parameter("azMax", fast_eff_area)
-    _, azMins = load_parameter("azMin", fast_eff_area)
-    az_bin_to_store = find_closest_az(azimuth, azMins, azMaxs)
-    return fast_eff_area["az"].array(library="np") == az_bin_to_store
+    """Select the IRF records for the nearest azimuth bin."""
+    ids = fast_eff_area["az"].array(library="np")
+    records = np.unique(np.column_stack((
+        ids,
+        fast_eff_area["azMin"].array(library="np"),
+        fast_eff_area["azMax"].array(library="np"),
+    )), axis=0)
+    if len(np.unique(records[:, 0])) != len(records):
+        raise ValueError("Inconsistent bounds for an IRF azimuth ID")
+    index = find_closest_az(azimuth, records[:, 1], records[:, 2])
+    return ids == records[index, 0]
 
 
 def extract_irf_1d(filename, irf_name, azimuth=None):

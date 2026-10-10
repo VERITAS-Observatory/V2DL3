@@ -32,58 +32,36 @@ def test_find_nearest():
 
 
 def test_find_closest_az():
-    azMins = np.array(
-        [
-            -1000.0,
-            -180.0,
-            -157.5,
-            -135.0,
-            -112.5,
-            -90.0,
-            -67.5,
-            -45.0,
-            -22.5,
-            0.0,
-            22.5,
-            45.0,
-            67.5,
-            90.0,
-            112.5,
-            135.0,
-            150.0,
-        ]
+    # Azimuth-bin limits are paired by bin ID and need not be in azimuth order.
+    az_mins = np.array(
+        [135, 150, -180] + [-180 + 22.5 * i for i in range(1, 14)] + [-1000]
     )
-    azMaxs = np.array(
-        [
-            -165.0,
-            -150.0,
-            -120.0,
-            -97.5,
-            -75.0,
-            -52.5,
-            -30.0,
-            -7.5,
-            15.0,
-            37.5,
-            60.0,
-            82.5,
-            105.0,
-            127.5,
-            150.0,
-            172.5,
-            1000.0,
-        ]
+    az_maxs = np.array(
+        [-165, -150, -120] + [-120 + 22.5 * i for i in range(1, 14)] + [1000]
     )
-    az_bin_to_store_1 = find_closest_az(146.20, azMins, azMaxs)
-    az_bin_to_store_2 = find_closest_az(320.0, azMins, azMaxs)
 
-    assert az_bin_to_store_1 == 14
-    assert az_bin_to_store_2 == 6
-    assert find_closest_az(359.0, azMins, azMaxs) == 8
-    assert find_closest_az(0.0, azMins, azMaxs) == 8
-    assert find_closest_az(360.0, azMins, azMaxs) == 8
-    assert find_closest_az(-1.0, azMins, azMaxs) == 8
-    assert find_closest_az(-180.0, azMins, azMaxs) == find_closest_az(180.0, azMins, azMaxs)
+    expected_bins = [
+        (1, 9),
+        (50, 11),
+        (165, 0),
+        (180, 1),
+        (359, 9),
+        (0, 9),
+        (360, 9),
+        # Pointing azimuths from DL3 observations generated with these IRFs.
+        (124.256, 14),  # OBS_ID 111395: formerly selected bin 13.
+        (167.73, 0),  # OBS_ID 115465: formerly selected bin 15.
+        (180.74, 1),  # OBS_ID 113442: formerly selected bin 0.
+        (273.44, 5),  # OBS_ID 114290: formerly selected bin 4.
+    ]
+    for azimuth, expected in expected_bins:
+        assert find_closest_az(azimuth, az_mins, az_maxs) == expected
+
+    centres = (
+        az_mins[:-1] + (az_maxs[:-1] - az_mins[:-1]) % 360 / 2
+    ) % 360
+    for index, centre in enumerate(centres):
+        assert find_closest_az(centre, az_mins, az_maxs) == index
 
 
 def test_extract_irf_accepts_zero_azimuth(monkeypatch):
@@ -103,6 +81,38 @@ def test_extract_irf_accepts_zero_azimuth(monkeypatch):
     }
 
 
-if __name__ == "__main__":
-    test_find_nearest()
-    test_find_closest_az()
+def test_azimuth_mask_preserves_ids_when_rows_are_shuffled():
+    from pyV2DL3.eventdisplay.IrfExtractor import _get_az_mask
+
+    class Branch:
+        def __init__(self, values):
+            self.values = np.array(values)
+
+        def array(self, library):
+            return self.values
+
+    tree = {
+        "az": Branch([11, 0, 11, 16]),
+        "azMin": Branch([22.5, 135, 22.5, -1000]),
+        "azMax": Branch([82.5, -165, 82.5, 1000]),
+    }
+    assert _get_az_mask(50, tree).tolist() == [True, False, True, False]
+    assert _get_az_mask(167.73, tree).tolist() == [False, True, False, False]
+
+
+def test_azimuth_mask_uses_full_azimuth_irf_when_it_is_the_only_option():
+    from pyV2DL3.eventdisplay.IrfExtractor import _get_az_mask
+
+    class Branch:
+        def __init__(self, values):
+            self.values = np.array(values)
+
+        def array(self, library):
+            return self.values
+
+    tree = {
+        "az": Branch([16, 16]),
+        "azMin": Branch([-1000, -1000]),
+        "azMax": Branch([1000, 1000]),
+    }
+    assert _get_az_mask(124.256, tree).tolist() == [True, True]
