@@ -154,7 +154,7 @@ class IrfInterpolator:
             logging.error(
                 "IRF Interpolation: Require 3 coordinates (pedvar, zenith, offset)"
             )
-            raise ValueError("Require 3 coordinates (pedvar, zenith, offset)")
+            raise ValueError
 
         if self.irf_name in self.implemented_irf_names_2d:
             return self._interpolate_2d(coordinate, self.irf_axes)

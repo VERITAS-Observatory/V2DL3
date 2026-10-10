@@ -54,8 +54,8 @@ def find_closest_az(azimuth, azMins, azMaxs):
     - anasum file (0..360)
     - EA (-180..180)
 
-    Array positions remain associated with their original bin IDs. The
-    all-azimuth sentinel is only used if there are no directional bins.
+    Array positions remain associated with their original azimuth-bin IDs.
+    A full-azimuth bin is used only when no directional bins are present.
     """
     if azimuth is None or not np.isfinite(azimuth):
         raise ValueError("A finite azimuth is required")
@@ -79,7 +79,7 @@ def get_empty_ndarray(data_dimension):
 
 
 def _get_az_mask(azimuth, fast_eff_area):
-    """Select an azimuth ID while preserving its paired bounds."""
+    """Select the IRF records for the nearest azimuth bin."""
     ids = fast_eff_area["az"].array(library="np")
     records = np.unique(np.column_stack((
         ids,
