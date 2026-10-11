@@ -244,7 +244,7 @@ def fill_energy_migration(
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
         if len(axis[0]) < 2:
-            raise ValueError("PSF needs at least two energy bins between 0.1 and 100 TeV")
+            raise ValueError("Energy migration needs at least two energy bins")
         _, e_low, e_high = bin_centers_to_edges(axis[0])
         _, b_low, b_high = bin_centers_to_edges(axis[1], False)
 
