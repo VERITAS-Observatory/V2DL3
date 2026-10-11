@@ -83,11 +83,11 @@ def gen_hdu_index(filelist, index_file_dir="./"):
                     ),
                     dtype=(
                         ">i8",
-                        "S6",
-                        "S10",
+                        f"S{_string_width(hdu_type_name)}",
+                        f"S{_string_width(hdu_type)}",
                         f"S{_string_width(file_dir)}",
                         f"S{_string_width(file_name)}",
-                        "S20",
+                        f"S{_string_width(hdu_name)}",
                     ),
                 )
 
