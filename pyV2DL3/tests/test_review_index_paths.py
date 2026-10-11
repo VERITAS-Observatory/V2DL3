@@ -1,5 +1,7 @@
 from astropy.io import fits
+
 from pyV2DL3.generateObsHduIndex import gen_hdu_index
+
 
 def test_long_relative_filename_and_directory_round_trip(tmp_path):
     folder = tmp_path / ("archive_" * 8)
