@@ -1,7 +1,9 @@
 import numpy as np
 from astropy.time import Time
+
 from pyV2DL3.constant import VTS_REFERENCE_MJD
 from pyV2DL3.eventdisplay.fillEVENTS import __get_time_vector
+
 
 def test_events_use_their_own_utc_date():
     days = np.array([60000, 60001, 60000])
