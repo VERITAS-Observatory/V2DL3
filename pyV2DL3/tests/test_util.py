@@ -140,6 +140,14 @@ def test_getGTI():
     )
 
 
+def test_getGTI_all_zero_mask():
+    start, stop, ontime = getGTI(np.array([0, 0]), run_start_from_reference=123)
+
+    assert start.size == 0
+    assert stop.size == 0
+    assert ontime == 0
+
+
 if __name__ == "__main__":
     test_getRunQuality()
     test_getGTI()

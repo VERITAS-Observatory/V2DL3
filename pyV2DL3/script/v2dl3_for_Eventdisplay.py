@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 import click
 
@@ -10,11 +11,48 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 IRF_AXIS = ["zenith", "pedvar"]
 
 
+def _obs_id_from_output(output):
+    """Return the integer observation ID encoded by an output filename."""
+
+    filename = os.path.basename(output)
+    for suffix in (".gz", ".fits", ".fit"):
+        if filename.lower().endswith(suffix):
+            filename = filename[: -len(suffix)]
+    try:
+        return int(filename)
+    except ValueError as error:
+        raise click.BadParameter(
+            "--filename_to_obsid requires an integer output filename stem"
+        ) from error
+
+
+def _set_obs_id(hdulist, obs_id):
+    """Set one observation ID on every HDU that carries the keyword."""
+
+    for hdu in hdulist[1:]:
+        if "OBS_ID" in hdu.header:
+            hdu.header["OBS_ID"] = obs_id
+
+
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     click.echo(f'pyV2DL3 version {__version__}')
     ctx.exit()
+
+
+def _configure_logging(debug, logfile):
+    """Configure console logging and optionally duplicate it to ``logfile``."""
+
+    level = logging.DEBUG if debug else logging.INFO
+    handlers = [logging.StreamHandler(sys.stderr)]
+    if logfile is not None:
+        handlers.append(logging.FileHandler(logfile))
+    logging.basicConfig(
+        format="%(levelname)s:v2dl3: %(message)s",
+        level=level,
+        handlers=handlers,
+    )
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -58,17 +96,20 @@ def print_version(ctx, param, value):
     "--filename_to_obsid",
     "-I",
     is_flag=True,
-    help="Override OBS_ID with output filename",
+    help="Override OBS_ID with the integer output filename stem.",
 )
 @click.option(
     "--evt_filter",
     type=click.Path(exists=True),
-    help="Load condition to filter events form json or yaml file.",
+    help="Load conditions to filter events from a JSON or YAML file.",
 )
 @click.option(
     "--force_extrapolation",
     is_flag=True,
-    help="IRF is extrapolated when parameter is found to be outside IRF range",
+    help=(
+        "Linearly extrapolate out-of-range IRF coordinates; requires "
+        "--interpolator_name RegularGridInterpolator."
+    ),
 )
 @click.option(
     "--fuzzy_boundary",
@@ -76,9 +117,12 @@ def print_version(ctx, param, value):
     nargs=2,
     type=(click.Choice(IRF_AXIS), click.FLOAT),
     default=None,
-    help="Parameter outside IRF range but within a given tolerance is interpolated\
-at boundary value. tolerance = ratio of absolute difference between boundary and parameter\
-value to boundary. Given for each IRF axes (zenith, pedvar) as key, value pair.",
+    help=(
+        "A parameter outside the IRF range but within the given tolerance is "
+        "interpolated at the boundary. The tolerance is the ratio of the "
+        "absolute difference between the boundary and parameter value to the "
+        "boundary. Repeat for each IRF axis (zenith, pedvar) as an axis/value pair."
+    ),
 )
 @click.option(
     "--db_fits_file",
@@ -113,19 +157,15 @@ def cli(
     if len(file_pair) == 0:
         click.echo(cli.get_help(click.Context(cli)))
         raise click.Abort()
+    if full_enclosure and point_like:
+        raise click.UsageError("--point-like and --full-enclosure are mutually exclusive")
+    if force_extrapolation and interpolator_name == "KNeighborsRegressor":
+        raise click.UsageError(
+            "--force_extrapolation requires --interpolator_name "
+            "RegularGridInterpolator"
+        )
 
-    if debug:
-        logging.basicConfig(
-            format="%(levelname)s:v2dl3: %(message)s",
-            level=logging.DEBUG,
-            filename=logfile,
-        )
-    else:
-        logging.basicConfig(
-            format="%(levelname)s:v2dl3: %(message)s",
-            level=logging.INFO,
-            filename=logfile,
-        )
+    _configure_logging(debug, logfile)
     logging.debug("logging level %s", logging.getLevelName(logging.getLogger().level))
 
     # default: point like IRFs
@@ -146,26 +186,33 @@ def cli(
     logging.info("IRF interpolator name: %s", interpolator_name)
     logging.info("Database FITS file: %s", db_fits_file)
 
-    datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
-    datasource.set_irfs_to_store(irfs_to_store)
-    datasource.fill_data(
-        evt_filter=evt_filter,
-        db_fits_file=db_fits_file,
-    )
-    hdulist = genHDUlist(
-        datasource,
-        save_multiplicity=save_multiplicity,
-        instrument_epoch=instrument_epoch,
-    )
-    fname_base = os.path.splitext(os.path.basename(output))[0]
-    if filename_to_obsid:
-        logging.info(
-            "Overwriting OBS_ID=%d with OBS_ID=%d",
-            hdulist[1].header['OBS_ID'], fname_base
+    try:
+        datasource = loadROOTFiles(anasum_str, ea_str, "Eventdisplay")
+        datasource.set_irfs_to_store(irfs_to_store)
+        datasource.fill_data(
+            evt_filter=evt_filter,
+            db_fits_file=db_fits_file,
+            force_extrapolation=force_extrapolation,
+            fuzzy_boundary=fuzzy_boundary,
+            interpolator_name=interpolator_name,
         )
-        hdulist[1].header["OBS_ID"] = fname_base
-    hdulist.writeto(output, overwrite=True)
-    logging.info("FITS output written to %s", output)
+        hdulist = genHDUlist(
+            datasource,
+            save_multiplicity=save_multiplicity,
+            instrument_epoch=instrument_epoch,
+        )
+        if filename_to_obsid:
+            obs_id = _obs_id_from_output(output)
+            logging.info(
+                "Overwriting OBS_ID=%s with OBS_ID=%s",
+                hdulist[1].header["OBS_ID"], obs_id
+            )
+            _set_obs_id(hdulist, obs_id)
+        hdulist.writeto(output, overwrite=True)
+        logging.info("FITS output written to %s", output)
+    except Exception:
+        logging.exception("Eventdisplay conversion failed")
+        raise
 
 
 if __name__ == "__main__":
