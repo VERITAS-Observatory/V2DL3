@@ -24,4 +24,4 @@ def test_pedvar_independent_of_output_filter():
 def test_pointing_mean_wraps_at_north():
     altitude, azimuth = __get_average_event_direction(np.array([60., 60.]), np.array([359., 1.]))
     assert altitude == 60.
-    assert min(abs(azimuth), abs(azimuth-360)) < 1e-10
+    assert min(abs(azimuth), abs(azimuth - 360)) < 1e-10
