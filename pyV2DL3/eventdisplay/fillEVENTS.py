@@ -299,8 +299,13 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
                 runNumber,
             )
         else:
-            for key in time_mask.keys():
-                logger.info("maskBits not found, available key: %s", key)
+            available_keys = list(time_mask.keys())
+            logger.info(
+                "Eventdisplay time mask has no maskBits for run %s "
+                "(available keys: %s); using the full run interval",
+                runNumber,
+                available_keys,
+            )
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
