@@ -4,7 +4,8 @@ from pyV2DL3.eventdisplay.fillRESPONSE import fill_direction_migration
 
 
 class Interpolator:
-    def set_irf(self, *args, **kwargs): pass
+    def set_irf(self, *args, **kwargs):
+        pass
 
     def interpolate(self, coords):
         return np.ones((3, 3)), [np.array([-1., 0., 1.]), np.array([-2., -1., 0.])]
