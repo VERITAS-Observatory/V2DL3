@@ -124,11 +124,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
 
     evt_dict = {}
     evt_dict["EVENT_ID"] = event_tree["eventNumber"][mask]
-    event_mjd = event_tree["MJD"][mask] if "MJD" in event_tree else None
-    evt_dict["TIME"] = __get_time_vector(
-        event_tree["timeOfDay"][mask], seconds_from_reference,
-        event_mjd=event_mjd,
-    )
+    evt_dict["TIME"] = __get_time_vector(event_tree["timeOfDay"][mask], seconds_from_reference)
     evt_dict["RA"] = event_tree["RA"][mask]
     evt_dict["DEC"] = event_tree["DEC"][mask]
     evt_dict["ALT"] = event_tree["El"][mask]
@@ -311,7 +307,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
     return gti_tstart_from_reference, gti_tstop_from_reference, ontime_s
 
 
-def __get_time_vector(time_of_day, seconds_from_reference, event_mjd=None):
+def __get_time_vector(time_of_day, seconds_from_reference):
     """
     Time vector in seconds since reference time
 
@@ -323,10 +319,6 @@ def __get_time_vector(time_of_day, seconds_from_reference, event_mjd=None):
     if time_of_day.max() > 24 * 60 * 60:
         logger.error("Max value in time_of_day array exceeds length of a day")
         raise ValueError
-    if event_mjd is not None:
-        t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
-        day_offsets = (Time(event_mjd, format="mjd", scale="utc") - t_ref).sec
-        return day_offsets + time_of_day
     return seconds_from_reference + time_of_day
 
 
