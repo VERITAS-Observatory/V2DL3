@@ -48,7 +48,7 @@ def load_parameter(parameter_name, fast_eff_area, az_mask=None):
 
 
 def find_closest_az(azimuth, azMins, azMaxs):
-    """find closest azimuth bin
+    """Find the closest azimuth bin using circular angular distance.
 
     Note the different conventions for azimuth:
     - anasum file (0..360)
@@ -60,7 +60,10 @@ def find_closest_az(azimuth, azMins, azMaxs):
     if np.any(az_centers < 0) or np.any(az_centers > 360):
         logging.error("IRF azimuth bins not in the range 0-360")
         raise ValueError
-    return find_nearest(az_centers, azimuth)
+
+    azimuth = np.mod(azimuth, 360.0)
+    angular_distance = np.abs((az_centers - azimuth + 180.0) % 360.0 - 180.0)
+    return angular_distance.argmin()
 
 
 def get_empty_ndarray(data_dimension):
@@ -183,8 +186,7 @@ def extract_irf_2d(filename, irf_name, azimuth=None):
                 find_nearest(woffs, all_Woffs[i]),
             ] = irf
         except Exception:
-            logging.error("Unexpected error:", sys.exc_info()[0])
-            logging.error("Entry number ", i)
+            logging.error("At entry number %d unexpected error: %s", i, sys.exc_info()[0])
             raise
 
     axes = {
@@ -204,7 +206,7 @@ def extract_irf(filename, irf_name, azimuth=None, irf1d=False):
     return a multidimensional array
     """
 
-    if not azimuth:
+    if azimuth is None:
         logging.error("Azimuth for IRF extraction not given")
         raise ValueError
 

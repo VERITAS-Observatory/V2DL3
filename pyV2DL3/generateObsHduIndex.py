@@ -25,6 +25,12 @@ class NoFitsFileError(Exception):
     pass
 
 
+def _string_width(values):
+    """Return a FITS byte width large enough for all string values."""
+
+    return max(1, *(len(str(value).encode("utf-8")) for value in values))
+
+
 def get_hdu_type_and_class(header: fits.header):
     hdu_key = tuple([header.get("HDUCLAS1", None), header.get("HDUCLAS2", None)])
     hdu_type, hdu_class = hdu_class_type[hdu_key]
@@ -75,7 +81,14 @@ def gen_hdu_index(filelist, index_file_dir="./"):
                         "FILE_NAME",
                         "HDU_NAME",
                     ),
-                    dtype=(">i8", "S6", "S10", "S40", "S54", "S20"),
+                    dtype=(
+                        ">i8",
+                        "S6",
+                        "S10",
+                        f"S{_string_width(file_dir)}",
+                        f"S{_string_width(file_name)}",
+                        "S20",
+                    ),
                 )
 
                 hdu_tables.append(t)

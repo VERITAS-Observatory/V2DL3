@@ -9,6 +9,12 @@ from pyV2DL3.eventdisplay.util import bin_centers_to_edges
 
 logger = logging.getLogger(__name__)
 
+# At low zenith angles the IRF dependence is sufficiently weak that the
+# lowest available zenith IRF can be used as a boundary value.  The fuzzy
+# boundary check remains strict for larger zenith angles, where extrapolation
+# has a larger impact on the IRFs.
+LOW_ZENITH_BOUNDARY = 30.0
+
 
 class FullEnclosureOffsetAxisError(Exception):
     pass
@@ -40,6 +46,11 @@ def print_logging_info(irf_to_store, camera_offsets, pedvar, zenith):
 def get_fuzzy_boundary(par_name, tolerance_tuble):
     """Return fuzzy boundary value for a given IRF axis (par_name)"""
 
+    if tolerance_tuble is None:
+        return 0.0
+    if np.isscalar(tolerance_tuble):
+        return tolerance_tuble
+
     try:
         for key, value in tolerance_tuble:
             if key == par_name:
@@ -51,11 +62,12 @@ def get_fuzzy_boundary(par_name, tolerance_tuble):
 
 
 def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
-    """Check that coordinates are in range of provided IRF and whether extrapolation is to be done
-    0. checks if command line parameter force_extrapolation is given. If given,
+    """Check that coordinates are in range of provided IRF and whether extrapolation is to be done.
+
+    1. checks if command line parameter force_extrapolation is given. If given,
        the extrapolation will happen when parameter is outside IRF range. If parameter is
        within IRF range, it works as normal. Default is False.
-    1. Further checks for fuzzy boundary (parameter close to boundary value).
+    2. Further checks for fuzzy boundary (parameter close to boundary value).
        If fuzzy boundary is within a given tolerance then IRF is interpolated for
        at boundary value. Default is 0.0 tolerance.
     """
@@ -66,12 +78,12 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
         )
     )
 
-    if kwargs.get("use_click", True):
+    if kwargs.get("use_click", False):
         clk = click.get_current_context()
         tolerance = get_fuzzy_boundary(par_name, clk.params["fuzzy_boundary"])
         extrapolation = clk.params["force_extrapolation"]
     else:
-        tolerance = kwargs.get("fuzzy_boundary", 0.0)
+        tolerance = get_fuzzy_boundary(par_name, kwargs.get("fuzzy_boundary", 0.0))
         extrapolation = kwargs.get("force_extrapolation", False)
 
     if np.all(irf_stored_par < par) or np.all(irf_stored_par > par):
@@ -79,6 +91,18 @@ def check_parameter_range(par, irf_stored_par, par_name, **kwargs):
             logging.warning(
                 "IRF extrapolation allowed for coordinate not inside IRF {0} range".format(par_name)
             )
+        elif (
+            par_name == "zenith"
+            and np.all(irf_stored_par > par)
+            and par < LOW_ZENITH_BOUNDARY
+        ):
+            logging.warning(
+                "Coordinate zenith ({0:.1f} deg) is below the IRF range; "
+                "using the lower boundary ({1:.1f} deg)".format(
+                    par, np.min(irf_stored_par)
+                )
+            )
+            par = np.min(irf_stored_par)
         elif tolerance > 0.0:
             if np.all(irf_stored_par < par) and check_fuzzy_boundary(
                 par, np.max(irf_stored_par), tolerance, par_name
@@ -141,26 +165,23 @@ def check_fuzzy_boundary(par, boundary, tolerance, par_name):
 
 
 def find_camera_offsets(camera_offsets):
-    """Find camera offsets, depending on  availability in the effective area file."""
+    """Convert simulated camera-offset centers into non-zero bin edges."""
 
-    if len(camera_offsets) == 1:
-        # Many times, just IRFs for 0.5 deg are available.
-        # Assume that offset for the whole camera.
-        logger.debug(
-            "IMPORTANT: Only one camera offset bin "
-            + "({} deg) simulated within the effective area file selected.".format(
-                camera_offsets[0]
-            )
-        )
-        logger.debug(
-            "IMPORTANT: Setting the IRFs of that given camera offset value to the whole camera"
-        )
-        return [0.0, 10.0], [0.0, 10.0]
+    centers = np.asarray(camera_offsets, dtype=float)
+    if centers.size == 0:
+        raise ValueError("At least one camera offset is required")
+    if centers.size == 1:
+        # Treat a lone positive center as the center of a bin starting at zero.
+        # Use a finite default width when the simulated center is itself zero.
+        width = centers[0] if centers[0] > 0.0 else 0.5
+        edges = np.array([max(0.0, centers[0] - width), centers[0] + width])
+    else:
+        boundaries = (centers[:-1] + centers[1:]) / 2.0
+        first = centers[0] - (boundaries[0] - centers[0])
+        last = centers[-1] + (centers[-1] - boundaries[-1])
+        edges = np.concatenate(([max(0.0, first)], boundaries, [last]))
 
-    # Note in the camera offset _low and _high may refer
-    # to the simulated "points", and
-    # not to actual bins.
-    return camera_offsets, camera_offsets
+    return edges[:-1], edges[1:]
 
 
 def duplicate_interpolating_coordinate(camera_offsets, irf_name):
@@ -259,8 +280,6 @@ def fill_direction_migration(
     irf_interpolator.set_irf("hAngularLogDiffEmc_2D", **kwargs)
 
     rpsf_final = []
-    rpsf_test = []
-    test_psf = False  # use PSF distribution from IRFs by default
 
     for offset in camera_offsets:
         # direction diff (rad, energy),
@@ -270,65 +289,34 @@ def fill_direction_migration(
         energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
         energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
 
-        axis[0] = axis[0][energy_axis_index_lb:energy_axis_index_ub]
-        _, e_low, e_high = bin_centers_to_edges(axis[0])
+        energy_axis = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        _, e_low, e_high = bin_centers_to_edges(energy_axis)
 
-        # generate psf data from halfnorm pdf
-        if test_psf:
-            from scipy.stats import halfnorm
+        direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
 
-            # interpolation test
-            rad_edges, r_low, r_high = bin_centers_to_edges(np.linspace(0, 10, 4000), logaxis=False)
+        # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
+        rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
 
-            # use linspace instead of rad_edges
-            rad_width_deg = np.diff(rad_edges)
-
-            x = np.linspace(0, 10, 4000)
-            sigma = 0.5
-            scale = sigma * np.sqrt(1 - 2 / np.pi)
-            y = halfnorm.pdf(x, loc=0, scale=scale)
-            cumsum = (2 * np.pi * rad_width_deg * y * (r_low + r_high) / 2).cumsum()
-            normed = y / cumsum.max() * ((180 / np.pi) ** 2)
-            normed = np.nan_to_num(normed)
-
-            # PSF should be normed (deg**2 / sr), test should give 3200:
-            # values = 2 * np.pi * rad_width_deg * normed * (r_low + r_high) / 2
-            # print("PSF normed? ( ≈ 3282 (deg**2 / sr))", values.cumsum().max())
-
-            y = np.array(normed)
-            test = np.repeat(y[np.newaxis, ...], len(axis[0]), axis=0)
-            rpsf_test.append(test)
-
-        else:
-            direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]
-
-            # Using rad**2 bins to normalize, dN/dlog(rad) ~ rad*dN/d(rad)
-            rad_edges, r_low, r_high = bin_centers_to_edges(axis[1], logaxis=True)
-
-            rad_width_deg = np.diff(np.power(10, rad_edges))
-            # this step makes sure all arrays have the same dimensions,
-            # rad_width_deg and the central rad values are
-            # repeated by the length of the energy axis.
-            norm = np.sum(
-                direction_diff
-                * np.repeat(rad_width_deg[..., np.newaxis], len(axis[0]), axis=1)
-                / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1),
-                axis=0,
-            )
-            norm = norm * 2 * np.pi
-            direction_diff = direction_diff / (
-                np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(axis[0]), axis=1) ** 2
-            )
-            with np.errstate(invalid="ignore"):
-                normed = direction_diff / norm * ((180 / np.pi) ** 2)
-            rpsf_final.append(np.nan_to_num(normed))
+        rad_width_deg = np.diff(np.power(10, rad_edges))
+        # this step makes sure all arrays have the same dimensions,
+        # rad_width_deg and the central rad values are
+        # repeated by the length of the energy axis.
+        norm = np.sum(
+            direction_diff
+            * np.repeat(rad_width_deg[..., np.newaxis], len(energy_axis), axis=1)
+            / np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1),
+            axis=0,
+        )
+        norm = norm * 2 * np.pi
+        direction_diff = direction_diff / (
+            np.repeat(((r_low + r_high) / 2)[..., np.newaxis], len(energy_axis), axis=1) ** 2
+        )
+        with np.errstate(invalid="ignore"):
+            normed = direction_diff / norm * ((180 / np.pi) ** 2)
+        rpsf_final.append(np.nan_to_num(normed))
 
     # PSF (3-dim with axes: psf[rad_index, offset_index, energy_index]
-    if test_psf:
-        rpsf_test = np.swapaxes(rpsf_test, 0, 1)
-        rpsf_final = np.swapaxes(rpsf_test, 0, 2)
-    else:
-        rpsf_final = np.swapaxes(rpsf_final, 0, 1)
+    rpsf_final = np.swapaxes(rpsf_final, 0, 1)
 
     return np.array(
         [(e_low, e_high, theta_low, theta_high, r_low, r_high, rpsf_final)],
@@ -352,11 +340,21 @@ def __fill_response__(
 
     response_dict = {}
 
-    if kwargs.get("use_click", True):
+    if kwargs.get("use_click", False):
         clk = click.get_current_context()
         interpolator_name = clk.params["interpolator_name"]
+        force_extrapolation = clk.params["force_extrapolation"]
     else:
         interpolator_name = kwargs.get("interpolator_name", "KNeighborsRegressor")
+        force_extrapolation = kwargs.get("force_extrapolation", False)
+
+    if force_extrapolation and interpolator_name == "KNeighborsRegressor":
+        raise ValueError(
+            "force_extrapolation requires RegularGridInterpolator; "
+            "KNeighborsRegressor does not extrapolate linearly"
+        )
+    if irf_to_store.get("point-like") and irf_to_store.get("full-enclosure"):
+        raise ValueError("point-like and full-enclosure IRFs are mutually exclusive")
 
     # IRF interpolator
     irf_interpolator = IrfInterpolator(effective_area, azimuth, interpolator_name)
