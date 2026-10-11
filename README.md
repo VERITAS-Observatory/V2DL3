@@ -28,7 +28,7 @@ source v2dl3/bin/activate
 pip install v2dl3
 ```
 
-All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`) are now available as callable command line tools.
+All scripts (`v2dl3-vegas`, `v2dl3-eventdisplay`, `v2dl3-generate-index-file`, `v2dl3-eventdisplay-query-runparameters`, `v2dl3-compareFitsFiles`) are now available as callable command line tools.
 
 ## V2DL3 for VEGAS
 
