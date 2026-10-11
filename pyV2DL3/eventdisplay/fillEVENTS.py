@@ -35,14 +35,15 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         runNumber = runSummary["runOn"][0]
         logger.info("Run number: %d", runNumber)
 
-        t_start, t_stop, t_avg = __get_start_stop_times(file)
-        t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
-            __get_times_since_reference_time(t_start, t_stop)
-
         event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
         run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
         if not np.isfinite(run_metadata["pedvar"]) or run_metadata["pedvar"] <= 0:
             raise ValueError("Invalid run pedestal variation for IRF selection")
+
+        t_start, t_stop, t_avg = __get_start_stop_times(file)
+        t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
+            __get_times_since_reference_time(t_start, t_stop)
+
         evt_dict, _, _ =  \
             __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
         pointing_ra, pointing_dec = __get_average_pointing(file, runNumber)
