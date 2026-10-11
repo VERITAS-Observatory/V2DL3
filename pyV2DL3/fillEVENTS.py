@@ -109,7 +109,7 @@ def fillEVENTS(datasource, save_multiplicity=False, instrument_epoch=None, event
     hdu1.header.set("TSTOP   ", evt_dict["TSTOP"], "mission time of end of obs [s]")
     hdu1.header.set(
         "MJDREFI ",
-        constant.VTS_REFERENCE_MJD,
+        int(constant.VTS_REFERENCE_MJD),
         "int part of reference MJD [days]",
     )
     hdu1.header.set("MJDREFF ", 0.0, "fractional part of reference MJD [days]")
