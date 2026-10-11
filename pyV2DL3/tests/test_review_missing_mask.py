@@ -1,5 +1,7 @@
 import pytest
+
 from pyV2DL3.eventdisplay.fillEVENTS import __get_ontime
+
 
 @pytest.mark.parametrize("stereo", [{}, {"timeMask": {}}])
 def test_missing_directory_and_missing_object(stereo):
