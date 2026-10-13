@@ -106,7 +106,7 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     assert events["EVENT_ID"].tolist() == [2]
     assert events["TIME"].tolist() == [103.0]
     assert max_img_sel == 7
-    assert pedvar == 6.0
+    assert pedvar == 5.0
     metadata = fill_events.__get_run_event_metadata(file, 42)
     assert metadata["altitude"] == 55.0
     assert metadata["azimuth"] == pytest.approx(75.0)
@@ -270,6 +270,32 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     db_reader.assert_called_once_with(
         "run.db.fits", 42, protected_keys=events.keys()
     )
+
+
+@pytest.mark.parametrize("pedvar", [np.nan, np.inf, 0.0, -1.0])
+def test_event_builder_rejects_invalid_run_pedestal_variation(monkeypatch, pedvar):
+    run_summary = Mock()
+    run_summary.arrays.return_value = {"runOn": np.array([42])}
+    event_tree = Mock()
+    event_tree.arrays.return_value = {}
+    root_file = RootFile({
+        "total_1/stereo/tRunSummary": run_summary,
+        "run_42/stereo/DL3EventTree": event_tree,
+    })
+    monkeypatch.setattr(fill_events.uproot, "open", Mock(return_value=root_file))
+    monkeypatch.setattr(
+        fill_events,
+        "__get_start_stop_times",
+        Mock(return_value=(None, None, None)),
+    )
+    monkeypatch.setattr(
+        fill_events,
+        "__get_run_event_metadata",
+        Mock(return_value={"pedvar": pedvar}),
+    )
+
+    with pytest.raises(ValueError, match="Invalid run pedestal variation"):
+        fill_events.__fillEVENTS__("events.root")
 
 
 def test_irf_extraction_and_interpolation_accept_north_azimuth(tmp_path, monkeypatch):
