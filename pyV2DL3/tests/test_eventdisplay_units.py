@@ -35,7 +35,7 @@ class Branch:
 
 def effective_area_tree():
     values = {
-        "azMin": [-180.0, 0.0, 180.0], "azMax": [-180.0, 0.0, 180.0],
+        "azMin": [-1000.0], "azMax": [1000.0],
         "az": [0], "pedvar": [4.0], "ze": [20.0], "Woff": [0.5],
         "e0": [[0.0, 1.0]], "eff": [[10.0, 20.0]],
         "hEsysMCRelative2D_binsx": [2], "hEsysMCRelative2D_minx": [-1.0],
