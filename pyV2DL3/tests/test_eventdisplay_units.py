@@ -94,7 +94,7 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
         "NImages": np.array([2, 3]),
         "Xoff": np.array([0.1, 0.2]),
         "Yoff": np.array([0.3, 0.4]),
-        "ImgSel": np.array([3, 7]),
+        "ImgSel": np.array([3, 5]),
         "MeanPedvar": np.array([4.0, 6.0]),
     }
 
@@ -105,7 +105,7 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     )
     assert events["EVENT_ID"].tolist() == [2]
     assert events["TIME"].tolist() == [103.0]
-    assert max_img_sel == 7
+    assert max_img_sel == 5
     assert pedvar == 6.0
     metadata = fill_events.__get_run_event_metadata(file, 42)
     assert metadata["altitude"] == 55.0
