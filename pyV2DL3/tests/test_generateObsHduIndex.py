@@ -186,7 +186,7 @@ class Test_CheckUnitConsistency:
 
         assert result == (value, units)
 
-    # Function converts mph to km/h when key contains "WIND"
+    # Function converts declared mph values for wind-speed fields to km/h
     def test_convert_mph_to_kmh(self):
         key = "WINDSPE"
         value = [10, 20, 30]
@@ -199,6 +199,13 @@ class Test_CheckUnitConsistency:
 
         assert result[0] == pytest.approx(expected_value, abs=1.e-3)
         assert result[1] == expected_units
+
+    def test_wind_direction_preserves_degree_values_and_units(self):
+        values = [180.0]
+
+        result = _check_unit_consistency("WINDDIR ", values, "deg")
+
+        assert result == (values, "deg")
 
     # Function returns None when value is None
     def test_value_is_none(self):
