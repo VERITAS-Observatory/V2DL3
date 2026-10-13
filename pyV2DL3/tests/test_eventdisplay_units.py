@@ -111,6 +111,10 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     assert metadata["altitude"] == 55.0
     assert metadata["azimuth"] == pytest.approx(75.0)
     assert metadata["img_sel_union"] == 7
+
+    tree["ImgSel"] = np.array([3, 5])
+    metadata = fill_events.__get_run_event_metadata(file, 42)
+    assert metadata["img_sel_union"] == 7
     assert metadata["pedvar"] == 5.0
 
     with pytest.raises(ZeroLengthEventList):
