@@ -31,6 +31,8 @@ def test_index_preserves_absolute_time_precision(tmp_path):
     out = tmp_path / "index.fits"
     fits.HDUList([fits.PrimaryHDU(), index]).writeto(out)
     with fits.open(out) as hdul:
+        assert hdul[1].columns["TSTART"].format == "D"
+        assert hdul[1].columns["TSTOP"].format == "D"
         assert abs(hdul[1].data["TSTART"][0] - 683868345.678) < 1e-6
         assert abs(hdul[1].data["TSTOP"][0] - 683868346.789) < 1e-6
     assert _default_null_value(">f8") == -9999.
