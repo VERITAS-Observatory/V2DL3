@@ -110,7 +110,7 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     metadata = fill_events.__get_run_event_metadata(file, 42)
     assert metadata["altitude"] == 55.0
     assert metadata["azimuth"] == pytest.approx(75.0)
-    assert metadata["max_img_sel"] == 7
+    assert metadata["img_sel_union"] == 7
     assert metadata["pedvar"] == 5.0
 
     with pytest.raises(ZeroLengthEventList):
@@ -246,7 +246,7 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     monkeypatch.setattr(
         fill_events,
         "__get_run_event_metadata",
-        Mock(return_value={"altitude": 10.0, "azimuth": 190.0, "max_img_sel": 7, "pedvar": 5.0}),
+        Mock(return_value={"altitude": 10.0, "azimuth": 190.0, "img_sel_union": 7, "pedvar": 5.0}),
     )
     monkeypatch.setattr(fill_events, "__get_average_pointing", Mock(return_value=(83.0, 22.0)))
     pointing_altaz = Mock(return_value=(55.0, 190.0))
