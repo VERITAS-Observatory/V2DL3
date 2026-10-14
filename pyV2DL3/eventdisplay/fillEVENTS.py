@@ -35,12 +35,15 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         runNumber = runSummary["runOn"][0]
         logger.info("Run number: %d", runNumber)
 
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
+        if not np.isfinite(run_metadata["pedvar"]) or run_metadata["pedvar"] <= 0:
+            raise ValueError("Invalid run pedestal variation for IRF selection")
+
         t_start, t_stop, t_avg = __get_start_stop_times(file)
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
-        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
         evt_dict, _, _ =  \
             __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
         pointing_ra, pointing_dec = __get_average_pointing(file, runNumber)
@@ -118,7 +121,11 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
 
     evt_dict = {}
     evt_dict["EVENT_ID"] = event_tree["eventNumber"][mask]
-    evt_dict["TIME"] = __get_time_vector(event_tree["timeOfDay"][mask], seconds_from_reference)
+    event_mjd = event_tree["MJD"][mask] if "MJD" in event_tree else None
+    evt_dict["TIME"] = __get_time_vector(
+        event_tree["timeOfDay"][mask], seconds_from_reference,
+        event_mjd=event_mjd,
+    )
     evt_dict["RA"] = event_tree["RA"][mask]
     evt_dict["DEC"] = event_tree["DEC"][mask]
     evt_dict["ALT"] = event_tree["El"][mask]
@@ -140,7 +147,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
     return (
         evt_dict,
         np.max(event_tree["ImgSel"][mask]),
-        np.mean(event_tree["MeanPedvar"][mask]),
+        np.mean(event_tree["MeanPedvar"]),
     )
 
 
@@ -290,10 +297,18 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         try:
             time_mask = file[f"run_{runNumber}"]["stereo"]["timeMask"]
         except KeyError:
-            logger.info("Eventdisplay time mask not found; using the full run interval")
+            logger.info(
+                "Eventdisplay time mask absent for run %s; using the full run interval",
+                runNumber,
+            )
         else:
-            for key in time_mask.keys():
-                logger.info("maskBits not found, available key: %s", key)
+            available_keys = list(time_mask.keys())
+            logger.info(
+                "Eventdisplay time mask has no maskBits for run %s "
+                "(available keys: %s); using the full run interval",
+                runNumber,
+                available_keys,
+            )
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
@@ -301,7 +316,7 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
     return gti_tstart_from_reference, gti_tstop_from_reference, ontime_s
 
 
-def __get_time_vector(time_of_day, seconds_from_reference):
+def __get_time_vector(time_of_day, seconds_from_reference, event_mjd=None):
     """
     Time vector in seconds since reference time
 
@@ -313,6 +328,10 @@ def __get_time_vector(time_of_day, seconds_from_reference):
     if time_of_day.max() > 24 * 60 * 60:
         logger.error("Max value in time_of_day array exceeds length of a day")
         raise ValueError
+    if event_mjd is not None:
+        t_ref = Time(VTS_REFERENCE_MJD, format="mjd", scale="utc")
+        day_offsets = (Time(event_mjd, format="mjd", scale="utc") - t_ref).sec
+        return day_offsets + time_of_day
     return seconds_from_reference + time_of_day
 
 
