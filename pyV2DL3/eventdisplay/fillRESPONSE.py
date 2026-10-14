@@ -184,19 +184,6 @@ def find_camera_offsets(camera_offsets):
     return edges[:-1], edges[1:]
 
 
-def duplicate_interpolating_coordinate(camera_offsets, irf_name):
-    """
-    This function duplicates the camera offsets value, when the dimension of
-    camera offset axis in the stored IRF is 1.
-    """
-
-    if len(camera_offsets) == 1:
-        logger.warning(f"Duplicating single offset axis for IRF {irf_name}")
-        camera_offsets = [camera_offsets[0], camera_offsets[0]]
-
-    return camera_offsets
-
-
 def fill_effective_area(
     irf_name, irf_interpolator, camera_offsets, pedvar, zenith, theta_low, theta_high, **kwargs
 ):
@@ -207,8 +194,6 @@ def fill_effective_area(
     ea_final = []
 
     # Loop over offsets and store
-    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
-
     for offset in camera_offsets:
         eff_area, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
         ea_final.append(np.array(eff_area))
@@ -238,11 +223,11 @@ def fill_energy_migration(
     irf_interpolator.set_irf(irf_name, **kwargs)
     ac_final = []
 
-    camera_offsets = duplicate_interpolating_coordinate(camera_offsets, irf_name)
-
     for offset in camera_offsets:
         bias, axis = irf_interpolator.interpolate([pedvar, zenith, offset])
 
+        if len(axis[0]) < 2:
+            raise ValueError("Energy migration needs at least two energy bins")
         _, e_low, e_high = bin_centers_to_edges(axis[0])
         _, b_low, b_high = bin_centers_to_edges(axis[1], False)
 
@@ -287,9 +272,11 @@ def fill_direction_migration(
 
         # energy axis from ~ 0.1 - 100 TeV
         energy_axis_index_lb = np.searchsorted(np.power(10, axis[0]), 0.1)
-        energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100) - len(axis[0])
+        energy_axis_index_ub = np.searchsorted(np.power(10, axis[0]), 100)
 
         energy_axis = axis[0][energy_axis_index_lb:energy_axis_index_ub]
+        if len(energy_axis) < 2:
+            raise ValueError("PSF needs at least two energy bins between 0.1 and 100 TeV")
         _, e_low, e_high = bin_centers_to_edges(energy_axis)
 
         direction_diff = direction_diff[:, energy_axis_index_lb:energy_axis_index_ub]

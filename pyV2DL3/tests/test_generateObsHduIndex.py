@@ -186,7 +186,7 @@ class Test_CheckUnitConsistency:
 
         assert result == (value, units)
 
-    # Function converts mph to km/h when key contains "WIND"
+    # Function converts declared mph values for wind-speed fields to km/h
     def test_convert_mph_to_kmh(self):
         key = "WINDSPE"
         value = [10, 20, 30]
@@ -199,6 +199,13 @@ class Test_CheckUnitConsistency:
 
         assert result[0] == pytest.approx(expected_value, abs=1.e-3)
         assert result[1] == expected_units
+
+    def test_wind_direction_preserves_degree_values_and_units(self):
+        values = [180.0]
+
+        result = _check_unit_consistency("WINDDIR ", values, "deg")
+
+        assert result == (values, "deg")
 
     # Function returns None when value is None
     def test_value_is_none(self):
@@ -295,6 +302,29 @@ def test_hdu_index_preserves_long_relative_paths(tmp_path):
 
     assert actual_dir == expected_dir
     assert actual_name == expected_name
+
+
+def test_hdu_index_preserves_long_hdu_fields(tmp_path):
+    source = tmp_path / "observation.fits"
+    long_hdu_name = "RAD_MAX_EXTENSION_NAME_123456789"
+
+    events = fits.BinTableHDU.from_columns([], name="EVENTS")
+    events.header.update(OBS_ID=42, HDUCLAS1="EVENTS")
+    rad_max = fits.BinTableHDU.from_columns([], name=long_hdu_name)
+    rad_max.header.update(
+        OBS_ID=42,
+        HDUCLAS1="RESPONSE",
+        HDUCLAS2="RAD_MAX",
+    )
+    fits.HDUList([fits.PrimaryHDU(), events, rad_max]).writeto(source)
+
+    index = gen_hdu_index([str(source)], str(tmp_path))
+    rows = index.data
+    hdu_types = [value.decode() if isinstance(value, bytes) else value for value in rows["HDU_TYPE"]]
+    hdu_names = [value.decode() if isinstance(value, bytes) else value for value in rows["HDU_NAME"]]
+
+    assert "rad_max" in hdu_types
+    assert long_hdu_name in hdu_names
 
 
 def test_index_cli_checks_requested_output_names(tmp_path, monkeypatch):
