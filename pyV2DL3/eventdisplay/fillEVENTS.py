@@ -116,7 +116,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
 
     mask = __get_mask(event_tree, select)
     if not np.any(mask):
-        logger.error("Empty event list after selection")
+        logger.error("Empty event list after applying selection filter")
         raise ZeroLengthEventList
 
     evt_dict = {}
