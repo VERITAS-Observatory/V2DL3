@@ -94,7 +94,7 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
         "NImages": np.array([2, 3]),
         "Xoff": np.array([0.1, 0.2]),
         "Yoff": np.array([0.3, 0.4]),
-        "ImgSel": np.array([3, 7]),
+        "ImgSel": np.array([3, 5]),
         "MeanPedvar": np.array([4.0, 6.0]),
     }
 
@@ -105,12 +105,16 @@ def test_event_list_helpers_apply_selection_and_reject_an_empty_result():
     )
     assert events["EVENT_ID"].tolist() == [2]
     assert events["TIME"].tolist() == [103.0]
-    assert max_img_sel == 7
+    assert max_img_sel == 5
     assert pedvar == 5.0
     metadata = fill_events.__get_run_event_metadata(file, 42)
     assert metadata["altitude"] == 55.0
     assert metadata["azimuth"] == pytest.approx(75.0)
-    assert metadata["max_img_sel"] == 7
+    assert metadata["img_sel_union"] == 7
+
+    tree["ImgSel"] = np.array([3, 5])
+    metadata = fill_events.__get_run_event_metadata(file, 42)
+    assert metadata["img_sel_union"] == 7
     assert metadata["pedvar"] == 5.0
 
     with pytest.raises(ZeroLengthEventList):
@@ -246,7 +250,7 @@ def test_event_builder_combines_run_metadata_events_gti_and_db_metadata(monkeypa
     monkeypatch.setattr(
         fill_events,
         "__get_run_event_metadata",
-        Mock(return_value={"altitude": 10.0, "azimuth": 190.0, "max_img_sel": 7, "pedvar": 5.0}),
+        Mock(return_value={"altitude": 10.0, "azimuth": 190.0, "img_sel_union": 7, "pedvar": 5.0}),
     )
     monkeypatch.setattr(fill_events, "__get_average_pointing", Mock(return_value=(83.0, 22.0)))
     pointing_altaz = Mock(return_value=(55.0, 190.0))

@@ -69,7 +69,7 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
-        evt_dict["N_TELS"] = np.binary_repr(run_metadata["max_img_sel"]).count("1")
+        evt_dict["N_TELS"] = np.binary_repr(run_metadata["img_sel_union"]).count("1")
         logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
@@ -166,7 +166,8 @@ def __get_run_event_metadata(file, runNumber, event_tree=None):
     return {
         "altitude": altitude,
         "azimuth": azimuth,
-        "max_img_sel": np.max(event_tree["ImgSel"]),
+        # OR all event masks to include every telescope participating in the run.
+        "img_sel_union": np.bitwise_or.reduce(event_tree["ImgSel"]),
         "pedvar": np.mean(event_tree["MeanPedvar"]),
     }
 
