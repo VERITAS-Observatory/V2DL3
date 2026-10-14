@@ -334,7 +334,8 @@ def _check_unit_consistency(key, value, units):
     Use wherever possible SI units
 
     """
-    if key is not None and key.find("WIND") != -1:
+    wind_speed_keys = {"WINDSPE", "WINDMAX", "WINDMIN"}
+    if key is not None and key.strip() in wind_speed_keys and units == "mph":
         mph = u.imperial.mile / u.hour
         return [v * mph.to(u.km / u.h) if v is not None else None for v in value], "km/h"
     return value, units
