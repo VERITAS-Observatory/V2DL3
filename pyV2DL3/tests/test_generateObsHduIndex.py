@@ -297,6 +297,29 @@ def test_hdu_index_preserves_long_relative_paths(tmp_path):
     assert actual_name == expected_name
 
 
+def test_hdu_index_preserves_long_hdu_fields(tmp_path):
+    source = tmp_path / "observation.fits"
+    long_hdu_name = "RAD_MAX_EXTENSION_NAME_123456789"
+
+    events = fits.BinTableHDU.from_columns([], name="EVENTS")
+    events.header.update(OBS_ID=42, HDUCLAS1="EVENTS")
+    rad_max = fits.BinTableHDU.from_columns([], name=long_hdu_name)
+    rad_max.header.update(
+        OBS_ID=42,
+        HDUCLAS1="RESPONSE",
+        HDUCLAS2="RAD_MAX",
+    )
+    fits.HDUList([fits.PrimaryHDU(), events, rad_max]).writeto(source)
+
+    index = gen_hdu_index([str(source)], str(tmp_path))
+    rows = index.data
+    hdu_types = [value.decode() if isinstance(value, bytes) else value for value in rows["HDU_TYPE"]]
+    hdu_names = [value.decode() if isinstance(value, bytes) else value for value in rows["HDU_NAME"]]
+
+    assert "rad_max" in hdu_types
+    assert long_hdu_name in hdu_names
+
+
 def test_index_cli_checks_requested_output_names(tmp_path, monkeypatch):
     (tmp_path / "obs-index.fits.gz").touch()
     monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: ["input.fits"])

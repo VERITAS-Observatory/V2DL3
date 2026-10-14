@@ -83,11 +83,11 @@ def gen_hdu_index(filelist, index_file_dir="./"):
                     ),
                     dtype=(
                         ">i8",
-                        "S6",
-                        "S10",
+                        f"S{_string_width(hdu_type_name)}",
+                        f"S{_string_width(hdu_type)}",
                         f"S{_string_width(file_dir)}",
                         f"S{_string_width(file_name)}",
-                        "S20",
+                        f"S{_string_width(hdu_name)}",
                     ),
                 )
 
@@ -207,6 +207,10 @@ def gen_obs_index(filelist, index_file_dir="./", dqm_header=False):
             key, value, _table_units[key]
         )
 
+    for i, name in enumerate(names):
+        if data_type[i].startswith("S"):
+            width = max((len(str(value)) for value in _table_data[name]), default=1)
+            data_type[i] = f"S{max(1, width)}"
     obs_table = Table(_table_data, names=names, dtype=data_type)
 
     for key, value in _table_units.items():
