@@ -35,12 +35,15 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         runNumber = runSummary["runOn"][0]
         logger.info("Run number: %d", runNumber)
 
+        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
+        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
+        if not np.isfinite(run_metadata["pedvar"]) or run_metadata["pedvar"] <= 0:
+            raise ValueError("Invalid run pedestal variation for IRF selection")
+
         t_start, t_stop, t_avg = __get_start_stop_times(file)
         t_start_from_reference, t_stop_from_reference, seconds_from_reference = \
             __get_times_since_reference_time(t_start, t_stop)
 
-        event_tree = file[f"run_{runNumber}/stereo/DL3EventTree"].arrays(library="np")
-        run_metadata = __get_run_event_metadata(file, runNumber, event_tree=event_tree)
         evt_dict, _, _ =  \
             __fill_event_list(file, runNumber, select, seconds_from_reference, event_tree=event_tree)
         pointing_ra, pointing_dec = __get_average_pointing(file, runNumber)
@@ -66,7 +69,7 @@ def __fillEVENTS__(edFileIO, select=None, db_fits_file=None):
         evt_dict["DEC_OBJ"] = runSummary["TargetDecJ2000"][0]
         evt_dict["TELLIST"] = produce_tel_list(
             file[f"run_{runNumber}/stereo/telconfig"].arrays(library="np"))
-        evt_dict["N_TELS"] = np.binary_repr(run_metadata["max_img_sel"]).count("1")
+        evt_dict["N_TELS"] = np.binary_repr(run_metadata["img_sel_union"]).count("1")
         logger.info("Number of Telescopes: %d", evt_dict["N_TELS"])
         evt_dict["GEOLON"] = VTS_REFERENCE_LON
         evt_dict["GEOLAT"] = VTS_REFERENCE_LAT
@@ -113,7 +116,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
 
     mask = __get_mask(event_tree, select)
     if not np.any(mask):
-        logger.error("Empty event list after selection")
+        logger.error("Empty event list after applying selection filter")
         raise ZeroLengthEventList
 
     evt_dict = {}
@@ -144,7 +147,7 @@ def __fill_event_list(file, runNumber, select, seconds_from_reference, event_tre
     return (
         evt_dict,
         np.max(event_tree["ImgSel"][mask]),
-        np.mean(event_tree["MeanPedvar"][mask]),
+        np.mean(event_tree["MeanPedvar"]),
     )
 
 
@@ -163,7 +166,8 @@ def __get_run_event_metadata(file, runNumber, event_tree=None):
     return {
         "altitude": altitude,
         "azimuth": azimuth,
-        "max_img_sel": np.max(event_tree["ImgSel"]),
+        # OR all event masks to include every telescope participating in the run.
+        "img_sel_union": np.bitwise_or.reduce(event_tree["ImgSel"]),
         "pedvar": np.mean(event_tree["MeanPedvar"]),
     }
 
@@ -296,10 +300,18 @@ def __get_ontime(file, runNumber, t_start_from_reference, t_stop_from_reference)
         try:
             time_mask = file[f"run_{runNumber}"]["stereo"]["timeMask"]
         except KeyError:
-            logger.info("Eventdisplay time mask not found; using the full run interval")
+            logger.info(
+                "Eventdisplay time mask absent for run %s; using the full run interval",
+                runNumber,
+            )
         else:
-            for key in time_mask.keys():
-                logger.info("maskBits not found, available key: %s", key)
+            available_keys = list(time_mask.keys())
+            logger.info(
+                "Eventdisplay time mask has no maskBits for run %s "
+                "(available keys: %s); using the full run interval",
+                runNumber,
+                available_keys,
+            )
         gti_tstart_from_reference = [t_start_from_reference]
         gti_tstop_from_reference = [t_stop_from_reference]
         ontime_s = t_stop_from_reference - t_start_from_reference
