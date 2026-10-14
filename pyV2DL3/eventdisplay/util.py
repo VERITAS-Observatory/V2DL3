@@ -117,6 +117,8 @@ def getGTI(BitArray, run_start_from_reference, nbits=None, run_duration=None):
         valid = stops > starts
         starts, stops = starts[valid], stops[valid]
     ontime = float(np.sum(stops - starts))
+    duration = float(run_duration) if run_duration is not None else float(bits.size)
+    logging.info("GTI mask: duration=%.2f s, ontime=%.2f s", duration, ontime)
     return starts + run_start_from_reference, stops + run_start_from_reference, ontime
 
 

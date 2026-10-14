@@ -1,5 +1,8 @@
+import logging
+
 import numpy as np
 import pytest
+
 from pyV2DL3.eventdisplay.util import getGTI
 
 
@@ -14,8 +17,10 @@ def test_all_single_byte_masks(byte):
     assert ontime == decoded.sum()
 
 
-def test_partial_second_and_padding():
+def test_partial_second_and_padding(caplog):
+    caplog.set_level(logging.INFO)
     start, stop, ontime = getGTI(np.array([255]), 100, nbits=3, run_duration=2.25)
     assert start.tolist() == [100]
     assert stop.tolist() == [102.25]
     assert ontime == 2.25
+    assert "GTI mask: duration=2.25 s, ontime=2.25 s" in caplog.text
