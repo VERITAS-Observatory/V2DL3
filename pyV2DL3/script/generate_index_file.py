@@ -153,6 +153,8 @@ def cli(
 
     logging.info("Generating HUD and OBS index files")
 
+    requested_ids = _read_run_list(run_list) if run_list else None
+
     if not recreate:
         obs_index_path = os.path.join(index_file_dir, obs_index_file)
         hdu_index_path = os.path.join(index_file_dir, hdu_index_file)
@@ -176,8 +178,7 @@ def cli(
         for f in __fits_files
         if f.find(obs_index_file) == -1 and f.find(hdu_index_file) == -1
     ]
-    if run_list:
-        requested_ids = _read_run_list(run_list)
+    if requested_ids is not None:
         fits_files = [
             filename for filename in fits_files if _filename_obs_id(filename) in requested_ids
         ]
@@ -191,7 +192,10 @@ def cli(
         if missing_ids:
             logging.warning("No FITS file found for run IDs: %s", missing_ids)
     if not fits_files:
-        raise click.ClickException("No FITS files found for the requested run list")
+        message = "No FITS files found"
+        if requested_ids is not None:
+            message += " for the requested run list"
+        raise click.ClickException(message)
     fits_files.sort()
 
     logging.debug("Found the following fits files:")
