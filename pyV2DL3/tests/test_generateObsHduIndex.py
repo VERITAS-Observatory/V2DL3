@@ -344,3 +344,138 @@ def test_index_cli_checks_requested_output_names(tmp_path, monkeypatch):
 
     assert result.exit_code == 0, result.output
     create_mock.assert_called_once()
+
+
+def test_index_cli_filters_root_files_by_run_list(tmp_path, monkeypatch):
+    run_list = tmp_path / "runs.txt"
+    run_list.write_text("# selected runs\n42\n42 # duplicate\n84\n")
+    fits_files = [
+        str(tmp_path / "42.fits.gz"),
+        str(tmp_path / "84_eventdisplay.fits"),
+        str(tmp_path / "99.fits.gz"),
+    ]
+    monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: fits_files)
+    create_mock = Mock()
+    monkeypatch.setattr(generate_index_file, "create_obs_hdu_index_file", create_mock)
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location",
+            str(tmp_path),
+            "--index_file_dir",
+            str(tmp_path),
+            "--run_list",
+            str(run_list),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert create_mock.call_args.args[0] == fits_files[:2]
+
+
+def test_index_cli_filters_eventdisplay_files_by_run_list(tmp_path, monkeypatch):
+    run_list = tmp_path / "runs.txt"
+    run_list.write_text("42\n")
+    fits_files = [
+        str(tmp_path / "42" / "42_eventdisplay.fits.gz"),
+        str(tmp_path / "84" / "84_eventdisplay.fits.gz"),
+    ]
+    glob_results = iter([[], fits_files])
+    monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: next(glob_results))
+    create_mock = Mock()
+    monkeypatch.setattr(generate_index_file, "create_obs_hdu_index_file", create_mock)
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location",
+            str(tmp_path),
+            "--index_file_dir",
+            str(tmp_path),
+            "--run_list",
+            str(run_list),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert create_mock.call_args.args[0] == fits_files[:1]
+
+
+@pytest.mark.parametrize(
+    ("run_list_content", "expected_message"),
+    [("not-a-run\n", "invalid run ID"), ("# comment only\n\n", "contains no run IDs")],
+)
+def test_index_cli_rejects_invalid_run_list(tmp_path, run_list_content, expected_message):
+    run_list = tmp_path / "runs.txt"
+    run_list.write_text(run_list_content)
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location",
+            str(tmp_path),
+            "--index_file_dir",
+            str(tmp_path),
+            "--run_list",
+            str(run_list),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert expected_message in result.output
+
+
+def test_index_cli_validates_run_list_before_existing_output_return(tmp_path):
+    (tmp_path / "obs-index.fits.gz").touch()
+    run_list = tmp_path / "runs.txt"
+    run_list.write_text("not-a-run\n")
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location",
+            str(tmp_path),
+            "--index_file_dir",
+            str(tmp_path),
+            "--run_list",
+            str(run_list),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "invalid run ID" in result.output
+
+
+def test_index_cli_rejects_run_list_with_no_matching_files(tmp_path, monkeypatch):
+    run_list = tmp_path / "runs.txt"
+    run_list.write_text("42\n")
+    monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: ["84.fits.gz"])
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        [
+            "--folder_location",
+            str(tmp_path),
+            "--index_file_dir",
+            str(tmp_path),
+            "--run_list",
+            str(run_list),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "No FITS files found for the requested run list" in result.output
+
+
+def test_index_cli_uses_generic_message_without_run_list(tmp_path, monkeypatch):
+    monkeypatch.setattr(generate_index_file.glob, "glob", lambda pattern: [])
+
+    result = CliRunner().invoke(
+        generate_index_file.cli,
+        ["--folder_location", str(tmp_path), "--index_file_dir", str(tmp_path)],
+    )
+
+    assert result.exit_code != 0
+    assert "No FITS files found" in result.output
+    assert "for the requested run list" not in result.output

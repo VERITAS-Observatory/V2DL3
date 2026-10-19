@@ -15,6 +15,7 @@ of each DL3 file.
 import glob
 import logging
 import os
+import re
 
 import click
 
@@ -29,6 +30,36 @@ def print_version(ctx, param, value):
         return
     click.echo(f'pyV2DL3 version {__version__}')
     ctx.exit()
+
+
+def _read_run_list(path):
+    """Read unique positive observation IDs from a plain-text run list."""
+    run_ids = set()
+    with open(path, encoding="utf-8") as run_file:
+        for line_number, line in enumerate(run_file, start=1):
+            value = line.split("#", 1)[0].strip()
+            if not value:
+                continue
+            if not value.isdecimal() or int(value) <= 0:
+                raise click.BadParameter(
+                    f"invalid run ID on line {line_number}: {value!r}",
+                    param_hint="--run_list",
+                )
+            run_ids.add(int(value))
+    if not run_ids:
+        raise click.BadParameter("contains no run IDs", param_hint="--run_list")
+    return run_ids
+
+
+def _filename_obs_id(filename):
+    """Return the numeric OBS_ID prefix used by V2DL3 FITS filenames."""
+    name = os.path.basename(filename)
+    for suffix in (".fits.gz", ".fits", ".fit"):
+        if name.lower().endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    match = re.fullmatch(r"(\d+)(?:[^0-9].*)?", name)
+    return int(match.group(1)) if match else None
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -76,13 +107,27 @@ def print_version(ctx, param, value):
     is_flag=True,
     help="Add DQM header to the HDU index file.",
 )
+@click.option(
+    "--run_list",
+    "--run-list",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Index only FITS files whose numeric filename prefix is listed.",
+)
 def cli(
-    folder_location, index_file_dir, hdu_index_file, obs_index_file, recreate, debug, dqm_header
+    folder_location,
+    index_file_dir,
+    hdu_index_file,
+    obs_index_file,
+    recreate,
+    debug,
+    dqm_header,
+    run_list,
 ):
     """Command line tool for generating index file from a set of DL3 files
 
     \b
-    Index files are created from all DL3 fits files found in the given folder.
+    Index files are created from DL3 FITS files found in the given folder.
+    Use --run_list to restrict indexing to the listed observation IDs.
 
     """
     if folder_location is None:
@@ -108,6 +153,8 @@ def cli(
 
     logging.info("Generating HUD and OBS index files")
 
+    requested_ids = _read_run_list(run_list) if run_list else None
+
     if not recreate:
         obs_index_path = os.path.join(index_file_dir, obs_index_file)
         hdu_index_path = os.path.join(index_file_dir, hdu_index_file)
@@ -131,9 +178,24 @@ def cli(
         for f in __fits_files
         if f.find(obs_index_file) == -1 and f.find(hdu_index_file) == -1
     ]
+    if requested_ids is not None:
+        fits_files = [
+            filename for filename in fits_files if _filename_obs_id(filename) in requested_ids
+        ]
+        found_ids = {_filename_obs_id(filename) for filename in fits_files}
+        missing_ids = sorted(requested_ids - found_ids)
+        logging.info(
+            "Run-list filter selected %d FITS files for %d requested observation IDs",
+            len(fits_files),
+            len(requested_ids),
+        )
+        if missing_ids:
+            logging.warning("No FITS file found for run IDs: %s", missing_ids)
     if not fits_files:
-        logging.error("No fits files found")
-        return
+        message = "No FITS files found"
+        if requested_ids is not None:
+            message += " for the requested run list"
+        raise click.ClickException(message)
     fits_files.sort()
 
     logging.debug("Found the following fits files:")
