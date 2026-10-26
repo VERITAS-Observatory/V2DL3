@@ -175,6 +175,22 @@ Generate observation index and HDU tables for DL3 data storage are required to u
 This steps is independent of VEGAS or Eventdisplay.
 The two index files are generated with the tool `v2dl3-generate-index-file` (check all options with `v2dl3-generate-index-file --help`).
 
+To generate indexes for only selected observations, pass a text run list with
+one numeric observation ID per line (blank lines and `#` comments are ignored):
+
+```bash
+mkdir -p ./selected-index
+v2dl3-generate-index-file \
+    --folder_location ./dl3_pointlike_moderate2tel \
+    --index_file_dir ./selected-index \
+    --run_list ./selected-runs.txt
+```
+
+The indexer filters the numeric FITS filename prefixes before opening files.
+The HDU and observation indexes contain only the matching files. Requested IDs
+without matching files are reported; an empty run list or a list with no
+matching files is an error.
+
 The tables are described on the [GADF website](https://gamma-astro-data-formats.readthedocs.io/en/v0.3/data_storage/index.html):
 
 - [Observation index table](https://gamma-astro-data-formats.readthedocs.io/en/v0.3/data_storage/obs_index/index.html)
