@@ -8,7 +8,13 @@ logger = logging.getLogger(__name__)
 
 
 def __fillRESPONSE_not_safe__(
-    effective_area_file, azimuth, zenith, noise, irf_to_store, psf_king_params=None, st6_configs=None
+    effective_area_file,
+    azimuth,
+    zenith,
+    noise,
+    irf_to_store,
+    psf_king_params=None,
+    st6_configs=None,
 ):
     response_dict = {}
     ea_final_data, ebias_final_data, abias_final_data = getIRF(
@@ -30,12 +36,14 @@ def __fillRESPONSE_not_safe__(
         hi_thres = min(hi_thres, np.max(data["ENERG_HI"]))
 
     if lo_thres >= hi_thres:
-        raise ValueError(f"No overlapping energy range across IRFs: LO_THRES={lo_thres}, HI_THRES={hi_thres}")
+        raise ValueError(
+            f"No overlapping energy range across IRFs: LO_THRES={lo_thres}, HI_THRES={hi_thres}"
+        )
 
     response_dict["LO_THRES"] = lo_thres
     response_dict["HI_THRES"] = hi_thres
-        
-    logger.debug(f'RAD_MAX = {np.sqrt(effective_area_file.theta_square_upper)}')
+
+    logger.debug(f"RAD_MAX = {np.sqrt(effective_area_file.theta_square_upper)}")
     # Point-like
     if irf_to_store["point-like"]:
         response_dict["EA"] = ea_final_data

@@ -105,9 +105,9 @@ class EffectiveAreaFile(object):
         return axis_dict, index_dict
 
     def get_safe_energy(self, az, ze, noise, offset=0.5, st6_configs=None):
-        #No longer used for VEGAS DL3 production
-        #The calculation of the energy threshold should be performed in gammapy not using the VEGAS routines
-        #the energy maximum and minimum are not set to the safe energy range but the max and min of the IRF
+        # No longer used for VEGAS DL3 production
+        # The calculation of the energy threshold should be performed in gammapy not using the VEGAS routines
+        # the energy maximum and minimum are not set to the safe energy range but the max and min of the IRF
         manager = self.manager
         effectiveAreaParameters = ROOT.VAEASimpleParameterData()
         effectiveAreaParameters.fAzimuth = az
@@ -137,7 +137,9 @@ class EffectiveAreaFile(object):
                 self.manager.setOption("EA_MaxEffectiveAreaUncertainty", ea_uncertainty)
                 self.manager.setOption("EA_MaxAllowedEnergyBias", energy_bias)
 
-        manager.getSafeEnergyRange(effectiveAreaParameters, offset, minEnergy, maxEnergy)
+        manager.getSafeEnergyRange(
+            effectiveAreaParameters, offset, minEnergy, maxEnergy
+        )
         return minEnergy.value / 1000.0, maxEnergy.value / 1000.0
 
     """
