@@ -56,6 +56,10 @@ Install now pyV2DL3:
 pip install .
 ```
 
+
+This README contains more detailed information about newer v2dl3-vegas options. See README.md for installation and basic usage.
+
+
 ### Docker recipe
 
 To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-docker/README.md*
@@ -64,10 +68,7 @@ To use a Docker image with v2dl3-vegas pre-installed, see *utils/v2dl3-vegas-doc
 
 Run `v2dl3-vegas --help` to see all options.
 
-See *README_vegas.md* for more information on newer v2dl3-vegas features such as ITM reconstruction, full-enclosure, and event classes.
-
-Make sure you have ROOT with pyROOT enabled and VEGAS(>=v2.5.7) installed to proceed.
-Now, lets create the DL3 fits files from the stage 5 files in the ```./VEGAS/``` folder.
+The most common requested options are `--full-enclosure` which enables full-enclosure (i.e. all offset/all extensions) and reconstruction mode `-r [1/2]`. To enable GEO, reconstruction should be set to `1`, for ITM reconstruction mode  should be set to `2`. To apply the correction for energy bias that is normally applied to VEGAS analysis use `--energy-bias-corr`. 
 
 #### One file at a time
 
@@ -76,6 +77,31 @@ To convert a single stage 5 file to DL3 fits you need to provide the path to the
 ```bash
 v2dl3-vegas -f ./VEGAS/54809.med.ED.050.St5_Stereo.root ./VEGAS/EA_na21stan_medPoint_050_ED_GRISU.root ./test
 ```
+
+#### King PSF
+
+To enable an alternative PSF description you can enable the function based on modeling using the King Function.
+
+`-k <filepath>`
+
+Some common parameter files are [available for download on the Wiki](https://veritas.sao.arizona.edu/wiki/V2dl3-vegas_dev_notes#King_PSF_Parameters_Files)
+
+The axes values (azimuth, zenith, noise, etc) will be matched to the nearest PSF parameter line. So if you have runs near 40 zenith, for example, and your King PSF parameter values are mapped only for 0 and 20 zenith, you may want to get a new PSF parameters file made.
+
+See the wiki link above for more information.
+
+
+#### Event Classes
+`-ec`
+
+Event Classes allow events of a run to be sorted to multiple fits files based on parameter(s).
+
+When the user chooses `event_class_mode`, multiple effective area files may be provided for a group of runs, and these EA files will define multiple event classes based on their cuts parameters. [See Example](https://veritas.sao.arizona.edu/wiki/V2dl3-vegas_dev_notes#Event_Classes)
+
+This is useful for splitting events from a run into multiple datasets for joint fitting. For example, disjoint signal and background classes based on MSW as developed by Alisha Chromey and Amanda Weinstein in "4DMLM" analysis [Example](https://github.com/VERITAS-Observatory/4DMLM-Analysis/blob/main/notebooks/crab-115-runs/JointCrab3DAnalysis2Events.ipynb)
+
+Currently, event_class_mode only sorts to multiple event classes based on MSW intervals.
+
 
 #### Generate from a VEGAS stage6 run list
 
