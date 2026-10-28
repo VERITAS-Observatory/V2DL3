@@ -39,7 +39,6 @@ def __fillRESPONSE_not_safe__(
         raise ValueError(
             f"No overlapping energy range across IRFs: LO_THRES={lo_thres}, HI_THRES={hi_thres}"
         )
-
     response_dict["LO_THRES"] = lo_thres
     response_dict["HI_THRES"] = hi_thres
 
