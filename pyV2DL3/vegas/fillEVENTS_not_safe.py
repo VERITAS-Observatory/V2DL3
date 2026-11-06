@@ -90,6 +90,8 @@ def __fillEVENTS_not_safe__(
         "decArr": [],
         "azArr": [],
         "altArr": [],
+        "detx": [],
+        "dety": [],
         "energyArr": [],
         "nTelArr": [],
         "fNoise": [],
@@ -186,6 +188,8 @@ def __fillEVENTS_not_safe__(
         this_event_group["decArr"].append(np.rad2deg(reco.fDirectionDec_J2000_Rad))
         this_event_group["azArr"].append(np.rad2deg(reco.fDirectionAzimuth_Rad))
         this_event_group["altArr"].append(np.rad2deg(reco.fDirectionElevation_Rad))
+        this_event_group["detx"].append(reco.fDirectionXCamPlane_Deg)
+        this_event_group["dety"].append(reco.fDirectionYCamPlane_Deg)
         this_event_group["energyArr"].append(reco.fEnergy_GeV / 1000.0)
         this_event_group["nTelArr"].append(reco.fImages)
 
@@ -384,6 +388,8 @@ def __fillEVENTS_not_safe__(
         evt_dict["DEC"] = arr_dict["decArr"]
         evt_dict["ALT"] = arr_dict["altArr"]
         evt_dict["AZ"] = arr_dict["azArr"]
+        evt_dict["DETX"] = arr_dict["detx"]
+        evt_dict["DETY"] = arr_dict["dety"]
         evt_dict["EVENT_TYPE"] = arr_dict["nTelArr"]
         if "mswArr" in arr_dict:
             evt_dict["MSW"] = arr_dict["mswArr"]
