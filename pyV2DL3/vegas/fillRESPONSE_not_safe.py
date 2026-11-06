@@ -26,8 +26,6 @@ def __fillRESPONSE_not_safe__(
         psf_king_params=psf_king_params,
     )
 
-    manager = effective_area_file.manager
-
     lo_thres = 0.0
     hi_thres = np.inf
 
