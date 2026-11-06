@@ -28,10 +28,16 @@ def __fillRESPONSE_not_safe__(
 
     lo_thres = 0.0
     hi_thres = np.inf
-
-    for data in (ea_final_data, ebias_final_data, abias_final_data):
-        lo_thres = max(lo_thres, np.min(data["ENERG_LO"]))
-        hi_thres = min(hi_thres, np.max(data["ENERG_HI"]))
+    if irf_to_store["point-like"]:
+        for data in (ea_final_data, ebias_final_data):
+            lo_thres = max(lo_thres, np.min(data["ENERG_LO"]))
+            hi_thres = min(hi_thres, np.max(data["ENERG_HI"]))
+    elif irf_to_store["full-enclosure"]:
+        for data in (ea_final_data, ebias_final_data, abias_final_data):
+            lo_thres = max(lo_thres, np.min(data["ENERG_LO"]))
+            hi_thres = min(hi_thres, np.max(data["ENERG_HI"]))
+    else:
+        raise ValueError("IRF requested should be point-like or full-enclosure")
 
     if lo_thres >= hi_thres:
         raise ValueError(
